@@ -343,3 +343,112 @@ func TestCleanOldBundle(t *testing.T) {
 		t.Fatal(".old not removed, or the running app touched")
 	}
 }
+
+// Fix: the second rename and the rename back both fail. The verified new
+// bundle stays in the temp folder, .old stays, and the error names all
+// three paths, so nothing is lost.
+func TestSwapNeverLosesBothBundles(t *testing.T) {
+	f, running := macSetup(t)
+	first := true
+	swapRename(t, func(string) bool {
+		if first {
+			first = false
+			return false
+		}
+		return true
+	})
+	_, err := macInstall(f, "update.dmg", running)
+	if err == nil {
+		t.Fatal("no error")
+	}
+	next := filepath.Join(tempUpdateDir(running), "Marstek Monitor.app")
+	if exists(running) {
+		t.Fatal("running path not empty")
+	}
+	if appTag(t, next) != "new" || appTag(t, running+".old") != "old" {
+		t.Fatal("a bundle was lost")
+	}
+	for _, p := range []string{running + ".old", next, running} {
+		if !strings.Contains(err.Error(), p) {
+			t.Fatalf("error %q does not name %s", err, p)
+		}
+	}
+	if f.detached != 1 {
+		t.Fatalf("detached %d, want 1", f.detached)
+	}
+}
+
+// The second rename fails once, the rename back fails, the retry works:
+// the new app is in place.
+func TestSwapRetriesNewIntoPlace(t *testing.T) {
+	f, running := macSetup(t)
+	n := 0
+	swapRename(t, func(string) bool { n++; return n == 2 || n == 3 })
+	if _, err := macInstall(f, "update.dmg", running); err != nil {
+		t.Fatal(err)
+	}
+	if appTag(t, running) != "new" || exists(tempUpdateDir(running)) {
+		t.Fatal("new app not in place, or temp folder left")
+	}
+}
+
+func TestMacInstallReplacesLeftoverOld(t *testing.T) {
+	f, running := macSetup(t)
+	makeApp(t, running+".old", "older")
+	if _, err := macInstall(f, "update.dmg", running); err != nil {
+		t.Fatal(err)
+	}
+	if appTag(t, running) != "new" || appTag(t, running+".old") != "old" {
+		t.Fatalf("running %q, .old %q", appTag(t, running), appTag(t, running+".old"))
+	}
+}
+
+// A symlinked .app at the dmg root is not an app: the one real app is taken.
+func TestMacInstallIgnoresSymlinkedApp(t *testing.T) {
+	f, running := macSetup(t)
+	target := filepath.Join(t.TempDir(), "Evil.app")
+	makeApp(t, target, "evil")
+	if err := os.Symlink(target, filepath.Join(f.mount, "Evil.app")); err != nil {
+		t.Skipf("symlinks need privileges here: %v", err)
+	}
+	if _, err := macInstall(f, "update.dmg", running); err != nil {
+		t.Fatal(err)
+	}
+	if appTag(t, running) != "new" {
+		t.Fatalf("installed %q, want new", appTag(t, running))
+	}
+}
+
+func TestMacRelativePathRefused(t *testing.T) {
+	f, _ := macSetup(t)
+	if _, err := macInstall(f, "update.dmg", "Marstek Monitor.app"); err == nil {
+		t.Fatal("macInstall took a relative path")
+	}
+	if f.attached != 0 {
+		t.Fatal("mounted for a relative path")
+	}
+	yes := func(string) bool { return true }
+	if canSelfUpdate(&fakeMac{running: "Applications/A.app", runTeam: "TEAM123"}, "Applications/A.app", yes) {
+		t.Fatal("canSelfUpdate took a relative path")
+	}
+}
+
+// cleanOldBundle also removes temp folders other runs left, never this
+// process's own.
+func TestCleanOldBundleRemovesStaleTemp(t *testing.T) {
+	root := t.TempDir()
+	running := filepath.Join(root, "Marstek Monitor.app")
+	makeApp(t, running, "new")
+	stale := filepath.Join(root, ".marstek-update-99999999")
+	makeApp(t, filepath.Join(stale, "A.app"), "x")
+	own := tempUpdateDir(running)
+	makeApp(t, filepath.Join(own, "A.app"), "x")
+	other := filepath.Join(root, "Other.app")
+	makeApp(t, other, "other")
+	if err := cleanOldBundle(running); err != nil {
+		t.Fatal(err)
+	}
+	if exists(stale) || !exists(own) || !exists(other) || appTag(t, running) != "new" {
+		t.Fatalf("stale %v, own %v, other %v", exists(stale), exists(own), exists(other))
+	}
+}
