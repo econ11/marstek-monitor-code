@@ -505,7 +505,7 @@ export function settingsScreen(deps: SettingsDeps): Screen {
     if (upd?.Checking) return
     deps.checkUpdates().then(setUpdate, err => {
       console.error('update check', err)
-      setUpdate({ ...(upd ?? { Current: view?.Version ?? '', Latest: '', Available: false, PageURL: '', Progress: 0, Phase: '' }), Checking: false, Err: 'check_failed' })
+      setUpdate({ ...(upd ?? { Current: view?.Version ?? '', Latest: '', Available: false, CanInstall: false, PageURL: '', Progress: 0, Phase: '' }), Checking: false, Err: 'check_failed' })
     })
   }
 

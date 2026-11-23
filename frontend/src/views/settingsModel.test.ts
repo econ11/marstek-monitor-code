@@ -267,7 +267,7 @@ test('panelGroups: the stations panel keeps its key when the first snapshot arri
 
 // Plan 3 Task 4: the update rows of «Про програму».
 const upd = (o: Partial<UpdateView> = {}): UpdateView =>
-  ({ Current: '1.0.0', Latest: '', Available: false, PageURL: '', Checking: false, Err: '', Progress: 0, Phase: '', ...o })
+  ({ Current: '1.0.0', Latest: '', Available: false, CanInstall: true, PageURL: '', Checking: false, Err: '', Progress: 0, Phase: '', ...o })
 const withUpdates = { ...view, S: { ...view.S, UpdateCheck: true } } as SettingsView
 
 test('about: the update switch, its row and «Перевірити зараз»', () => {
@@ -301,9 +301,19 @@ test('about: checking, then «Доступна версія» with «Онови�
   // Without the install hook (canInstall false), «Оновити» is shown disabled.
   const noInstall = row(settingsModel(withUpdates, snap, 'about', { update: avail }), 'update')
   expect(noInstall.actions?.[0]).toEqual({ act: 'install', label: 'Оновити', primary: true, disabled: true })
-  // Final review M7: only Windows has the installer, even with the hook.
-  const mac = row(settingsModel({ ...withUpdates, Platform: 'darwin' } as SettingsView, snap, 'about', { update: avail, canInstall: true }), 'update')
-  expect(mac.actions?.map(a => [a.act, !!a.disabled])).toEqual([['install', true], ['download', false], ['check', false]])
+})
+
+// Task 6: «Оновити» is enabled iff UpdateView.CanInstall (the Go side says
+// this copy can update itself), on Windows and on Mac alike; «Завантажити»
+// and «Перевірити зараз» stay enabled.
+test('about: «Оновити» is enabled iff update.CanInstall, on windows and darwin', () => {
+  for (const Platform of ['windows', 'darwin']) {
+    for (const CanInstall of [true, false]) {
+      const u = upd({ Latest: '1.2.0', Available: true, CanInstall })
+      const r = row(settingsModel({ ...withUpdates, Platform } as SettingsView, snap, 'about', { update: u, canInstall: true }), 'update')
+      expect(r.actions?.map(a => [a.act, !!a.disabled])).toEqual([['install', !CanInstall], ['download', false], ['check', false]])
+    }
+  }
 })
 
 // Final review M2: a dev build never says «остання версія» and offers no check.

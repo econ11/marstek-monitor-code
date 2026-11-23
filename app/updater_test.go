@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -38,17 +39,18 @@ type fakeAssets struct {
 func newFakeAssets(t *testing.T, version string, installer []byte) *fakeAssets {
 	t.Helper()
 	sum := sha256.Sum256(installer)
-	a := &fakeAssets{installer: installer, checksum: hex.EncodeToString(sum[:]) + "  " + update.AssetName(version, runtime.GOOS) + "\n"}
+	name := update.AssetName(version, runtime.GOOS)
+	a := &fakeAssets{installer: installer, checksum: hex.EncodeToString(sum[:]) + "  " + name + "\n"}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		a.mu.Lock()
 		a.paths = append(a.paths, r.URL.Path)
 		a.agents = append(a.agents, r.UserAgent())
 		body, sumBody, short := a.installer, a.checksum, a.short
 		a.mu.Unlock()
-		switch filepath.Ext(r.URL.Path) {
-		case ".sha256":
+		switch path.Base(r.URL.Path) {
+		case name + ".sha256":
 			fmt.Fprint(w, sumBody)
-		case ".exe":
+		case name: // the platform's asset (update.AssetName): the .exe or the .dmg
 			w.Header().Set("Content-Length", strconv.Itoa(len(body)))
 			if short {
 				w.Write(body[:len(body)/2])

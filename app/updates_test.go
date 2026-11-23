@@ -329,11 +329,11 @@ func TestUpdatesState(t *testing.T) {
 	st := openTestStore(t)
 	g := newFakeGitHub(t, "1.2.0")
 	h := newUpdates(t, st, g, "1.1.0", false, updT0)
-	if v := h.u.State(); v != (UpdateView{Current: "1.1.0"}) {
+	if v := h.u.State(); v != (UpdateView{Current: "1.1.0", CanInstall: canInstallHere()}) {
 		t.Fatalf("before a check: %+v", v)
 	}
 	v, err := h.u.Check()
-	want := UpdateView{Current: "1.1.0", Latest: "1.2.0", Available: true, PageURL: "https://github.com/econ11/marstek-monitor/releases/tag/v1.2.0"}
+	want := UpdateView{Current: "1.1.0", CanInstall: canInstallHere(), Latest: "1.2.0", Available: true, PageURL: "https://github.com/econ11/marstek-monitor/releases/tag/v1.2.0"}
 	if err != nil || v != want || h.u.State() != want {
 		t.Fatalf("after: %+v, %v; want %+v", v, err, want)
 	}
@@ -390,7 +390,7 @@ func TestFoundReleaseSurvivesRestart(t *testing.T) {
 
 	// Restart: the row is back without a request.
 	h2 := newUpdates(t, st, g, "1.0.0", false, updT0)
-	want := UpdateView{Current: "1.0.0", Latest: "1.2.0", Available: true, PageURL: found.PageURL}
+	want := UpdateView{Current: "1.0.0", CanInstall: canInstallHere(), Latest: "1.2.0", Available: true, PageURL: found.PageURL}
 	if v := h2.u.State(); v != want {
 		t.Fatalf("after restart: %+v, want %+v", v, want)
 	}
@@ -411,7 +411,7 @@ func TestFoundReleaseSurvivesRestart(t *testing.T) {
 
 	// Installed: the running version is the one found; it is forgotten.
 	h3 := newUpdates(t, st, g, "1.2.0", false, updT0)
-	if v := h3.u.State(); v != (UpdateView{Current: "1.2.0"}) {
+	if v := h3.u.State(); v != (UpdateView{Current: "1.2.0", CanInstall: canInstallHere()}) {
 		t.Fatalf("running 1.2.0: %+v", v)
 	}
 	if raw, ok, _ := st.GetSetting(settingFoundRelease); ok && raw != "" {
@@ -458,7 +458,7 @@ func TestCleanTempRemovesLeftover(t *testing.T) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(dir, "marstek-monitor-1.0.0-setup.exe"), []byte("x"), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, update.AssetName("1.0.0", runtime.GOOS)), []byte("x"), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	other := filepath.Join(root, "other")
@@ -527,5 +527,17 @@ func TestCheckOffInSimulation(t *testing.T) {
 	}
 	if len(h.views) == 0 || h.views[len(h.views)-1].Err != UpdateErrSimulated {
 		t.Fatalf("not emitted: %+v", h.views)
+	}
+}
+
+// CanInstall says whether «Оновити» can run here: the Windows installer
+// always can; elsewhere it is the platform's (updater_*.go) answer.
+func TestUpdateViewCanInstall(t *testing.T) {
+	u := NewUpdatesService(openTestStore(t), "1.0.0", nil, false)
+	if got := u.State().CanInstall; got != canInstallHere() {
+		t.Fatalf("CanInstall %v, canInstallHere %v", got, canInstallHere())
+	}
+	if runtime.GOOS == "windows" && !u.State().CanInstall {
+		t.Fatal("Windows must offer the one-click update")
 	}
 }

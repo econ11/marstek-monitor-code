@@ -49,3 +49,6 @@ func installerCmd(path, prevExe string) *exec.Cmd {
 	}
 	return cmd
 }
+
+// canInstallHere: the Windows installer can always run (UpdateView.CanInstall).
+func canInstallHere() bool { return true }

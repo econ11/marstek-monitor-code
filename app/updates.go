@@ -58,10 +58,13 @@ const (
 // succeeds); Available: Latest is newer than Current; PageURL its release
 // page. Err is a code: UpdateErrCheck (a failed manual check), or why the
 // one-click update failed (UpdateErrDownload…). Progress (0..1, the
-// download) and Phase (Phase*) are set while that update runs.
+// download) and Phase (Phase*) are set while that update runs. CanInstall:
+// this copy can update itself («Оновити»; canInstallHere, per platform),
+// else only «Завантажити» is offered.
 type UpdateView struct {
 	Current, Latest string
 	Available       bool
+	CanInstall      bool
 	PageURL         string
 	Checking        bool
 	Err             string
@@ -121,7 +124,7 @@ type UpdatesService struct {
 //wails:ignore
 func NewUpdatesService(st *store.Store, current string, c update.HTTPDoer, auto bool) *UpdatesService {
 	u := &UpdatesService{st: st, current: current, http: c, now: time.Now, after: time.After,
-		started: time.Now(), auto: auto, view: UpdateView{Current: current},
+		started: time.Now(), auto: auto, view: UpdateView{Current: current, CanInstall: canInstallHere()},
 		TempDir: filepath.Join(os.TempDir(), updateTempDir), start: startInstaller,
 		dev: !update.IsVersion(current)}
 	u.restoreFound()

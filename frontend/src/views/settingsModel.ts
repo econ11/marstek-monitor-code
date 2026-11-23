@@ -57,8 +57,8 @@ export type RowAction = { act: string; label: string; primary?: boolean; disable
 /** What the Settings screen knows beyond the view and the snapshot:
  *  notificationsOff = Windows blocks the app's toasts (banner §11.2);
  *  update = the update state (UpdatesService); canInstall = the one-click
- *  update binding exists (Task 5); «Оновити» is enabled only with it and on
- *  Windows (SettingsView.Platform). */
+ *  update binding exists (Task 5); «Оновити» is enabled only with it and when
+ *  update.CanInstall (this copy can update itself, app/updates.go). */
 export type SettingsExtras = { notificationsOff?: boolean; update?: UpdateView | null; canInstall?: boolean }
 
 /** A catalogue text whose tail is an action's label, split at the last sep:
@@ -326,9 +326,10 @@ function about(v: SettingsView, x: SettingsExtras): SettingRow[] {
     { id: 'version', label: dev ? t('settings.about.version.dev') : t('settings.about.version', { version: v.Version }), control: 'info' },
     toggle('updateCheck', 'settings.about.autoUpdates', v.S.UpdateCheck),
     // A dev build has no version to compare (UpdatesService checks nothing):
-    // it never claims «остання версія». The installer exists on Windows only.
+    // it never claims «остання версія». «Оновити» needs UpdateView.CanInstall:
+    // the Go side says whether this copy can update itself (per platform).
     dev ? { id: 'update', label: t('settings.about.update.dev'), control: 'info' }
-      : updateRow(x.update, !!x.canInstall && v.Platform === 'windows'),
+      : updateRow(x.update, !!x.canInstall && !!x.update?.CanInstall),
     { id: 'description', label: t('settings.about.description'), control: 'info' },
     { id: 'privacy', label: t('settings.about.privacy.v1'), control: 'info' },
     { id: 'github', label: t('settings.about.github'), control: 'button', href: GITHUB_URL },
