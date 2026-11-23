@@ -4,6 +4,7 @@
 package i18n
 
 import (
+	"runtime"
 	"strings"
 	"sync/atomic"
 )
@@ -52,6 +53,9 @@ var UK = map[string]string{
 	"tray.menu.quit":                  "Вийти",
 	"tray.firstMinimize.toast.title":  "Marstek Monitor працює в треї",
 	"tray.firstMinimize.toast.body":   "І далі стежить за станцією. Щоб вийти, клацніть іконку правою кнопкою → «Вийти».",
+	// Copy §13.7 (macOS port, final review I1): T picks .mac on darwin.
+	"tray.firstMinimize.toast.title.mac": "Marstek Monitor працює в рядку меню",
+	"tray.firstMinimize.toast.body.mac":  "І далі стежить за станцією. Щоб вийти, клацніть іконку → «Вийти».",
 
 	// §12.3 Windows toasts. copy.md gives title and body per key (suffixes
 	// .title/.body here) and the emoji as a separate icon column (.icon).
@@ -157,7 +161,24 @@ var UK = map[string]string{
 var (
 	langs   = map[string]map[string]string{"uk": UK, "en": EN}
 	current atomic.Pointer[string] // nil = "uk"
+	goos    = runtime.GOOS         // tests switch it
 )
+
+// PlatformKey is key + ".mac" on darwin when that variant exists (in either
+// catalogue), else key: the Go twin of the frontend's pk (copy §13.7).
+func PlatformKey(key, goos string) string {
+	if goos != "darwin" {
+		return key
+	}
+	mac := key + ".mac"
+	if _, ok := UK[mac]; ok {
+		return mac
+	}
+	if _, ok := EN[mac]; ok {
+		return mac
+	}
+	return key
+}
 
 // SetLang switches the catalogue: "uk" or "en"; anything else is "en".
 // Safe to call from any goroutine.
@@ -179,7 +200,9 @@ func Lang() string {
 // T renders the template for key in the current language, substituting
 // {name} with the following name, value pairs. A key missing in the current
 // language takes the en, then the uk text; a key in neither returns itself.
+// On macOS a key with a .mac variant renders that variant (PlatformKey).
 func T(key string, kv ...string) string {
+	key = PlatformKey(key, goos)
 	tmpl, ok := langs[Lang()][key]
 	if !ok {
 		tmpl, ok = EN[key]

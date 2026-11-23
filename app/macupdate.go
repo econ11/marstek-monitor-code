@@ -23,6 +23,11 @@ type macTools interface {
 	TeamID(app string) (string, error) // "" for ad-hoc/unsigned
 }
 
+// errSwappedNoRelaunch: macInstall put the new version in place, but its
+// relaunch did not start. install() keeps the restart marker: the next start
+// (by hand) is the new version.
+var errSwappedNoRelaunch = errors.New("update: the new version is in place; start it again")
+
 // renameFile is os.Rename; tests swap it to fail a step of the swap.
 var renameFile = os.Rename
 

@@ -1078,7 +1078,7 @@
 
 ### 13.7 macOS: тексти `.mac`
 
-План macOS-порту (Task 2). Текст, що називає Windows, трей чи брандмауер, має на Mac варіант під тим самим ключем + `.mac`; його вибирає `pk(key, platform)` (`frontend/src/i18n/platform.ts`) за `SettingsView.Platform` = `darwin`. Решта текстів однакова. На Mac не показуються `onboarding.dx.netPublic.*` (macOS не повідомляє про загальнодоступну мережу) і `onboarding.done.trayHint` (підказка про панель задач Windows 11). Дія блоку брандмауера на Mac відкриває налаштування «Локальна мережа», без UAC; її `pending` / `error` мають свої `.mac`. Mac-варіант ⓘ `info.settings.quiet.mac` — у §15.
+План macOS-порту (Task 2). Текст, що називає Windows, трей чи брандмауер, має на Mac варіант під тим самим ключем + `.mac`; його вибирає `pk(key, platform)` (`frontend/src/i18n/platform.ts`) за `SettingsView.Platform` = `darwin`. Решта текстів однакова. На Mac не показуються `onboarding.dx.netPublic.*` (macOS не повідомляє про загальнодоступну мережу) і `onboarding.done.trayHint` (підказка про панель задач Windows 11). Дія блоку брандмауера на Mac відкриває налаштування «Локальна мережа», без UAC; її `pending` / `error` мають свої `.mac`. Mac-варіант ⓘ `info.settings.quiet.mac` — у §15. Тексти Go (`app/i18n`: тости, меню іконки) теж мають `.mac`; їх вибирає `i18n.PlatformKey` за `runtime.GOOS`. Ні `Windows`, ні трей, ні інсталятор не називає жоден текст, який бачить Mac (тести Go і frontend).
 
 | Ключ | UK | EN | Примітка |
 |---|---|---|---|
@@ -1098,6 +1098,11 @@
 | `onboarding.dx.firewall.action.mac` | Відкрити налаштування | Open settings | Відкриває «Локальна мережа» |
 | `onboarding.dx.firewall.pending.mac` | Відкриваю налаштування… | Opening settings… | Поки налаштування відкриваються |
 | `onboarding.dx.firewall.error.mac` | Не вдалося відкрити налаштування. Відкрийте «Системні параметри» → «Конфіденційність і безпека» → «Локальна мережа». | Couldn't open settings. Open System Settings → Privacy & Security → Local Network. | Налаштування не відкрилися |
+| `tray.firstMinimize.toast.title.mac` | Marstek Monitor працює в рядку меню | Marstek Monitor is running in the menu bar | Go (`app/i18n`), тост першого закриття вікна |
+| `tray.firstMinimize.toast.body.mac` | І далі стежить за станцією. Щоб вийти, клацніть іконку → «Вийти». | It keeps watching the station. To quit, click the icon → Quit. | Go (`app/i18n`). На Mac меню відкривається звичайним кліком |
+| `update.starting.mac` | Встановлюємо оновлення. Програма закриється й відкриється знову. | Installing the update. The app will close and open again. | Mac оновлюється без інсталятора (заміна .app) |
+| `update.failed.start.mac` | Не вдалося встановити оновлення. Спробуйте ще раз або натисніть «Завантажити». | Couldn't install the update. Try again or click Download. | |
+| `update.moveToApps.mac` | Щоб оновлюватись одним кліком, перетягніть Marstek Monitor у «Програми». | To update with one click, move Marstek Monitor to Applications. | Лише Mac, без базового ключа. Рядок під оновленням, коли є нова версія, а `CanInstall` = false (запуск з dmg чи з AppTranslocation); «Оновити» тоді не показується |
 
 ---
 

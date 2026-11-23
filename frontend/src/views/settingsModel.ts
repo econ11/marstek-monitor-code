@@ -273,31 +273,32 @@ function data(v: SettingsView): SettingRow[] {
 }
 
 /** The update row: what the last check found, its error, and the buttons —
- *  «Оновити» (Task 5's one-click update), «Завантажити» (PageURL) and
- *  «Перевірити зараз». Before the first check there is no state line (the
- *  version row says what runs). A failed automatic check never sets Err.
- *  While «Оновити» runs (u.Phase) the row shows the phase and a progress bar;
- *  a failed update shows its reason, with «Оновити» (again) and
- *  «Завантажити» (the release page) still there. */
-function updateRow(u: UpdateView | null | undefined, canInstall: boolean): SettingRow {
+ *  «Оновити» (Task 5's one-click update; only when this copy can update
+ *  itself), «Завантажити» (PageURL) and «Перевірити зараз». Before the first
+ *  check there is no state line (the version row says what runs). A failed
+ *  automatic check never sets Err. While «Оновити» runs (u.Phase) the row
+ *  shows the phase and a progress bar; a failed update shows its reason, with
+ *  «Оновити» (again) and «Завантажити» (the release page) still there. On a
+ *  Mac the texts that name the installer have .mac variants. */
+function updateRow(u: UpdateView | null | undefined, canInstall: boolean, platform: string): SettingRow {
   const check: RowAction = { act: 'check', label: t('settings.about.update.checkNow') }
   const download: RowAction = { act: 'download', label: t('update.download') }
-  const install: RowAction = { act: 'install', label: t('settings.about.update.install'), primary: true }
+  const install: RowAction[] = canInstall ? [{ act: 'install', label: t('settings.about.update.install'), primary: true }] : []
   if (u?.Phase) {
     return {
-      id: 'update', label: phaseText(u), control: 'actions', progress: Math.min(1, Math.max(0, u.Progress)),
-      actions: [{ ...install, disabled: true }, download],
+      id: 'update', label: phaseText(u, platform), control: 'actions', progress: Math.min(1, Math.max(0, u.Progress)),
+      actions: [...install.map(a => ({ ...a, disabled: true })), download],
     }
   }
   if (u?.Checking) return { id: 'update', label: t('settings.about.update.checking'), control: 'actions', actions: [{ ...check, disabled: true }] }
   const r: SettingRow = { id: 'update', label: '', control: 'actions', actions: [check] }
   if (u?.Available && u.Latest) {
     r.label = splitAction(t('settings.about.update.available', { version: u.Latest }), '. ', true)[0]
-    r.actions = [canInstall ? install : { ...install, disabled: true }, download, check]
+    r.actions = [...install, download, check]
   } else if (u?.Latest) {
     r.label = t('settings.about.update.latest')
   }
-  if (u?.Err) r.error = t(UPDATE_ERR[u.Err] ?? 'settings.about.update.failed.v1')
+  if (u?.Err) r.error = UPDATE_ERR[u.Err] ? pt(UPDATE_ERR[u.Err], platform) : t('settings.about.update.failed.v1')
   return r
 }
 
@@ -311,17 +312,21 @@ const UPDATE_ERR: Record<string, string> = {
   start: 'update.failed.start',
 }
 
-function phaseText(u: UpdateView): string {
+function phaseText(u: UpdateView, platform: string): string {
   switch (u.Phase) {
     case 'downloading': return t('update.downloading', { version: u.Latest, percent: Math.round(Math.min(1, Math.max(0, u.Progress)) * 100) })
     case 'verifying': return t('update.verifying')
     case 'backingUp': return t('update.backingUp')
-    default: return t('update.starting')
+    default: return pt('update.starting', platform)
   }
 }
 
 function about(v: SettingsView, x: SettingsExtras): SettingRow[] {
   const dev = v.Version === 'dev' || !v.Version
+  // A Mac copy run from the dmg or translocated cannot update itself
+  // (CanInstall false): a hint says how to get the one-click update.
+  const moveHint: SettingRow[] = !dev && v.Platform === 'darwin' && x.update?.Available && x.update.Latest && !x.update.CanInstall
+    ? [{ id: 'updateHint', label: t('update.moveToApps.mac'), control: 'info' }] : []
   return [
     { id: 'version', label: dev ? t('settings.about.version.dev') : t('settings.about.version', { version: v.Version }), control: 'info' },
     toggle('updateCheck', 'settings.about.autoUpdates', v.S.UpdateCheck),
@@ -329,7 +334,8 @@ function about(v: SettingsView, x: SettingsExtras): SettingRow[] {
     // it never claims «остання версія». «Оновити» needs UpdateView.CanInstall:
     // the Go side says whether this copy can update itself (per platform).
     dev ? { id: 'update', label: t('settings.about.update.dev'), control: 'info' }
-      : updateRow(x.update, !!x.canInstall && !!x.update?.CanInstall),
+      : updateRow(x.update, !!x.canInstall && !!x.update?.CanInstall, v.Platform),
+    ...moveHint,
     { id: 'description', label: t('settings.about.description'), control: 'info' },
     { id: 'privacy', label: t('settings.about.privacy.v1'), control: 'info' },
     { id: 'github', label: t('settings.about.github'), control: 'button', href: GITHUB_URL },

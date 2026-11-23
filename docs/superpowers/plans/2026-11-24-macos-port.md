@@ -355,10 +355,11 @@
   - the checksums match the artifacts;
   - the notes;
   - no personal data in the notes or the logs.
+- [ ] **Step 1b:** Right after the draft is checked and before publishing, with owner OK: push the releases repo README (the macOS section, a local commit in the releases clone), so the published release links to a README that covers the Mac.
 - [ ] **Step 3:** The owner publishes the draft by hand.
 - [ ] **Step 4:** Acceptance checklist for the owner:
   - **Mac:**
-    1. Download the dmg in Safari and open it with no Gatekeeper warning.
+    1. Download the dmg in Safari and open it. The first launch shows only macOS's usual one-time confirmation for an app downloaded from the Internet («Відкрити»); no other warning (no unidentified developer, no "cannot check it for malicious software").
     2. Drag the app to «Програми» and launch it.
     3. The Local Network prompt shows; allow it. The real station is found.
     4. Notifications work, and clicking one opens its tab.

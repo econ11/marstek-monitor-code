@@ -465,6 +465,10 @@ export const en: Record<string, string> = {
   'update.failed.integrity': "The downloaded file didn't match the published SHA-256 checksum, so it was deleted. Try downloading again.",
   'update.failed.backup': "Couldn't back up the database, so the update wasn't installed. Try again or download it from the release page.",
   'update.failed.start': "Couldn't start the installer. Try again or download it from the release page.",
+  // Copy §13.7 (macOS port): see uk.ts.
+  'update.starting.mac': 'Installing the update. The app will close and open again.',
+  'update.failed.start.mac': "Couldn't install the update. Try again or click Download.",
+  'update.moveToApps.mac': 'To update with one click, move Marstek Monitor to Applications.',
   // Not in the catalogue (plan 2, Task 17): see uk.ts.
   'settings.general.language.system': 'Same as Windows',
   'settings.notify.noConnection.desc.v1': "If the station doesn't respond for longer than set. Off by default: the router may lose power in an outage too.",

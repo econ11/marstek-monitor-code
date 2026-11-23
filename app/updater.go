@@ -192,8 +192,12 @@ func (u *UpdatesService) install(rel update.Release, avail bool) (err error) {
 		slog.Warn("update: restart marker", "err", err) // only the gap's label is lost
 	}
 	if err := u.start(path); err != nil {
-		if err := u.st.SetSetting(settingUpdateRestart, ""); err != nil {
-			slog.Warn("update: restart marker", "err", err)
+		// A Mac swap that is done but did not relaunch keeps the marker:
+		// the next start is the new version.
+		if !errors.Is(err, errSwappedNoRelaunch) {
+			if err := u.st.SetSetting(settingUpdateRestart, ""); err != nil {
+				slog.Warn("update: restart marker", "err", err)
+			}
 		}
 		return failed(UpdateErrStart, err)
 	}

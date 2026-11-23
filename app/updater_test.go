@@ -436,6 +436,23 @@ func TestUpdateRestartMarker(t *testing.T) {
 	}
 }
 
+// Final review M4: the Mac swap succeeded but the relaunch did not start.
+// The new version is in place and opens at the next start by hand, so the
+// marker stays (that start's gap is the update); the error is still a
+// start failure.
+func TestUpdateSwappedNoRelaunchKeepsMarker(t *testing.T) {
+	h := newInstall(t)
+	h.u.now = func() time.Time { return updT0 }
+	h.starter.err = fmt.Errorf("%w: %v", errSwappedNoRelaunch, errors.New("fork failed"))
+	h.failedWith(t, h.u.Install(), UpdateErrStart)
+	if v, ok, _ := h.st.GetSetting(settingUpdateRestart); !ok || v == "" {
+		t.Fatalf("marker cleared after a swap without relaunch: %q", v)
+	}
+	if !TakeUpdateRestart(h.st, newVersion, updT0.Add(5*time.Minute)) {
+		t.Fatal("the new version's start did not take the marker")
+	}
+}
+
 // Install refuses on a copy that cannot update itself (CanInstall false):
 // nothing is downloaded, backed up or started.
 func TestUpdateRefusedWhenCannotInstall(t *testing.T) {

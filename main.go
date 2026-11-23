@@ -334,11 +334,11 @@ func run() error {
 			r.run(ctx)
 		}()
 		if simulate {
-			if localUpdateTest {
-				// The update swapped the bundle before this start: its
-				// .app.old goes. Checks stay manual («Перевірити зараз»).
-				updates.CleanAfterUpdate()
-			}
+			// A local update test swapped the bundle before this start: its
+			// .app.old goes. Every simulated start does it (the relaunched
+			// app may not see the test base); a bare dev binary has nothing
+			// to clean. Checks stay manual («Перевірити зараз»).
+			updates.CleanAfterUpdate()
 			slog.Info("update check: off in a simulated run")
 			return
 		}

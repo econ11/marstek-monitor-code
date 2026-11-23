@@ -19,9 +19,6 @@ import (
 //   - FirewallMayBlock → "Local Network access is denied" (probe below);
 //   - AllowFirewall → opens System Settings → Privacy & Security → Local
 //     Network (the app cannot grant it itself).
-//
-// TODO(macos): the frontend still says "firewall" / "Windows" in these
-// texts (copy.md), and the Allow button promises a UAC prompt.
 
 // systemPublicNetwork: macOS has no network categories.
 func systemPublicNetwork(map[string]bool) (bool, error) { return false, nil }

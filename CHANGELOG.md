@@ -7,7 +7,7 @@
 Перший випуск Marstek Monitor для macOS. Windows-версія працює як і раніше.
 
 - macOS 12 і новіші, одна програма для Apple Silicon та Intel. Встановлення: відкрити `marstek-monitor-1.1.0-macos.dmg` і перетягнути додаток у «Програми».
-- Програма підписана й нотаризована Apple, тому відкривається звичайним подвійним клацанням, без попереджень Gatekeeper.
+- Програма підписана й нотаризована Apple. Під час першого запуску macOS, як для будь-якої програми з інтернету, один раз попросить підтвердити відкриття.
 - Ті самі вкладки й сповіщення, що й на Windows. Іконка живе в рядку меню й показує, чи є світло; іконка в Dock з'являється, лише поки відкрите вікно.
 - Клік по сповіщенню відкриває вікно на потрібній вкладці.
 - «Відкривати під час входу в систему» в налаштуваннях. Дані зберігаються в `~/Library/Application Support/MarstekMonitor`.
@@ -21,7 +21,7 @@
 The first Marstek Monitor release for macOS. The Windows version works as before.
 
 - macOS 12 or later, one app for Apple Silicon and Intel. To install, open `marstek-monitor-1.1.0-macos.dmg` and drag the app into Applications.
-- The app is signed and notarized by Apple, so it opens with a normal double click and no Gatekeeper warning.
+- The app is signed and notarized by Apple. On the first launch macOS asks once to confirm opening it, as it does for any app downloaded from the Internet.
 - The same tabs and notifications as on Windows. The icon lives in the menu bar and shows whether the power is on; the Dock icon appears only while the window is open.
 - Clicking a notification opens the window on the matching tab.
 - "Open at login" in Settings. Data is kept in `~/Library/Application Support/MarstekMonitor`.

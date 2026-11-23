@@ -45,6 +45,9 @@ var EN = map[string]string{
 	"tray.menu.quit":                  "Quit",
 	"tray.firstMinimize.toast.title":  "Marstek Monitor is running in the tray",
 	"tray.firstMinimize.toast.body":   "It keeps watching the station. To quit, right-click the icon → Quit.",
+	// Copy §13.7 (macOS port): see uk.go.
+	"tray.firstMinimize.toast.title.mac": "Marstek Monitor is running in the menu bar",
+	"tray.firstMinimize.toast.body.mac":  "It keeps watching the station. To quit, click the icon → Quit.",
 
 	// §12.3 Windows toasts
 	"notify.attribution":                 "{station} · {model}",

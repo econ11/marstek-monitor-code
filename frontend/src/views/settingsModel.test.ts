@@ -298,22 +298,52 @@ test('about: checking, then «Доступна версія» with «Онови�
     { act: 'download', label: 'Завантажити' },
     { act: 'check', label: 'Перевірити зараз' },
   ])
-  // Without the install hook (canInstall false), «Оновити» is shown disabled.
+  // Without the install hook (canInstall false) there is no «Оновити».
   const noInstall = row(settingsModel(withUpdates, snap, 'about', { update: avail }), 'update')
-  expect(noInstall.actions?.[0]).toEqual({ act: 'install', label: 'Оновити', primary: true, disabled: true })
+  expect(noInstall.actions?.map(a => a.act)).toEqual(['download', 'check'])
 })
 
-// Task 6: «Оновити» is enabled iff UpdateView.CanInstall (the Go side says
-// this copy can update itself), on Windows and on Mac alike; «Завантажити»
-// and «Перевірити зараз» stay enabled.
-test('about: «Оновити» is enabled iff update.CanInstall, on windows and darwin', () => {
+// Task 6 + final review M2: «Оновити» is there iff UpdateView.CanInstall
+// (the Go side says this copy can update itself), on Windows and on Mac
+// alike; «Завантажити» and «Перевірити зараз» always are.
+test('about: «Оновити» is shown iff update.CanInstall, on windows and darwin', () => {
   for (const Platform of ['windows', 'darwin']) {
     for (const CanInstall of [true, false]) {
       const u = upd({ Latest: '1.2.0', Available: true, CanInstall })
       const r = row(settingsModel({ ...withUpdates, Platform } as SettingsView, snap, 'about', { update: u, canInstall: true }), 'update')
-      expect(r.actions?.map(a => [a.act, !!a.disabled])).toEqual([['install', !CanInstall], ['download', false], ['check', false]])
+      expect(r.actions?.map(a => [a.act, !!a.disabled])).toEqual([...(CanInstall ? [['install', false]] : []), ['download', false], ['check', false]])
     }
   }
+})
+
+// Final review M2: a Mac copy that cannot update itself (run from the dmg
+// or translocated) says how to get the one-click update, under the row.
+test('about: on a Mac without CanInstall, the hint to move to Applications', () => {
+  const ids = (Platform: string, o: Partial<UpdateView>) =>
+    settingsModel({ ...withUpdates, Platform } as SettingsView, snap, 'about', { update: upd({ Latest: '1.2.0', ...o }), canInstall: true }).rows.map(r => r.id)
+  expect(ids('darwin', { Available: true, CanInstall: false })).toEqual(['version', 'updateCheck', 'update', 'updateHint', 'description', 'privacy', 'github', 'donate'])
+  expect(ids('darwin', { Available: true, CanInstall: true })).not.toContain('updateHint')
+  expect(ids('darwin', { Available: false, CanInstall: false })).not.toContain('updateHint')
+  expect(ids('windows', { Available: true, CanInstall: false })).not.toContain('updateHint')
+  const hint = (l: 'uk' | 'en') => {
+    setLocale(l)
+    return row(settingsModel({ ...withUpdates, Platform: 'darwin' } as SettingsView, snap, 'about',
+      { update: upd({ Latest: '1.2.0', Available: true, CanInstall: false }), canInstall: true }), 'updateHint')
+  }
+  expect(hint('uk')).toMatchObject({ control: 'info', label: 'Щоб оновлюватись одним кліком, перетягніть Marstek Monitor у «Програми».' })
+  expect(hint('en').label).toBe('To update with one click, move Marstek Monitor to Applications.')
+})
+
+// Final review M1: a Mac update has no installer; its texts say «встановити».
+test('about: the Mac update texts', () => {
+  const mac = { ...withUpdates, Platform: 'darwin' } as SettingsView
+  const at = (o: Partial<UpdateView>) => row(settingsModel(mac, snap, 'about',
+    { update: upd({ Latest: '1.2.0', Available: true, ...o }), canInstall: true }), 'update')
+  expect(at({ Phase: 'starting', Progress: 1 }).label).toBe('Встановлюємо оновлення. Програма закриється й відкриється знову.')
+  expect(at({ Err: 'start' }).error).toBe('Не вдалося встановити оновлення. Спробуйте ще раз або натисніть «Завантажити».')
+  setLocale('en')
+  expect(at({ Phase: 'starting', Progress: 1 }).label).toBe('Installing the update. The app will close and open again.')
+  expect(at({ Err: 'start' }).error).toBe("Couldn't install the update. Try again or click Download.")
 })
 
 // Final review M2: a dev build never says «остання версія» and offers no check.
@@ -395,8 +425,8 @@ test('about: the one-click update phases and its failures', () => {
 })
 
 // macOS port, Task 2 (Review Focus 5): on a Mac no text of Settings names
-// Windows, the tray, the firewall or UAC.
-const WINDOWS_WORDS = /Windows|тре[йюїя]|панел|tray|брандмауер|firewall|UAC/i
+// Windows, the tray, the firewall, UAC or an installer.
+const WINDOWS_WORDS = /Windows|тре[йюїя]|панел|tray|брандмауер|firewall|UAC|інсталятор|installer/i
 /** Every text a value shows: its strings, without ids, keys and links. */
 function shown(x: unknown, out: string[] = []): string[] {
   if (typeof x === 'string') out.push(x)
@@ -417,6 +447,13 @@ test('TestNoWindowsWordOnMac: settings', () => {
       ...SECTIONS.map(sec => settingsModel(mac, snap, sec, { update: avail, canInstall: true })),
       settingsModel(mac, snap, 'notifications', { notificationsOff: true }),
       settingsModel(noMin, snap, 'general'),
+      // The one-click update's phases and failures, and the copy that
+      // cannot update itself (final review M1, M2).
+      ...['downloading', 'verifying', 'backingUp', 'starting'].map(Phase =>
+        settingsModel(mac, snap, 'about', { update: { ...avail, CanInstall: true, Phase, Progress: 0.5 }, canInstall: true })),
+      ...['simulated', 'download', 'checksum', 'backup', 'start', 'check_failed'].map(Err =>
+        settingsModel(mac, snap, 'about', { update: { ...avail, CanInstall: true, Err }, canInstall: true })),
+      settingsModel(mac, snap, 'about', { update: { ...avail, CanInstall: false }, canInstall: true }),
     ]
     // The ⓘ tips too: their text is t(info.key), not a string of the row.
     const tips = models.flatMap(m => m.rows.filter(r => r.info).map(r => t(r.info!.key, r.info!.args)))

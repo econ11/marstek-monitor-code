@@ -480,6 +480,11 @@ export const uk: Record<string, string> = {
   'update.failed.integrity': 'Завантажений файл не збігся з опублікованою сумою SHA-256, тому його видалено. Спробуйте завантажити ще раз.',
   'update.failed.backup': 'Не вдалося зберегти копію бази даних, тому оновлення не встановлено. Спробуйте ще раз або завантажте зі сторінки релізу.',
   'update.failed.start': 'Не вдалося запустити інсталятор. Спробуйте ще раз або завантажте зі сторінки релізу.',
+  // Copy §13.7 (macOS port, final review M1, M2): a Mac update has no
+  // installer; moveToApps is Mac-only (a copy that cannot update itself).
+  'update.starting.mac': 'Встановлюємо оновлення. Програма закриється й відкриється знову.',
+  'update.failed.start.mac': 'Не вдалося встановити оновлення. Спробуйте ще раз або натисніть «Завантажити».',
+  'update.moveToApps.mac': 'Щоб оновлюватись одним кліком, перетягніть Marstek Monitor у «Програми».',
   // Not in the catalogue (plan 2, Task 17): the texts the plan gives (.v1 = no
   // cloud), the parts of catalogue rows the screen shows apart (the retention
   // options, the confirm dialog's body and buttons), the firmware check of the

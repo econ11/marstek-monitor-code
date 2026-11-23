@@ -224,8 +224,8 @@ func (u *UpdatesService) simulated() bool { return u.Simulate && !localUpdateTes
 
 // CleanAfterUpdate removes what a Mac update left beside the app (the
 // swapped-out .app.old and temp folders); nothing on Windows. CleanTemp
-// does it too; main calls this one in the local update test, where
-// CleanTemp is not run.
+// does it too; main calls this one on every simulated start (the local
+// update test among them), where CleanTemp is not run.
 //
 //wails:ignore
 func (u *UpdatesService) CleanAfterUpdate() { cleanAfterUpdate() }

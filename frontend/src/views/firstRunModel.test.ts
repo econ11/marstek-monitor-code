@@ -297,7 +297,7 @@ test('readmeURL opens the local-API section', () => {
 // macOS port, Task 2 (Review Focus 5): on a Mac no text of the first run
 // names Windows, the tray, the firewall or UAC. The Mac never reports a
 // public network (netdiag_darwin), and its firewall action opens settings.
-const WINDOWS_WORDS = /Windows|тре[йюїя]|панел|tray|брандмауер|firewall|UAC/i
+const WINDOWS_WORDS = /Windows|тре[йюїя]|панел|tray|брандмауер|firewall|UAC|інсталятор|installer/i
 function shown(x: unknown, out: string[] = []): string[] {
   if (typeof x === 'string') out.push(x)
   else if (Array.isArray(x)) x.forEach(v => shown(v, out))

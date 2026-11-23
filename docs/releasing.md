@@ -18,8 +18,10 @@ Each `.sha256` is one line `<hex>  <filename>` (two spaces, LF), as `sha256sum` 
 
 ## Secrets (Actions secrets of `econ11/marstek-monitor-code`)
 
-Names only; the values live only in the repo's Actions secrets, set by the owner from files
-(`gh secret set NAME < file`), never typed into a chat or a log. Setup: `docs/macos-signing.md`.
+Names only; the values live only in the repo's Actions secrets, set by the owner with `gh secret set`:
+the two file secrets from their files (`MACOS_CERT_P12` piped from `base64` of the `.p12`, `NOTARY_KEY_P8` from
+`< AuthKey_<id>.p8`), the other four typed into gh's own hidden prompt («Paste your secret»), never
+into a chat, a log or the command line. Setup: `docs/macos-signing.md`.
 
 | Secret | What |
 | --- | --- |

@@ -285,8 +285,9 @@ func startInstaller(dmg string) error {
 	cmd := exec.Command("/bin/sh", append([]string{"-c", relaunchScript}, args...)...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	if err := cmd.Start(); err != nil {
-		// The new app is in place; it opens at the next start by hand.
-		return fmt.Errorf("update: installed, but the relaunch did not start: %w", err)
+		// The new app is in place; it opens at the next start by hand
+		// (install keeps the restart marker).
+		return fmt.Errorf("%w: %v", errSwappedNoRelaunch, err)
 	}
 	return cmd.Process.Release()
 }
