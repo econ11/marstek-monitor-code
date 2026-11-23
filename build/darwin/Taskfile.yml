@@ -1,10 +1,9 @@
 version: '3'
 
-# macOS build (spike, econ11/macos-spike). Trimmed from the Wails v3.1.0
-# template: no Docker cross-compile, no universal binary, no DMG, and no
-# common:generate:icons (it would rebuild build/windows/icon.ico from
-# appicon.png and lose the hinted small sizes; icons.icns is committed and
-# was made once with
+# macOS build. Trimmed from the Wails v3.1.0 template: no Docker
+# cross-compile, no universal binary, no DMG, and no common:generate:icons
+# (it would rebuild build/windows/icon.ico from appicon.png and lose the
+# hinted small sizes; icons.icns is committed and was made once with
 #   wails3 generate icons -input build/appicon.png -macfilename build/darwin/icons.icns -windowsfilename <throw-away>.ico).
 
 includes:
@@ -63,7 +62,9 @@ tasks:
       - codesign --verify --deep --strict "{{.BIN_DIR}}/{{.APP_NAME}}.app"
 
   run:
-    summary: Builds a dev bundle and runs it (bundle id needed for notifications)
+    summary: Runs a dev bundle with the simulated station in a throw-away data folder
+    # Never the real data folder (~/Library/Application Support/MarstekMonitor)
+    # and never the real station: -simulate-quiet, data in a fresh mktemp -d.
     cmds:
       - wails3 tool prepare-macos-output --dir "{{.BIN_DIR}}"
       - test -n "{{.BIN_DIR}}" && test -n "{{.APP_NAME}}" && rm -rf -- "{{.BIN_DIR}}/{{.APP_NAME}}.dev.app"
@@ -74,4 +75,4 @@ tasks:
       - cp "build/darwin/Info.dev.plist" "{{.BIN_DIR}}/{{.APP_NAME}}.dev.app/Contents/Info.plist"
       - xattr -cr "{{.BIN_DIR}}/{{.APP_NAME}}.dev.app"
       - codesign --force --deep --sign - "{{.BIN_DIR}}/{{.APP_NAME}}.dev.app"
-      - '"{{.BIN_DIR}}/{{.APP_NAME}}.dev.app/Contents/MacOS/{{.APP_NAME}}"'
+      - '"{{.BIN_DIR}}/{{.APP_NAME}}.dev.app/Contents/MacOS/{{.APP_NAME}}" -simulate-quiet -simulate-dir "$(mktemp -d -t marstek-monitor-dev)"'

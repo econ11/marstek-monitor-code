@@ -22,7 +22,7 @@
 // artboard: Wails 3.1 scales the tray image to the menu bar thickness
 // (22 pt), so a 22 pt image is shown 1:1 (an 18 pt one was stretched to a
 // soft 20 pt glyph, taller than the neighbouring icons; checked on a Mac
-// 2026-11-23, docs/macos-spike.md).
+// 2026-11-23).
 package main
 
 import (
