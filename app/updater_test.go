@@ -135,6 +135,7 @@ func newInstall(t *testing.T) *installHarness {
 	// The fake starter installs anywhere; the real CanInstall of a test
 	// binary is false on macOS (no bundle, no Team ID).
 	h.u.view.CanInstall = true
+	h.u.installable = func() bool { return true }
 	// What the last check found: the new release with both assets.
 	h.u.rel = update.Release{Version: newVersion, PageURL: "https://github.com/econ11/marstek-monitor/releases/tag/v" + newVersion,
 		InstallerURL: "https://github.com/econ11/marstek-monitor/releases/download/v" + newVersion + "/" + update.AssetName(newVersion, runtime.GOOS),

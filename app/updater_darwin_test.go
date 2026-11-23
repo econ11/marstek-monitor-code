@@ -1,9 +1,11 @@
 package app
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -61,9 +63,19 @@ func TestParseAttachPlist(t *testing.T) {
 }
 
 func TestTeamRequirement(t *testing.T) {
-	want := `anchor apple generic and certificate leaf[subject.OU] = "ABCDE12345"`
+	want := `anchor apple generic and certificate 1[field.1.2.840.113635.100.6.2.6] exists` +
+		` and certificate leaf[field.1.2.840.113635.100.6.1.13] exists and certificate leaf[subject.OU] = "ABCDE12345"`
 	if got := teamRequirement("ABCDE12345"); got != want {
 		t.Fatalf("%s", got)
+	}
+	// codesign must accept the text as a requirement (a syntax error is exit 1,
+	// an unmet one exit 3): checked against an ad-hoc bundle.
+	app := filepath.Join(t.TempDir(), "A.app")
+	makeAdhocApp(t, app)
+	err := exec.Command("/usr/bin/codesign", "--verify", "-R="+teamRequirement("ABCDE12345"), app).Run()
+	var ee *exec.ExitError
+	if !errors.As(err, &ee) || ee.ExitCode() != 3 {
+		t.Fatalf("codesign with the requirement: %v, want exit 3 (requirement not met)", err)
 	}
 }
 
@@ -192,18 +204,34 @@ func TestRelaunchArgs(t *testing.T) {
 	}
 }
 
-// The relaunch script passes the flags through as separate arguments and
-// waits for the pid; checked with a stand-in for open.
+// The relaunch script passes the flags through as separate arguments, opens
+// even when the old process does not exit in time, and logs a failed open;
+// checked with stand-ins for open and logger.
 func TestRelaunchScript(t *testing.T) {
-	dir := t.TempDir()
-	out := filepath.Join(dir, "out")
-	script := strings.ReplaceAll(relaunchScript, "/usr/bin/open", "printf '%s\\n' >"+out)
-	cmd := exec.Command("/bin/sh", "-c", script, "x", "999999", "/A b.app", "-simulate-quiet", "-simulate-dir", "/t m")
-	if b, err := cmd.CombinedOutput(); err != nil {
-		t.Fatalf("%v %s", err, b)
+	run := func(pid string, ticks int, openExit int, flags ...string) (opened, logged string) {
+		t.Helper()
+		dir := t.TempDir()
+		openOut, logOut := filepath.Join(dir, "open"), filepath.Join(dir, "log")
+		// The stand-in for open is a shell function, so "$@" are its words.
+		script := "openf() { printf '%s\\n' \"$@\" >" + openOut + "; return " + strconv.Itoa(openExit) + "; }\n" +
+			strings.ReplaceAll(strings.ReplaceAll(relaunchScript, "/usr/bin/open", "openf"), "/usr/bin/logger -t marstek-monitor", "printf '%s\\n' >>"+logOut)
+		args := append([]string{"-c", script, "x", pid, "/A b.app", strconv.Itoa(ticks)}, flags...)
+		_ = exec.Command("/bin/sh", args...).Run()
+		o, _ := os.ReadFile(openOut)
+		l, _ := os.ReadFile(logOut)
+		return string(o), string(l)
 	}
-	b, _ := os.ReadFile(out)
-	if want := "/A b.app\n--args\n-simulate-quiet\n-simulate-dir\n/t m\n"; string(b) != want {
-		t.Fatalf("open got %q, want %q", b, want)
+	opened, logged := run("999999", 300, 0, "-simulate-quiet", "-simulate-dir", "/t m")
+	if opened != "/A b.app\n--args\n-simulate-quiet\n-simulate-dir\n/t m\n" || logged != "" {
+		t.Fatalf("flags: open %q, log %q", opened, logged)
+	}
+	// This test process never exits: after 2 ticks the app opens anyway.
+	opened, logged = run(strconv.Itoa(os.Getpid()), 2, 0)
+	if opened != "/A b.app\n" || !strings.Contains(logged, "still runs") {
+		t.Fatalf("timeout: open %q, log %q", opened, logged)
+	}
+	_, logged = run("999999", 300, 1)
+	if !strings.Contains(logged, "could not open") {
+		t.Fatalf("failed open not logged: %q", logged)
 	}
 }

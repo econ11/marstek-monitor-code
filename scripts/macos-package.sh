@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # macos-package.sh <version> [<identity>]
 #
 # Builds the Mac release: a universal Marstek Monitor.app stamped with
@@ -19,9 +19,11 @@
 # (the local update test, docs/macos-signing.md); never for a release.
 #
 # Checks (any failure stops the script): the binary holds arm64 and x86_64;
-# CFBundleShortVersionString is <version>; codesign --verify --deep --strict
-# passes; with an identity, the hardened runtime flag is set.
-set -eu
+# each slice carries the `release` build tag (go version -m), or does NOT
+# carry it with UPDATE_TEST=1; CFBundleShortVersionString is <version>;
+# codesign --verify --deep --strict passes; with an identity, the hardened
+# runtime flag is set.
+set -euo pipefail
 
 VERSION=${1:-}
 IDENTITY=${2:-}
@@ -53,10 +55,35 @@ fail() {
 	exit 1
 }
 
+# One temp folder for everything (the notarization zip, the dmg stage),
+# removed however the script ends.
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+
+notary() { # notarytool with the API key
+	xcrun notarytool "$@" --key "$NOTARY_KEY_PATH" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER"
+}
+
 notarize() { # <file to submit> <file to staple>
-	xcrun notarytool submit "$1" --key "$NOTARY_KEY_PATH" --key-id "$NOTARY_KEY_ID" \
-		--issuer "$NOTARY_ISSUER" --wait --timeout 30m >&2 || fail "notarization of $1 failed"
+	local out id status
+	out=$(notary submit "$1" --wait --timeout 30m --output-format json) || true
+	id=$(printf '%s' "$out" | /usr/bin/plutil -extract id raw -o - - 2>/dev/null || true)
+	status=$(printf '%s' "$out" | /usr/bin/plutil -extract status raw -o - - 2>/dev/null || true)
+	if [ "$status" != "Accepted" ]; then
+		echo "notarization of $1: status '${status:-unknown}' (submission ${id:-none})" >&2
+		if [ -n "$id" ]; then
+			# Apple's log names the problems; the signer's identity is left out.
+			notary log "$id" 2>&1 | grep -v -i -E '"(teamId|signer|developer|certificate)' >&2 || true
+		fi
+		fail "notarization of $1 failed"
+	fi
 	xcrun stapler staple "$2" >&2 || fail "stapling $2 failed"
+}
+
+# slice_tags <binary> <arch>: the -tags of that slice's Go build info.
+slice_tags() {
+	lipo -thin "$2" -output "$TMP/slice-$2" "$1"
+	go version -m "$TMP/slice-$2" | awk '$1 == "build" && $2 ~ /^-tags=/ { sub(/^-tags=/, "", $2); print $2 }'
 }
 
 # 1. The universal, version-stamped, ad-hoc signed app.
@@ -73,6 +100,14 @@ fi
 ARCHS=$(lipo -archs "$EXE")
 case " $ARCHS " in *" arm64 "*) ;; *) fail "no arm64 in the binary ($ARCHS)" ;; esac
 case " $ARCHS " in *" x86_64 "*) ;; *) fail "no x86_64 in the binary ($ARCHS)" ;; esac
+for arch in arm64 x86_64; do
+	tags=$(slice_tags "$EXE" "$arch")
+	if [ "${UPDATE_TEST:-}" = 1 ]; then
+		case ",$tags," in *,release,*) fail "$arch: UPDATE_TEST=1 but the slice has the release tag ($tags)" ;; esac
+	else
+		case ",$tags," in *,release,*) ;; *) fail "$arch: no release tag in the slice ($tags)" ;; esac
+	fi
+done
 SHORT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Contents/Info.plist")
 [ "$SHORT" = "$VERSION" ] || fail "CFBundleShortVersionString is $SHORT, want $VERSION"
 codesign --verify --deep --strict "$APP" || fail "codesign --verify --deep --strict failed"
@@ -82,15 +117,14 @@ fi
 
 # 4. Notarize and staple the app (before it goes into the dmg).
 if [ -n "$NOTARIZE" ]; then
-	ZIP=$(mktemp -d)/marstek-monitor.zip
+	ZIP="$TMP/marstek-monitor.zip"
 	ditto -c -k --keepParent "$APP" "$ZIP"
 	notarize "$ZIP" "$APP"
-	rm -f "$ZIP"
 fi
 
 # 5. The dmg: the app (under its display name) and an Applications link.
-STAGE=$(mktemp -d)
-trap 'rm -rf "$STAGE"' EXIT
+STAGE="$TMP/stage"
+mkdir "$STAGE"
 ditto "$APP" "$STAGE/Marstek Monitor.app"
 ln -s /Applications "$STAGE/Applications"
 rm -f "$DMG" "$DMG.sha256"

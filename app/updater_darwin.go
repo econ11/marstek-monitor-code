@@ -109,9 +109,16 @@ func (r realMac) Verify(app string) error {
 	return err
 }
 
-// teamRequirement is the code requirement «signed through Apple by team».
+// teamRequirement is the code requirement «a Developer ID Application
+// certificate of team»: Apple's anchor, the Developer ID intermediate
+// (1.2.840.113635.100.6.2.6), a Developer ID Application leaf
+// (1.2.840.113635.100.6.1.13) and the team in its OU. An App Store or
+// development certificate of the same team does not pass.
 func teamRequirement(team string) string {
-	return `anchor apple generic and certificate leaf[subject.OU] = "` + team + `"`
+	return `anchor apple generic` +
+		` and certificate 1[field.1.2.840.113635.100.6.2.6] exists` +
+		` and certificate leaf[field.1.2.840.113635.100.6.1.13] exists` +
+		` and certificate leaf[subject.OU] = "` + team + `"`
 }
 
 // TeamID is the app's Team ID from codesign -dv, "" when it is ad-hoc
@@ -273,7 +280,8 @@ func startInstaller(dmg string) error {
 	// new app gets this run's -simulate* flags back (the local update test
 	// must not restart on the real data folder); a normal run has none, and
 	// the app opens as by a double click.
-	args := append([]string{"marstek-relaunch", strconv.Itoa(os.Getpid()), newApp}, relaunchArgs(os.Args[1:])...)
+	args := append([]string{"marstek-relaunch", strconv.Itoa(os.Getpid()), newApp, strconv.Itoa(relaunchWaitTicks)},
+		relaunchArgs(os.Args[1:])...)
 	cmd := exec.Command("/bin/sh", append([]string{"-c", relaunchScript}, args...)...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	if err := cmd.Start(); err != nil {
@@ -283,12 +291,29 @@ func startInstaller(dmg string) error {
 	return cmd.Process.Release()
 }
 
-// relaunchScript waits for the old process ($1) to exit, then opens the new
-// app ($2), with the remaining arguments as its flags when there are any.
-const relaunchScript = `pid=$1; app=$2; shift 2
-while kill -0 "$pid" 2>/dev/null; do sleep 0.2; done
-if [ $# -gt 0 ]; then exec /usr/bin/open "$app" --args "$@"; fi
-exec /usr/bin/open "$app"`
+// relaunchWaitTicks × 0.2 s is how long the relaunch waits for the old
+// process: 60 s, then it opens the new app anyway.
+const relaunchWaitTicks = 300
+
+// relaunchScript waits for the old process ($1) to exit, at most $3 ticks of
+// 0.2 s, then opens the new app ($2), with the remaining arguments as its
+// flags when there are any. A wait that runs out or an open that fails goes
+// to the system log (logger -t marstek-monitor; Console.app).
+const relaunchScript = `pid=$1; app=$2; ticks=$3; shift 3
+i=0
+while kill -0 "$pid" 2>/dev/null; do
+  if [ "$i" -ge "$ticks" ]; then
+    /usr/bin/logger -t marstek-monitor "update: the old process $pid still runs after the wait; opening the new app anyway"
+    break
+  fi
+  sleep 0.2; i=$((i+1))
+done
+if [ $# -gt 0 ]; then /usr/bin/open "$app" --args "$@"; else /usr/bin/open "$app"; fi
+rc=$?
+if [ "$rc" -ne 0 ]; then
+  /usr/bin/logger -t marstek-monitor "update: could not open the new app $app (open exit $rc); start it by hand"
+fi
+exit "$rc"`
 
 // relaunchArgs keeps the -simulate* flags of args (and the folder after
 // -simulate-dir); everything else is dropped.

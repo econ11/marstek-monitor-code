@@ -60,7 +60,9 @@ const (
 // one-click update failed (UpdateErrDownload…). Progress (0..1, the
 // download) and Phase (Phase*) are set while that update runs. CanInstall:
 // this copy can update itself («Оновити»; canInstallHere, per platform),
-// else only «Завантажити» is offered.
+// else only «Завантажити» is offered. It is worked out once, when a newer
+// release is first known (found by a check or restored), so it is false
+// while nothing is available; the update row uses it only then.
 type UpdateView struct {
 	Current, Latest string
 	Available       bool
@@ -106,6 +108,13 @@ type UpdatesService struct {
 	Quit      func()
 	start     func(path string) error // startInstaller; a fake in tests
 
+	// installable is canInstallHere (a fake in tests); canInstall asks it
+	// once, at the first release found (on macOS it runs codesign), not at
+	// every start.
+	installable func() bool
+	installOnce sync.Once
+	installOK   bool
+
 	// dev: current is not a version (a developer build, "dev" or ""):
 	// nothing is checked, restored or installed.
 	dev bool
@@ -124,7 +133,7 @@ type UpdatesService struct {
 //wails:ignore
 func NewUpdatesService(st *store.Store, current string, c update.HTTPDoer, auto bool) *UpdatesService {
 	u := &UpdatesService{st: st, current: current, http: c, now: time.Now, after: time.After,
-		started: time.Now(), auto: auto, view: UpdateView{Current: current, CanInstall: canInstallHere()},
+		started: time.Now(), auto: auto, view: UpdateView{Current: current}, installable: canInstallHere,
 		TempDir: filepath.Join(os.TempDir(), updateTempDir), start: startInstaller,
 		dev: !update.IsVersion(current)}
 	u.restoreFound()
@@ -159,6 +168,7 @@ func (u *UpdatesService) restoreFound() {
 	}
 	u.rel = rel
 	u.view.Latest, u.view.Available, u.view.PageURL = rel.Version, true, rel.PageURL
+	u.view.CanInstall = u.canInstall()
 }
 
 // storeFound keeps rel when it is newer, else clears the setting.
@@ -194,6 +204,12 @@ func (u *UpdatesService) CleanTemp() {
 	if err := os.RemoveAll(u.TempDir); err != nil {
 		slog.Info("update: remove the old download folder", "err", err)
 	}
+}
+
+// canInstall is installable(), asked once and kept.
+func (u *UpdatesService) canInstall() bool {
+	u.installOnce.Do(func() { u.installOK = u.installable() })
+	return u.installOK
 }
 
 // localUpdateTest is update.LocalTestBase (a var so tests can play a
@@ -346,6 +362,9 @@ func (u *UpdatesService) check(ctx context.Context, manual bool, now time.Time, 
 	}
 	u.rel = rel
 	u.view.Latest, u.view.Available, u.view.PageURL, u.view.Err = rel.Version, newer, rel.PageURL, ""
+	if newer {
+		u.view.CanInstall = u.canInstall()
+	}
 	v := u.view
 	u.emitLocked()
 	u.mu.Unlock()

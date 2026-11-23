@@ -329,7 +329,7 @@ func TestUpdatesState(t *testing.T) {
 	st := openTestStore(t)
 	g := newFakeGitHub(t, "1.2.0")
 	h := newUpdates(t, st, g, "1.1.0", false, updT0)
-	if v := h.u.State(); v != (UpdateView{Current: "1.1.0", CanInstall: canInstallHere()}) {
+	if v := h.u.State(); v != (UpdateView{Current: "1.1.0"}) {
 		t.Fatalf("before a check: %+v", v)
 	}
 	v, err := h.u.Check()
@@ -411,7 +411,7 @@ func TestFoundReleaseSurvivesRestart(t *testing.T) {
 
 	// Installed: the running version is the one found; it is forgotten.
 	h3 := newUpdates(t, st, g, "1.2.0", false, updT0)
-	if v := h3.u.State(); v != (UpdateView{Current: "1.2.0", CanInstall: canInstallHere()}) {
+	if v := h3.u.State(); v != (UpdateView{Current: "1.2.0"}) {
 		t.Fatalf("running 1.2.0: %+v", v)
 	}
 	if raw, ok, _ := st.GetSetting(settingFoundRelease); ok && raw != "" {
@@ -531,13 +531,27 @@ func TestCheckOffInSimulation(t *testing.T) {
 }
 
 // CanInstall says whether «Оновити» can run here: the Windows installer
-// always can; elsewhere it is the platform's (updater_*.go) answer.
+// always can; elsewhere it is the platform's (updater_*.go) answer. It is
+// asked once, when a newer release is first known, not at start.
 func TestUpdateViewCanInstall(t *testing.T) {
-	u := NewUpdatesService(openTestStore(t), "1.0.0", nil, false)
-	if got := u.State().CanInstall; got != canInstallHere() {
-		t.Fatalf("CanInstall %v, canInstallHere %v", got, canInstallHere())
+	st := openTestStore(t)
+	g := newFakeGitHub(t, "1.2.0")
+	h := newUpdates(t, st, g, "1.1.0", false, updT0)
+	calls := 0
+	h.u.installable = func() bool { calls++; return canInstallHere() }
+	if v := h.u.State(); v.CanInstall || calls != 0 {
+		t.Fatalf("before a release: CanInstall %v, asked %d times; want false, 0", v.CanInstall, calls)
 	}
-	if runtime.GOOS == "windows" && !u.State().CanInstall {
+	for i := 0; i < 2; i++ {
+		v, err := h.u.Check()
+		if err != nil || !v.Available || v.CanInstall != canInstallHere() {
+			t.Fatalf("check %d: %+v, %v; want CanInstall %v", i, v, err, canInstallHere())
+		}
+	}
+	if calls != 1 {
+		t.Fatalf("asked %d times, want once", calls)
+	}
+	if runtime.GOOS == "windows" && !h.u.State().CanInstall {
 		t.Fatal("Windows must offer the one-click update")
 	}
 }

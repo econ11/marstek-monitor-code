@@ -252,18 +252,26 @@ func run() error {
 			}
 		})
 
+	services := []application.Service{
+		application.NewService(&app.Service{}),
+		application.NewService(svc),
+		application.NewService(settingsSvc),
+		application.NewService(onb),
+		application.NewService(nav),
+		application.NewService(updates),
+	}
+	// macOS: the notification service needs a bundle id; a bare binary (a
+	// dev build run outside its .app) would fail to start with it, so it
+	// runs without notifications there (app.NotificationsAvailable).
+	if app.NotificationsAvailable() {
+		services = append(services, application.NewService(notifier.Service()))
+	} else {
+		slog.Warn("notifications: off, the app does not run from its bundle")
+	}
 	a = application.New(application.Options{
 		Name:        "Marstek Monitor",
 		Description: "Marstek battery monitor",
-		Services: []application.Service{
-			application.NewService(&app.Service{}),
-			application.NewService(svc),
-			application.NewService(settingsSvc),
-			application.NewService(onb),
-			application.NewService(nav),
-			application.NewService(updates),
-			application.NewService(notifier.Service()),
-		},
+		Services:    services,
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},

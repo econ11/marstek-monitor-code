@@ -53,3 +53,6 @@ func saveToastIcon() {
 // AskNotificationPermission: Windows has no permission prompt for toasts
 // (macOS asks at start, toast_darwin.go).
 func AskNotificationPermission() {}
+
+// NotificationsAvailable: Windows toasts need no bundle (macOS: a bundle id).
+func NotificationsAvailable() bool { return true }
