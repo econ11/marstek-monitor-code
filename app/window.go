@@ -35,6 +35,7 @@ func NewWindow(a *application.App, hidden bool, onHide func()) *Window {
 		Windows:          application.WindowsWindow{Theme: application.Dark},
 	})
 	w := &Window{win: win, icon: newWindowIcon(win)}
+	w.icon.setOpen(!hidden) // macOS: the Dock icon only while the window is open
 	w.closeToTray.Store(true)
 	win.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
 		e.Cancel()
@@ -43,6 +44,7 @@ func NewWindow(a *application.App, hidden bool, onHide func()) *Window {
 			return
 		}
 		win.Hide()
+		w.icon.setOpen(false)
 		if onHide != nil {
 			go onHide()
 		}
@@ -63,6 +65,7 @@ func (w *Window) HWND() uintptr {
 // Show shows, restores and focuses the window. It never hides it (flows 5.1:
 // the tray click is not a toggle).
 func (w *Window) Show() {
+	w.icon.setOpen(true) // macOS: the Dock icon comes first, then the window
 	w.win.Show()
 	w.win.UnMinimise()
 	w.win.Focus()

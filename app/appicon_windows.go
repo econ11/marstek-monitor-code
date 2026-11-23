@@ -148,3 +148,7 @@ func (w *windowIcon) show(hwnd uintptr, dpi int) {
 	w.icons.destroy() // the window no longer uses them
 	w.icons, w.shown, w.shownDPI = p, w.want, dpi
 }
+
+// setOpen: on Windows the taskbar button comes and goes with the window by
+// itself (the Dock rule is macOS only, dock.go).
+func (w *windowIcon) setOpen(bool) {}

@@ -265,6 +265,10 @@ func run() error {
 			DisableQuitOnLastWindowClosed: true,
 			WndProcInterceptor:            power.WndProc,
 		},
+		// macOS: a menu-bar app; the Dock icon shows only while the window is
+		// open (app/dock.go). --background starts with no window, so no Dock
+		// icon from the first frame.
+		Mac:        application.MacOptions{ActivationPolicy: macActivationPolicy(background)},
 		OnShutdown: cancel,
 	})
 
@@ -595,4 +599,14 @@ func pcOnline() bool {
 		}
 	}
 	return false
+}
+
+// macActivationPolicy is the macOS activation policy at start: accessory (no
+// Dock icon) for --background, regular when the window opens at once. The
+// Dock follows the window from then on (app/dock.go).
+func macActivationPolicy(background bool) application.ActivationPolicy {
+	if background {
+		return application.ActivationPolicyAccessory
+	}
+	return application.ActivationPolicyRegular
 }
