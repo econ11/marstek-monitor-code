@@ -52,3 +52,7 @@ func installerCmd(path, prevExe string) *exec.Cmd {
 
 // canInstallHere: the Windows installer can always run (UpdateView.CanInstall).
 func canInstallHere() bool { return true }
+
+// cleanAfterUpdate: the installer's leftovers are the download folder,
+// which CleanTemp removes; nothing else on Windows.
+func cleanAfterUpdate() {}

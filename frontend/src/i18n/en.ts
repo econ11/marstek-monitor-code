@@ -642,6 +642,7 @@ export const en: Record<string, string> = {
   'outages.timeline.band.between': 'between {from} and {to} – {end} · {duration}',
   // macOS port (copy §13.7): see uk.ts.
   'settings.general.autostart.mac': 'Open at login',
+  'settings.general.autostart.moveFirst.mac': 'Move Marstek Monitor to Applications first',
   'settings.general.minimizeToTray.mac': 'Minimize to the menu bar when closed',
   'settings.general.language.desc.mac': 'macOS language by default.',
   'settings.general.language.system.mac': 'Same as macOS',

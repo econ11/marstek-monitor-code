@@ -675,6 +675,7 @@ export const uk: Record<string, string> = {
   'outages.timeline.band.between': 'між {from} і {to} – {end} · {duration}',
   // macOS port (copy §13.7): the Mac variants, chosen by pk (i18n/platform.ts).
   'settings.general.autostart.mac': 'Відкривати під час входу в систему',
+  'settings.general.autostart.moveFirst.mac': 'Спершу перетягніть Marstek Monitor у «Програми»',
   'settings.general.minimizeToTray.mac': 'Згортати в рядок меню при закритті',
   'settings.general.language.desc.mac': 'За замовчуванням — мова macOS.',
   'settings.general.language.system.mac': 'Як у macOS',

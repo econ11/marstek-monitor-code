@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { actionHTML, progressHTML } from './settings'
+import { actionHTML, autostartErrorKey, progressHTML } from './settings'
 
 // Fix round 1: a disabled update button («Перевірити зараз» while the check
 // runs) is aria-disabled, not disabled, so the keyboard focus stays on it.
@@ -22,4 +22,12 @@ test('the update progress bar', () => {
   expect(bar).toContain('aria-valuenow="42"')
   expect(bar).toContain('width:42%')
   expect(progressHTML({ id: 'update', label: '', control: 'actions', progress: 3 })).toContain('aria-valuenow="100"')
+})
+
+// macOS port, Task 6: «Open at login» from the dmg or a translocated copy is
+// refused by Go (ErrAutostartMoveFirst) and says to move the app first.
+test('autostart: move the app first on macOS', () => {
+  expect(autostartErrorKey(new Error('autostart.moveFirst: move the app to Applications first'))).toBe('settings.general.autostart.moveFirst.mac')
+  expect(autostartErrorKey('autostart.moveFirst: move the app to Applications first')).toBe('settings.general.autostart.moveFirst.mac')
+  expect(autostartErrorKey(new Error('registry unreadable'))).toBe('settings.save.error')
 })

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 // autostartLabel is the launchd label and the plist name (the bundle id).
@@ -37,6 +38,9 @@ func autostartPlist() (string, error) {
 // the agent in System Settings → General → Login Items under the
 // executable's name, and notifies "Background item added" once.
 func SetAutostart(enabled bool, exePath string) error {
+	if enabled && autostartNeedsMove(exePath) {
+		return ErrAutostartMoveFirst
+	}
 	path, err := autostartPlist()
 	if err != nil {
 		return err
@@ -64,6 +68,19 @@ func AutostartEnabled() (bool, error) {
 		return false, nil
 	}
 	return err == nil, err
+}
+
+// ErrAutostartMoveFirst: the app runs from a place a login item must not
+// point at (Gatekeeper's translocated copy, or a mounted dmg / external disk
+// under /Volumes/). The settings screen shows
+// settings.general.autostart.moveFirst.mac for it (the text is matched on
+// "autostart.moveFirst").
+var ErrAutostartMoveFirst = errors.New("autostart.moveFirst: move the app to Applications first")
+
+// autostartNeedsMove: exe is translocated or under /Volumes/; such a path
+// is gone after a restart or an eject.
+func autostartNeedsMove(exe string) bool {
+	return isTranslocated(exe) || strings.HasPrefix(filepath.ToSlash(exe), "/Volumes/")
 }
 
 // launchAgentPlist: run exe --background once at login, no restarts.

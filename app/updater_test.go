@@ -132,6 +132,9 @@ func newInstall(t *testing.T) *installHarness {
 	h.u.TempDir, h.u.BackupDir = h.tmp, h.backups
 	h.u.start = h.starter.start
 	h.u.Quit = func() { h.quits++ }
+	// The fake starter installs anywhere; the real CanInstall of a test
+	// binary is false on macOS (no bundle, no Team ID).
+	h.u.view.CanInstall = true
 	// What the last check found: the new release with both assets.
 	h.u.rel = update.Release{Version: newVersion, PageURL: "https://github.com/econ11/marstek-monitor/releases/tag/v" + newVersion,
 		InstallerURL: "https://github.com/econ11/marstek-monitor/releases/download/v" + newVersion + "/" + update.AssetName(newVersion, runtime.GOOS),
@@ -429,5 +432,21 @@ func TestUpdateRestartMarker(t *testing.T) {
 	h.st.SetSetting(settingUpdateRestart, "nonsense")
 	if TakeUpdateRestart(h.st, newVersion, updT0) {
 		t.Fatal("garbage counted")
+	}
+}
+
+// Install refuses on a copy that cannot update itself (CanInstall false):
+// nothing is downloaded, backed up or started.
+func TestUpdateRefusedWhenCannotInstall(t *testing.T) {
+	h := newInstall(t)
+	h.u.view.CanInstall = false
+	if err := h.u.Install(); !errors.Is(err, ErrUpdateCannotInstall) {
+		t.Fatalf("Install = %v, want ErrUpdateCannotInstall", err)
+	}
+	if len(h.starter.paths) != 0 || h.quits != 0 {
+		t.Fatalf("started %v, quit %d; want nothing", h.starter.paths, h.quits)
+	}
+	if _, err := os.Stat(h.tmp); !os.IsNotExist(err) {
+		t.Fatalf("download folder made: %v", err)
 	}
 }

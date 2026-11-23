@@ -185,6 +185,9 @@ func (u *UpdatesService) storeFound(rel update.Release, newer bool) {
 //
 //wails:ignore
 func (u *UpdatesService) CleanTemp() {
+	// macOS: the bundle an update swapped out (<app>.old) and its temp
+	// folders beside the app go too (cleanAfterUpdate).
+	cleanAfterUpdate()
 	if u.TempDir == "" || filepath.Base(u.TempDir) != updateTempDir {
 		return
 	}

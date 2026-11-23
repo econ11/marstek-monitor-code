@@ -1083,6 +1083,7 @@
 | Ключ | UK | EN | Примітка |
 |---|---|---|---|
 | `settings.general.autostart.mac` | Відкривати під час входу в систему | Open at login | Також DONE першого запуску |
+| `settings.general.autostart.moveFirst.mac` | Спершу перетягніть Marstek Monitor у «Програми» | Move Marstek Monitor to Applications first | Лише Mac, без базового ключа. Помилка під перемикачем, коли програма запущена з dmg (`/Volumes/`) чи з AppTranslocation: Go відмовляє (`ErrAutostartMoveFirst`) |
 | `settings.general.minimizeToTray.mac` | Згортати в рядок меню при закритті | Minimize to the menu bar when closed | Також DONE першого запуску |
 | `settings.general.language.desc.mac` | За замовчуванням — мова macOS. | macOS language by default. | |
 | `settings.general.language.system.mac` | Як у macOS | Same as macOS | |

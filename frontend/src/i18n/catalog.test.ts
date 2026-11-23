@@ -70,5 +70,8 @@ test('every .mac key is in both catalogues, with its base key', () => {
   expect(mac.length).toBeGreaterThanOrEqual(12)
   const base = (k: string) => k.slice(0, -'.mac'.length)
   expect(mac.filter(k => !(k in uk) || !(k in en))).toEqual([])
-  expect(mac.filter(k => !(base(k) in uk) || !(base(k) in en))).toEqual([])
+  // Mac-only texts with no Windows counterpart (copy §13.7, «лише Mac»).
+  const macOnly = ['settings.general.autostart.moveFirst.mac']
+  expect(mac.filter(k => !macOnly.includes(k) && (!(base(k) in uk) || !(base(k) in en)))).toEqual([])
+  expect(macOnly.filter(k => base(k) in uk || base(k) in en)).toEqual([])
 })

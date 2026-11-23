@@ -380,7 +380,7 @@ export function settingsScreen(deps: SettingsDeps): Screen {
         setOverlay(id, null)
       } catch (err) {
         console.error('autostart', err)
-        setOverlay(id, { error: t('settings.save.error') })
+        setOverlay(id, { error: t(autostartErrorKey(err)) })
       }
       render()
       return
@@ -656,4 +656,12 @@ export function settingsScreen(deps: SettingsDeps): Screen {
       host = null
     },
   }
+}
+
+/** The message for a failed autostart switch: on macOS a login item is
+ *  refused while the app runs from the dmg or translocated (Go
+ *  ErrAutostartMoveFirst, matched on "autostart.moveFirst"). */
+export function autostartErrorKey(err: unknown): 'settings.general.autostart.moveFirst.mac' | 'settings.save.error' {
+  const text = err instanceof Error ? err.message : String(err)
+  return text.includes('autostart.moveFirst') ? 'settings.general.autostart.moveFirst.mac' : 'settings.save.error'
 }

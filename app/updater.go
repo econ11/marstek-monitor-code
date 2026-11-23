@@ -56,6 +56,11 @@ const (
 // ErrUpdateBusy: Install while a check or an update is running.
 var ErrUpdateBusy = errors.New("update: already running")
 
+// ErrUpdateCannotInstall: Install on a copy that cannot update itself
+// (UpdateView.CanInstall false: a Mac app that is translocated, on /Volumes/,
+// in a folder it cannot write, or without a Team ID).
+var ErrUpdateCannotInstall = errors.New("update: this copy cannot update itself")
+
 // updateFailure is a failed step: code is the UpdateView.Err.
 type updateFailure struct {
 	code string
@@ -85,6 +90,12 @@ func (u *UpdatesService) Install() error {
 	if u.dev {
 		u.mu.Unlock()
 		return errors.New("update: off in a developer build")
+	}
+	if !u.view.CanInstall {
+		// «Оновити» is not offered then (only «Завантажити»); a call anyway
+		// must not start a swap this copy cannot do.
+		u.mu.Unlock()
+		return ErrUpdateCannotInstall
 	}
 	if u.view.Checking || u.view.Phase != "" {
 		u.mu.Unlock()

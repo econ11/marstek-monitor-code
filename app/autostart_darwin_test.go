@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -67,5 +68,28 @@ func TestRepointAutostartDarwinNoOp(t *testing.T) {
 	}
 	if entries, _ := os.ReadDir(dir); len(entries) != 0 {
 		t.Fatalf("LaunchAgents folder touched: %v", entries)
+	}
+}
+
+// A translocated app or one on /Volumes/ gets no LaunchAgent (that path is
+// gone after a restart or an eject); turning autostart off still works.
+func TestAutostartMoveFirst(t *testing.T) {
+	dir := useTempAutostartKey(t)
+	for _, exe := range []string{
+		"/private/var/folders/x/AppTranslocation/ABC/d/Marstek Monitor.app/Contents/MacOS/marstek-monitor",
+		"/Volumes/Marstek Monitor/Marstek Monitor.app/Contents/MacOS/marstek-monitor",
+	} {
+		if err := SetAutostart(true, exe); !errors.Is(err, ErrAutostartMoveFirst) {
+			t.Errorf("%s: %v, want ErrAutostartMoveFirst", exe, err)
+		}
+		if err := SetAutostart(false, exe); err != nil {
+			t.Errorf("%s: turning off: %v", exe, err)
+		}
+	}
+	if entries, _ := os.ReadDir(dir); len(entries) != 0 {
+		t.Fatalf("LaunchAgent written: %v", entries)
+	}
+	if err := SetAutostart(true, "/Applications/Marstek Monitor.app/Contents/MacOS/marstek-monitor"); err != nil {
+		t.Fatal(err)
 	}
 }
