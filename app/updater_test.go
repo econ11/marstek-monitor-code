@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"sync"
 	"testing"
@@ -37,7 +38,7 @@ type fakeAssets struct {
 func newFakeAssets(t *testing.T, version string, installer []byte) *fakeAssets {
 	t.Helper()
 	sum := sha256.Sum256(installer)
-	a := &fakeAssets{installer: installer, checksum: hex.EncodeToString(sum[:]) + "  " + update.InstallerName(version) + "\n"}
+	a := &fakeAssets{installer: installer, checksum: hex.EncodeToString(sum[:]) + "  " + update.AssetName(version, runtime.GOOS) + "\n"}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		a.mu.Lock()
 		a.paths = append(a.paths, r.URL.Path)
@@ -131,8 +132,8 @@ func newInstall(t *testing.T) *installHarness {
 	h.u.Quit = func() { h.quits++ }
 	// What the last check found: the new release with both assets.
 	h.u.rel = update.Release{Version: newVersion, PageURL: "https://github.com/econ11/marstek-monitor/releases/tag/v" + newVersion,
-		InstallerURL: "https://github.com/econ11/marstek-monitor/releases/download/v" + newVersion + "/" + update.InstallerName(newVersion),
-		ChecksumURL:  "https://github.com/econ11/marstek-monitor/releases/download/v" + newVersion + "/" + update.InstallerName(newVersion) + ".sha256"}
+		InstallerURL: "https://github.com/econ11/marstek-monitor/releases/download/v" + newVersion + "/" + update.AssetName(newVersion, runtime.GOOS),
+		ChecksumURL:  "https://github.com/econ11/marstek-monitor/releases/download/v" + newVersion + "/" + update.AssetName(newVersion, runtime.GOOS) + ".sha256"}
 	h.u.view.Latest, h.u.view.Available, h.u.view.PageURL = newVersion, true, h.u.rel.PageURL
 	return h
 }
@@ -168,7 +169,7 @@ func (h *installHarness) failedWith(t *testing.T, err error, code string) {
 func TestUpdateAbortsOnBadChecksum(t *testing.T) {
 	h := newInstall(t)
 	h.assets.mu.Lock()
-	h.assets.checksum = "0000000000000000000000000000000000000000000000000000000000000000  " + update.InstallerName(newVersion) + "\n"
+	h.assets.checksum = "0000000000000000000000000000000000000000000000000000000000000000  " + update.AssetName(newVersion, runtime.GOOS) + "\n"
 	h.assets.mu.Unlock()
 	err := h.u.Install()
 	h.failedWith(t, err, UpdateErrChecksum)
@@ -176,7 +177,7 @@ func TestUpdateAbortsOnBadChecksum(t *testing.T) {
 	if c := h.starter.calls(); len(c) != 0 {
 		t.Fatalf("installer started: %v", c)
 	}
-	if _, err := os.Stat(filepath.Join(h.tmp, update.InstallerName(newVersion))); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(h.tmp, update.AssetName(newVersion, runtime.GOOS))); !os.IsNotExist(err) {
 		t.Errorf("the mismatching file was not deleted: %v", err)
 	}
 	// A checksum file without our installer's line is a mismatch too.
@@ -247,7 +248,7 @@ func TestUpdateHappyPath(t *testing.T) {
 	}
 	// The installer started with the downloaded, verified file; the app quits.
 	got := h.starter.calls()
-	wantPath := filepath.Join(h.tmp, update.InstallerName(newVersion))
+	wantPath := filepath.Join(h.tmp, update.AssetName(newVersion, runtime.GOOS))
 	if len(got) != 1 || got[0] != wantPath {
 		t.Fatalf("starter calls %v, want [%s]", got, wantPath)
 	}
@@ -363,7 +364,7 @@ func TestInstallWhileBusy(t *testing.T) {
 }
 
 func TestParseChecksum(t *testing.T) {
-	name := update.InstallerName("1.1.0")
+	name := update.AssetName("1.1.0", "windows")
 	h := "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
 	for _, tc := range []struct {
 		body string

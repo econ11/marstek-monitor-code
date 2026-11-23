@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -147,7 +148,7 @@ func (u *UpdatesService) restoreFound() {
 	rel, valid := update.Release{}, false
 	if json.Unmarshal([]byte(raw), &f) == nil {
 		rel, valid = update.Restore(update.Release{Version: f.Version, PageURL: f.PageURL,
-			InstallerURL: f.InstallerURL, ChecksumURL: f.ChecksumURL})
+			InstallerURL: f.InstallerURL, ChecksumURL: f.ChecksumURL}, runtime.GOOS)
 	}
 	if !valid || !update.Newer(rel.Version, u.current) {
 		u.storeFound(update.Release{}, false)
@@ -305,7 +306,7 @@ func (u *UpdatesService) check(ctx context.Context, manual bool, now time.Time, 
 
 	ctx, cancel := context.WithTimeout(ctx, checkTimeout)
 	defer cancel()
-	rel, newer, err := update.Latest(ctx, u.http, u.current)
+	rel, newer, err := update.Latest(ctx, u.http, u.current, runtime.GOOS)
 
 	u.mu.Lock()
 	u.view.Checking = false

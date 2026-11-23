@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/econ11/marstek-monitor-code/app/i18n"
 	"github.com/econ11/marstek-monitor-code/core/notify"
 	"github.com/econ11/marstek-monitor-code/core/store"
+	"github.com/econ11/marstek-monitor-code/core/update"
 )
 
 // fakeGitHub answers the latest-release request with the release of
@@ -44,8 +46,10 @@ func newFakeGitHub(t *testing.T, version string) *fakeGitHub {
 		}
 		assets := "[]"
 		if g.assets {
-			assets = fmt.Sprintf(`[{"name":"marstek-monitor-%[1]s-setup.exe","browser_download_url":"https://github.com/econ11/marstek-monitor/releases/download/v%[1]s/marstek-monitor-%[1]s-setup.exe"},`+
-				`{"name":"marstek-monitor-%[1]s-setup.exe.sha256","browser_download_url":"https://github.com/econ11/marstek-monitor/releases/download/v%[1]s/marstek-monitor-%[1]s-setup.exe.sha256"}]`, g.version)
+			// The running platform's installer, as the app's check asks for it.
+			assets = fmt.Sprintf(`[{"name":"%[2]s","browser_download_url":"https://github.com/econ11/marstek-monitor/releases/download/v%[1]s/%[2]s"},`+
+				`{"name":"%[2]s.sha256","browser_download_url":"https://github.com/econ11/marstek-monitor/releases/download/v%[1]s/%[2]s.sha256"}]`,
+				g.version, update.AssetName(g.version, runtime.GOOS))
 		}
 		fmt.Fprintf(w, `{"tag_name":"v%[1]s","html_url":"https://github.com/econ11/marstek-monitor/releases/tag/v%[1]s","assets":%[2]s}`, g.version, assets)
 	}))

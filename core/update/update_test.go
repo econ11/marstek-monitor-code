@@ -90,7 +90,7 @@ func TestLatestParses(t *testing.T) {
 		w.Header().Set("Set-Cookie", "a=b") // must not come back
 		w.Write([]byte(releaseJSON))
 	})
-	rel, newer, err := Latest(context.Background(), d, "1.1.0")
+	rel, newer, err := Latest(context.Background(), d, "1.1.0", "windows")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,7 +123,7 @@ func TestLatestParses(t *testing.T) {
 		}
 	}
 	// A second check sends no cookie either (no jar).
-	if _, _, err := Latest(context.Background(), d, "1.2.0"); err != nil {
+	if _, _, err := Latest(context.Background(), d, "1.2.0", "windows"); err != nil {
 		t.Fatal(err)
 	}
 	if c := seen.Header.Get("Cookie"); c != "" {
@@ -134,7 +134,7 @@ func TestLatestParses(t *testing.T) {
 func TestLatestSameOrOlderIsNotNewer(t *testing.T) {
 	d := server(t, func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(releaseJSON)) })
 	for _, cur := range []string{"1.2.0", "1.3.0", "dev"} {
-		rel, newer, err := Latest(context.Background(), d, cur)
+		rel, newer, err := Latest(context.Background(), d, cur, "windows")
 		if err != nil || newer || rel.Version != "1.2.0" {
 			t.Fatalf("current %s: %+v, %v, %v", cur, rel, newer, err)
 		}
@@ -161,13 +161,13 @@ func TestLatestFailures(t *testing.T) {
 		},
 	} {
 		d := server(t, h)
-		if _, newer, err := Latest(context.Background(), d, "1.0.0"); err == nil || newer {
+		if _, newer, err := Latest(context.Background(), d, "1.0.0", "windows"); err == nil || newer {
 			t.Errorf("%s: err %v, newer %v; want an error", name, err, newer)
 		}
 	}
 	// Offline: the doer itself fails.
 	off := doerFunc(func(*http.Request) (*http.Response, error) { return nil, errors.New("no network") })
-	if _, _, err := Latest(context.Background(), off, "1.0.0"); err == nil {
+	if _, _, err := Latest(context.Background(), off, "1.0.0", "windows"); err == nil {
 		t.Fatal("offline: no error")
 	}
 }
@@ -180,7 +180,7 @@ func TestLatestDropsUnsafeURLs(t *testing.T) {
 		  {"name":"marstek-monitor-1.2.0-setup.exe","browser_download_url":"http://example.com/x.exe"},
 		  {"name":"marstek-monitor-1.2.0-setup.exe.sha256","browser_download_url":"file:///c:/x"}]}`))
 	})
-	rel, newer, err := Latest(context.Background(), d, "1.0.0")
+	rel, newer, err := Latest(context.Background(), d, "1.0.0", "windows")
 	if err != nil || !newer {
 		t.Fatal(err)
 	}
@@ -258,8 +258,8 @@ func TestIsVersion(t *testing.T) {
 func TestRestore(t *testing.T) {
 	dl := ReleasesBase + "download/v1.2.0/"
 	good := Release{Version: "1.2.0", PageURL: ReleasesBase + "tag/v1.2.0",
-		InstallerURL: dl + InstallerName("1.2.0"), ChecksumURL: dl + InstallerName("1.2.0") + ".sha256"}
-	if r, ok := Restore(good); !ok || r != good {
+		InstallerURL: dl + AssetName("1.2.0", "windows"), ChecksumURL: dl + AssetName("1.2.0", "windows") + ".sha256"}
+	if r, ok := Restore(good, "windows"); !ok || r != good {
 		t.Fatalf("Restore(good) = %+v, %v", r, ok)
 	}
 	with := func(f func(*Release)) Release { r := good; f(&r); return r }
@@ -270,23 +270,93 @@ func TestRestore(t *testing.T) {
 		"foreign page":      with(func(r *Release) { r.PageURL = "https://evil.example/econ11/marstek-monitor/releases/tag/v1.2.0" }),
 		"no page":           with(func(r *Release) { r.PageURL = "" }),
 		"http page":         with(func(r *Release) { r.PageURL = "http://github.com/econ11/marstek-monitor/releases/tag/v1.2.0" }),
-		"foreign installer": with(func(r *Release) { r.InstallerURL = "https://evil.example/" + InstallerName("1.2.0") }),
+		"foreign installer": with(func(r *Release) { r.InstallerURL = "https://evil.example/" + AssetName("1.2.0", "windows") }),
 		"other repo": with(func(r *Release) {
-			r.InstallerURL = "https://github.com/econ11/marstek-monitor-evil/releases/download/v1.2.0/" + InstallerName("1.2.0")
+			r.InstallerURL = "https://github.com/econ11/marstek-monitor-evil/releases/download/v1.2.0/" + AssetName("1.2.0", "windows")
 		}),
 		"wrong installer":   with(func(r *Release) { r.InstallerURL = dl + "evil.exe" }),
-		"other version exe": with(func(r *Release) { r.InstallerURL = dl + InstallerName("1.1.0") }),
+		"other version exe": with(func(r *Release) { r.InstallerURL = dl + AssetName("1.1.0", "windows") }),
 		"wrong checksum":    with(func(r *Release) { r.ChecksumURL = dl + "sums.txt" }),
-		"foreign checksum":  with(func(r *Release) { r.ChecksumURL = "https://evil.example/" + InstallerName("1.2.0") + ".sha256" }),
+		"foreign checksum":  with(func(r *Release) { r.ChecksumURL = "https://evil.example/" + AssetName("1.2.0", "windows") + ".sha256" }),
 		"no installer":      with(func(r *Release) { r.InstallerURL = "" }),
 		"no checksum":       with(func(r *Release) { r.ChecksumURL = "" }),
 		"userinfo": with(func(r *Release) {
-			r.InstallerURL = "https://u:p@github.com/econ11/marstek-monitor/releases/download/v1.2.0/" + InstallerName("1.2.0")
+			r.InstallerURL = "https://u:p@github.com/econ11/marstek-monitor/releases/download/v1.2.0/" + AssetName("1.2.0", "windows")
 		}),
 	}
 	for name, r := range bad {
-		if got, ok := Restore(r); ok || got != (Release{}) {
+		if got, ok := Restore(r, "windows"); ok || got != (Release{}) {
 			t.Errorf("%s: Restore = %+v, %v; want dropped", name, got, ok)
 		}
+	}
+}
+
+func TestAssetName(t *testing.T) {
+	for _, c := range []struct{ goos, want string }{
+		{"windows", "marstek-monitor-1.1.0-setup.exe"},
+		{"darwin", "marstek-monitor-1.1.0-macos.dmg"},
+		{"linux", ""},
+		{"", ""},
+	} {
+		if got := AssetName("1.1.0", c.goos); got != c.want {
+			t.Errorf("AssetName(1.1.0, %q) = %q, want %q", c.goos, got, c.want)
+		}
+	}
+}
+
+// Review Focus 3: a release with both platforms' assets hands each platform
+// only its own; a release without the current platform's asset offers none.
+func TestLatestPicksPlatformAsset(t *testing.T) {
+	const dl = "https://github.com/econ11/marstek-monitor/releases/download/v1.2.0/"
+	asset := func(n string) string { return `{"name":"` + n + `","browser_download_url":"` + dl + n + `"}` }
+	exe, dmg := "marstek-monitor-1.2.0-setup.exe", "marstek-monitor-1.2.0-macos.dmg"
+	both := `{"tag_name":"v1.2.0","assets":[` + asset(exe) + `,` + asset(exe+".sha256") + `,` + asset(dmg) + `,` + asset(dmg+".sha256") + `]}`
+	winOnly := `{"tag_name":"v1.2.0","assets":[` + asset(exe) + `,` + asset(exe+".sha256") + `]}`
+	get := func(body, goos string) Release {
+		t.Helper()
+		d := server(t, func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(body)) })
+		rel, _, err := Latest(context.Background(), d, "1.0.0", goos)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return rel
+	}
+	if r := get(both, "windows"); r.InstallerURL != dl+exe || r.ChecksumURL != dl+exe+".sha256" {
+		t.Errorf("windows: %+v", r)
+	}
+	if r := get(both, "darwin"); r.InstallerURL != dl+dmg || r.ChecksumURL != dl+dmg+".sha256" {
+		t.Errorf("darwin: %+v", r)
+	}
+	if r := get(winOnly, "darwin"); r.InstallerURL != "" || r.ChecksumURL != "" {
+		t.Errorf("darwin, Windows-only release: %+v", r)
+	}
+	if r := get(both, "linux"); r.InstallerURL != "" || r.ChecksumURL != "" {
+		t.Errorf("linux: %+v", r)
+	}
+}
+
+// Review Focus 3: a stored release keeps only the current platform's asset;
+// a Windows .exe stored in settings is dropped on Mac, and the reverse.
+func TestRestorePlatform(t *testing.T) {
+	dl := ReleasesBase + "download/v1.2.0/"
+	rel := func(name string) Release {
+		return Release{Version: "1.2.0", PageURL: ReleasesBase + "tag/v1.2.0",
+			InstallerURL: dl + name, ChecksumURL: dl + name + ".sha256"}
+	}
+	win, mac := rel("marstek-monitor-1.2.0-setup.exe"), rel("marstek-monitor-1.2.0-macos.dmg")
+	if r, ok := Restore(win, "windows"); !ok || r != win {
+		t.Errorf("exe on windows: %+v, %v", r, ok)
+	}
+	if r, ok := Restore(win, "darwin"); ok || r != (Release{}) {
+		t.Errorf("exe on darwin: %+v, %v; want dropped", r, ok)
+	}
+	if r, ok := Restore(mac, "darwin"); !ok || r != mac {
+		t.Errorf("dmg on darwin: %+v, %v", r, ok)
+	}
+	if r, ok := Restore(mac, "windows"); ok || r != (Release{}) {
+		t.Errorf("dmg on windows: %+v, %v; want dropped", r, ok)
+	}
+	if _, ok := Restore(win, "linux"); ok {
+		t.Error("restored on linux")
 	}
 }

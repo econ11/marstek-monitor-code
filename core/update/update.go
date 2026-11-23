@@ -61,16 +61,26 @@ func httpsOnly(req *http.Request, via []*http.Request) error {
 }
 
 // Release is a published version. InstallerURL and ChecksumURL are the
-// assets InstallerName and InstallerName+".sha256", "" when missing.
+// current platform's assets AssetName and AssetName+".sha256", "" when
+// missing.
 type Release struct {
 	Version                            string // without the "v"
 	PageURL, InstallerURL, ChecksumURL string
 	Notes                              string
 }
 
-// InstallerName is the installer asset of version v (the release script,
-// Task 7, publishes it with its checksum as InstallerName(v)+".sha256").
-func InstallerName(v string) string { return "marstek-monitor-" + v + "-setup.exe" }
+// AssetName is the installer asset of version v for the platform goos (a
+// runtime.GOOS value); the release publishes each with its checksum as
+// AssetName(v, goos)+".sha256". "" for a platform with no installer.
+func AssetName(v, goos string) string {
+	switch goos {
+	case "windows":
+		return "marstek-monitor-" + v + "-setup.exe"
+	case "darwin":
+		return "marstek-monitor-" + v + "-macos.dmg"
+	}
+	return ""
+}
 
 type apiRelease struct {
 	TagName    string `json:"tag_name"`
@@ -87,8 +97,10 @@ type apiRelease struct {
 // Latest asks GitHub for the newest release; newer reports whether it is
 // newer than current (Newer). Any answer but 200 with a release whose tag is
 // semver is an error: offline, a rate limit (403 / 429), a 5xx, no release.
-func Latest(ctx context.Context, c HTTPDoer, current string) (rel Release, newer bool, err error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, LatestURL, nil)
+// Only goos's installer and checksum are picked (AssetName): a release
+// without them has InstallerURL and ChecksumURL "".
+func Latest(ctx context.Context, c HTTPDoer, current, goos string) (rel Release, newer bool, err error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, latestAPI(), nil)
 	if err != nil {
 		return Release{}, false, err
 	}
@@ -126,16 +138,18 @@ func Latest(ctx context.Context, c HTTPDoer, current string) (rel Release, newer
 	if _, ok := parse(v); !ok {
 		return Release{}, false, fmt.Errorf("update: tag %q is not a version", a.TagName)
 	}
-	rel = Release{Version: v, PageURL: httpsURL(a.HTMLURL), Notes: a.Body}
+	rel = Release{Version: v, PageURL: safeURL(a.HTMLURL), Notes: a.Body}
 	if rel.PageURL == "" {
 		rel.PageURL = ReleasesPage
 	}
-	for _, as := range a.Assets {
-		switch as.Name {
-		case InstallerName(v):
-			rel.InstallerURL = httpsURL(as.URL)
-		case InstallerName(v) + ".sha256":
-			rel.ChecksumURL = httpsURL(as.URL)
+	if name := AssetName(v, goos); name != "" {
+		for _, as := range a.Assets {
+			switch as.Name {
+			case name:
+				rel.InstallerURL = safeURL(as.URL)
+			case name + ".sha256":
+				rel.ChecksumURL = safeURL(as.URL)
+			}
 		}
 	}
 	return rel, Newer(v, current), nil
@@ -152,30 +166,53 @@ func IsVersion(v string) bool {
 // one found across restarts, settingFoundRelease). It is pinned to what
 // Latest finds in the releases repo: Version is plain MAJOR.MINOR.PATCH
 // (an optional -pre, no "v", no "+build"); PageURL, InstallerURL and
-// ChecksumURL are https under ReleasesBase, the installer ends in
-// "/"+InstallerName(Version) and the checksum in that +".sha256". Anything
-// else drops the whole release (ok false): the next check finds it again.
-// Whether it is newer than the running version is the caller's check.
-func Restore(r Release) (Release, bool) {
+// ChecksumURL are https under ReleasesBase (releasesBase), the installer
+// ends in "/"+AssetName(Version, goos) and the checksum in that +".sha256",
+// so an installer of another platform (a Windows .exe stored before the app
+// ran on a Mac) is dropped. Anything else drops the whole release (ok
+// false): the next check finds it again. Whether it is newer than the
+// running version is the caller's check.
+func Restore(r Release, goos string) (Release, bool) {
 	v := r.Version
 	if !IsVersion(v) || strings.HasPrefix(v, "v") || strings.Contains(v, "+") {
 		return Release{}, false
 	}
-	if !pinned(r.PageURL, "") || !pinned(r.InstallerURL, "/"+InstallerName(v)) ||
-		!pinned(r.ChecksumURL, "/"+InstallerName(v)+".sha256") {
+	name := AssetName(v, goos)
+	if name == "" || !pinned(r.PageURL, "") || !pinned(r.InstallerURL, "/"+name) ||
+		!pinned(r.ChecksumURL, "/"+name+".sha256") {
 		return Release{}, false
 	}
 	return Release{Version: v, PageURL: r.PageURL, InstallerURL: r.InstallerURL, ChecksumURL: r.ChecksumURL}, true
 }
 
-// pinned: s is an https URL under ReleasesBase ending in suffix, with no
+// pinned: s is a safe URL under releasesBase ending in suffix, with no
 // query, fragment, user info or "..".
 func pinned(s, suffix string) bool {
-	if httpsURL(s) == "" || !strings.HasPrefix(s, ReleasesBase) || !strings.HasSuffix(s, suffix) || strings.Contains(s, "..") {
+	if safeURL(s) == "" || !strings.HasPrefix(s, releasesBase()) || !strings.HasSuffix(s, suffix) || strings.Contains(s, "..") {
 		return false
 	}
 	u, err := url.Parse(s)
 	return err == nil && u.RawQuery == "" && u.Fragment == "" && !u.ForceQuery
+}
+
+// devLoopback is the only http prefix a releases base can have: a dev build
+// pointed at a local server (base_dev.go). A release build's base is always
+// the https ReleasesBase.
+const devLoopback = "http://127.0.0.1:"
+
+// safeURL returns s if it is an absolute https URL with a host, or, when a
+// dev build's base is a loopback http server, an http URL under that base;
+// else "".
+func safeURL(s string) string {
+	if httpsURL(s) != "" {
+		return s
+	}
+	if b := releasesBase(); strings.HasPrefix(b, devLoopback) && strings.HasPrefix(s, b) {
+		if u, err := url.Parse(s); err == nil && u.User == nil {
+			return s
+		}
+	}
+	return ""
 }
 
 // httpsURL returns s if it is an absolute https URL with a host, else "".

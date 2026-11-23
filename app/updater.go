@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -118,7 +119,7 @@ func (u *UpdatesService) install(rel update.Release, avail bool) (err error) {
 	if !avail || rel.InstallerURL == "" || rel.ChecksumURL == "" {
 		return failed(UpdateErrDownload, errors.New("the release has no installer or checksum"))
 	}
-	name := update.InstallerName(rel.Version)
+	name := update.AssetName(rel.Version, runtime.GOOS)
 	if filepath.Base(name) != name || u.TempDir == "" {
 		return failed(UpdateErrDownload, fmt.Errorf("bad installer name %q or folder", name))
 	}
