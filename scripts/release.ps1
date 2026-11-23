@@ -1,12 +1,19 @@
 <#
 .SYNOPSIS
-  Builds and (after owner approval) publishes a Marstek Monitor release.
+  EMERGENCY, WINDOWS-ONLY FALLBACK: builds and (after owner approval) publishes a Windows-only
+  Marstek Monitor release from this PC.
 .DESCRIPTION
+  The normal release is .github/workflows/release.yml: push the tag v<version> and the workflow
+  builds Windows and macOS and creates a draft in the releases repo (docs/releasing.md). Use this
+  script only when the workflow cannot run. A release made here has no macOS dmg, so Mac users
+  get no update offer for that version.
+
   Steps, failing fast: clean tree on the release branch; version not tagged; CHANGELOG has the
-  version; wails3 build (frontend deps, bindings and dist, which are gitignored); go vet /
-  go test / npm test / typecheck; installer; SHA-256 file; local git tag;
-  `gh release create`. With -DryRun everything except the tag and `gh release create` is
-  done, and those two are only printed. Without -DryRun the script stops at a typed
+  version (scripts/release-notes.ps1); wails3 build (frontend deps, bindings and dist, which are
+  gitignored); go vet / go test / go test -tags release ./core/update/ / npm test / typecheck;
+  installer, whose exe must carry the `release` build tag (go version -m); SHA-256 file; local
+  git tag; `gh release create`. With -DryRun everything except the tag and `gh release create`
+  is done, and those two are only printed. Without -DryRun the script stops at a typed
   confirmation: publishing is the owner's decision, never an agent's.
 .EXAMPLE
   scripts/release.ps1 -Version 1.0.0 -DryRun
@@ -28,22 +35,6 @@ function Invoke-Checked([string]$What, [scriptblock]$Cmd) {
     if ($LASTEXITCODE -ne 0) { Fail "$What failed (exit $LASTEXITCODE)" }
 }
 
-# Returns the body of the `## <version>` section of a changelog (without the heading), or $null.
-function Get-ChangelogSection([string]$Path, [string]$Ver) {
-    $lines = Get-Content -LiteralPath $Path -Encoding UTF8
-    $start = -1
-    for ($i = 0; $i -lt $lines.Count; $i++) {
-        if ($lines[$i] -match ('^##\s+' + [regex]::Escape($Ver) + '(\s|$)')) { $start = $i + 1; break }
-    }
-    if ($start -lt 0) { return $null }
-    $end = $lines.Count
-    for ($i = $start; $i -lt $lines.Count; $i++) {
-        if ($lines[$i] -match '^##\s') { $end = $i; break }
-    }
-    if ($end -le $start) { return '' }
-    return (($lines[$start..($end - 1)]) -join "`n").Trim()
-}
-
 if ($MyInvocation.InvocationName -eq '.') { return }   # dot-sourced by the tests: functions only
 
 if ($Version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.]+)?$') { Fail "version must look like 1.2.3 or 1.2.3-rc.1 (got '$Version')" }
@@ -61,15 +52,17 @@ Step "2/9 $tag is not tagged yet"
 if (git tag --list $tag) { Fail "tag $tag already exists locally" }
 
 Step "3/9 CHANGELOG has '## $Version'"
-$notes = Get-ChangelogSection (Join-Path $root 'CHANGELOG.md') $Version
-if (-not $notes) { Fail "CHANGELOG.md has no non-empty '## $Version' section" }
+$notes = & (Join-Path $PSScriptRoot 'release-notes.ps1') -Version $Version -Path (Join-Path $root 'CHANGELOG.md')
+if ($LASTEXITCODE -ne 0 -or -not $notes) { Fail "CHANGELOG.md has no non-empty '## $Version' section" }
+$notes = (@($notes) -join "`n")
 
 Step '4/9 prepare: wails3 build (npm install, bindings, frontend/dist; a fresh clone has none of them)'
 Invoke-Checked 'wails3 build' { wails3 build }
 
-Step '5/9 checks: go vet, go test, npm test, typecheck'
+Step '5/9 checks: go vet, go test, go test -tags release ./core/update/, npm test, typecheck'
 Invoke-Checked 'go vet' { go vet ./... }
 Invoke-Checked 'go test' { go test ./... }
+Invoke-Checked 'go test -tags release' { go test -tags release ./core/update/ }
 Invoke-Checked 'npm test' { npm --prefix frontend test }
 Invoke-Checked 'typecheck' { npm --prefix frontend run typecheck }
 
@@ -83,6 +76,14 @@ if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
 Invoke-Checked 'package' { wails3 task package "VERSION=$Version" }
 $installer = Join-Path $root "bin\marstek-monitor-$Version-setup.exe"
 if (-not (Test-Path $installer)) { Fail "installer not produced: $installer" }
+# The installer ships bin\marstek-monitor.exe; a release build keeps the releases repo pinned.
+$exe = Join-Path $root 'bin\marstek-monitor.exe'
+$buildInfo = go version -m $exe
+if ($LASTEXITCODE -ne 0) { Fail "go version -m failed on $exe" }
+if (-not ($buildInfo | Where-Object { $_ -match '^\s*build\s+-tags=(\S*,)?release(,|\s|$)' })) {
+    Fail "the shipped exe lacks the 'release' build tag (go version -m $exe)"
+}
+Write-Host '    the exe carries the release build tag'
 
 Step '7/9 SHA-256'
 $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()

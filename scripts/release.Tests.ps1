@@ -1,20 +1,5 @@
 # Pester 3+ compatible: Invoke-Pester scripts/release.Tests.ps1
-. "$PSScriptRoot\release.ps1" -Version 0.0.0
-
-Describe 'Get-ChangelogSection' {
-    $f = Join-Path $env:TEMP 'release-test-changelog.md'
-    Set-Content -LiteralPath $f -Encoding UTF8 -Value @('# Changelog', '', '## 1.1.0', 'new', '', '## 1.0.0', 'first', 'second', '', '## 0.9.0', 'old')
-    It 'returns the body of the requested version only' {
-        (Get-ChangelogSection $f '1.0.0') | Should Be "first`nsecond"
-    }
-    It 'does not match a version prefix' {
-        (Get-ChangelogSection $f '1.0') | Should BeNullOrEmpty
-    }
-    It 'returns null for an unknown version' {
-        (Get-ChangelogSection $f '2.0.0') | Should BeNullOrEmpty
-    }
-    Remove-Item $f
-}
+# The changelog parser is tested in release-notes.Tests.ps1.
 
 Describe 'release.ps1 ordering' {
     $text = Get-Content -Raw -LiteralPath "$PSScriptRoot\release.ps1"
@@ -23,5 +8,27 @@ Describe 'release.ps1 ordering' {
         $tagAt = $text.IndexOf('git tag -a $tag -m "Marstek Monitor $Version"', $gh)
         ($gh -gt 0) | Should Be $true
         ($tagAt -gt $gh) | Should Be $true
+    }
+}
+
+Describe 'release.ps1 checks' {
+    $text = Get-Content -Raw -LiteralPath "$PSScriptRoot\release.ps1"
+    It 'takes the notes from release-notes.ps1' {
+        $text.Contains("'release-notes.ps1'") | Should Be $true
+        $text.Contains('function Get-ChangelogSection') | Should Be $false
+    }
+    It 'runs the release-tag tests of core/update' {
+        $text.Contains('go test -tags release ./core/update/') | Should Be $true
+    }
+    It 'checks the shipped exe for the release build tag after packaging, before hashing' {
+        $pkg = $text.IndexOf('wails3 task package')
+        $check = $text.IndexOf('go version -m $exe')
+        $hash = $text.IndexOf('Get-FileHash')
+        ($pkg -gt 0) | Should Be $true
+        ($check -gt $pkg) | Should Be $true
+        ($hash -gt $check) | Should Be $true
+    }
+    It 'says it is the emergency Windows-only fallback' {
+        $text.Contains('EMERGENCY, WINDOWS-ONLY FALLBACK') | Should Be $true
     }
 }
