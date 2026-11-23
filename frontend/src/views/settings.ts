@@ -10,7 +10,7 @@ import { morphChildren } from '../ui/morph'
 import { mountPeriod, periodRange, syncSeg, type DayRange, type PeriodKey } from '../ui/period'
 import { escapeHTML as esc } from '../ui/tooltip'
 import {
-  isSection, panelGroups, retentionChange, sectionIcon, settingsModel, splitAction, validateMinSOC, validateName, validTime, withChange,
+  isSection, notifyTestSent, panelGroups, retentionChange, sectionIcon, settingsModel, splitAction, validateMinSOC, validateName, validTime, withChange,
   type RowAction, type RowNote, type SettingRow, type SettingsSection,
 } from './settingsModel'
 
@@ -474,7 +474,7 @@ export function settingsScreen(deps: SettingsDeps): Screen {
   async function sendTest() {
     try {
       await deps.sendTest()
-      const [text, action] = splitAction(t('settings.notify.test.sent'), '? ', true)
+      const [text, action] = notifyTestSent(view?.Platform ?? '')
       setOverlay('test', { notes: [{ text, tone: 'muted', action: 'openNotify', actionLabel: action }] })
     } catch (err) {
       console.error('test notification', err)

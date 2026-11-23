@@ -1,6 +1,7 @@
 import type { SettingsView, UpdateView } from '../../bindings/github.com/econ11/marstek-monitor-code/app/models'
 import type { Settings } from '../../bindings/github.com/econ11/marstek-monitor-code/core/settings/models'
 import type { Snapshot } from '../../bindings/github.com/econ11/marstek-monitor-code/core/monitor/models'
+import { pk } from '../i18n/platform'
 import { getLocale, INTL, t } from '../lib/i18n'
 import { stationLabel } from '../lib/station'
 import type { Info } from '../ui/infoTip'
@@ -162,20 +163,29 @@ export function retentionChange(from: number, to: number, now: number): { confir
   return { confirm: true, period: retentionLabel(to), date: dateLong(bound) }
 }
 
+/** pt: the text of key for the platform (its .mac variant on a Mac). */
+const pt = (key: string, platform: string, args?: Record<string, string | number>) => t(pk(key, platform), args)
+
+/** The «Надіслано…» note under the test button: its text and its action. */
+export function notifyTestSent(platform: string): [string, string] {
+  return splitAction(pt('settings.notify.test.sent', platform), '? ', true)
+}
+
 const toggle = (id: string, key: string, value: boolean, o: Partial<SettingRow> = {}): SettingRow =>
   ({ id, label: t(key), desc: t(`${key}.desc`), control: 'toggle', value, ...o })
 
 function general(v: SettingsView): SettingRow[] {
   return [
     {
-      id: 'language', label: t('settings.general.language'), desc: t('settings.general.language.desc'), control: 'seg', value: v.S.Language,
-      options: [{ value: '', label: t('settings.general.language.system') }, { value: 'uk', label: t('settings.general.language.uk') },
+      id: 'language', label: t('settings.general.language'), desc: pt('settings.general.language.desc', v.Platform), control: 'seg', value: v.S.Language,
+      options: [{ value: '', label: pt('settings.general.language.system', v.Platform) }, { value: 'uk', label: t('settings.general.language.uk') },
         { value: 'en', label: t('settings.general.language.en') }],
     },
-    toggle('autostart', 'settings.general.autostart', v.Autostart),
+    toggle('autostart', 'settings.general.autostart', v.Autostart, { label: pt('settings.general.autostart', v.Platform) }),
     // Off: × quits, so say what that costs (flows §5.2, instead of a quit dialog).
-    toggle('minimizeToTray', 'settings.general.minimizeToTray', v.S.MinimizeToTray,
-      v.S.MinimizeToTray ? {} : { desc: t('settings.general.minimizeToTray.off.help') }),
+    toggle('minimizeToTray', 'settings.general.minimizeToTray', v.S.MinimizeToTray, {
+      label: pt('settings.general.minimizeToTray', v.Platform), ...v.S.MinimizeToTray ? {} : { desc: t('settings.general.minimizeToTray.off.help') },
+    }),
     {
       id: 'theme', label: t('settings.general.theme'), desc: t('settings.general.theme.desc'), control: 'seg', value: 'dark', disabled: true,
       options: [{ value: 'dark', label: t('settings.general.theme.dark') }],
@@ -189,12 +199,12 @@ function notifications(v: SettingsView, off: boolean): SettingRow[] {
   const conn = t('settings.notify.group.connection'), quiet = t('settings.notify.quiet')
   const low = enabled(s, 'low'), noLink = enabled(s, 'noConnection')
   // Windows blocks the toasts: a test would show nothing (hi-fi 07-settings).
-  const [blocked, open] = splitAction(t('settings.notify.osDisabled'), '. ', true)
+  const [blocked, open] = splitAction(pt('settings.notify.osDisabled', v.Platform), '. ', true)
   return [
     { id: 'intro', label: t('settings.notify.intro'), control: 'info' },
     off
       ? { id: 'osDisabled', label: blocked, control: 'banner', head: true, icon: 'alert', actionLabel: open }
-      : { id: 'test', label: t('settings.notify.test'), desc: t('settings.notify.test.desc'), control: 'button', head: true, icon: 'bell' },
+      : { id: 'test', label: t('settings.notify.test'), desc: pt('settings.notify.test.desc', v.Platform), control: 'button', head: true, icon: 'bell' },
     toggle('gridLost', 'settings.notify.gridLost', enabled(s, 'gridLost'), { group: grid, icon: 'plug-off' }),
     toggle('gridBack', 'settings.notify.gridBack', enabled(s, 'gridBack'), { group: grid, icon: 'plug' }),
     toggle('low', 'settings.notify.low', low, { group: battery, icon: 'battery' }),
@@ -225,7 +235,7 @@ function stations(v: SettingsView, s: Snapshot | null): SettingRow[] {
   const rows: SettingRow[] = [{ id: 'intro', label: t('settings.stations.intro'), control: 'info' }]
   if (hasStation(s)) {
     rows.push({
-      id: 'name', label: t('addStation.name.label'), desc: t('addStation.name.help'), control: 'text',
+      id: 'name', label: t('addStation.name.label'), desc: pt('addStation.name.help', v.Platform), control: 'text',
       value: s!.Station.Name, placeholder: stationLabel(s!.Station),
     })
   } else {
@@ -235,7 +245,7 @@ function stations(v: SettingsView, s: Snapshot | null): SettingRow[] {
     id: 'minSOC', label: t('settings.stations.minSOC'), desc: t('settings.stations.minSOC.desc'), control: 'text',
     value: String(v.S.StationMinSOC), suffix: '%',
   })
-  if (hasStation(s)) rows.push({ id: 'trayShows', label: t('settings.stations.trayShows', { station: stationLabel(s!.Station) }), control: 'info' })
+  if (hasStation(s)) rows.push({ id: 'trayShows', label: pt('settings.stations.trayShows', v.Platform, { station: stationLabel(s!.Station) }), control: 'info' })
   return rows
 }
 

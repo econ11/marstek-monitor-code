@@ -293,3 +293,37 @@ test('readmeURL opens the local-API section', () => {
   setLocale('en')
   expect(readmeURL()).toBe('https://github.com/econ11/marstek-monitor#enabling-the-stations-local-api')
 })
+
+// macOS port, Task 2 (Review Focus 5): on a Mac no text of the first run
+// names Windows, the tray, the firewall or UAC. The Mac never reports a
+// public network (netdiag_darwin), and its firewall action opens settings.
+const WINDOWS_WORDS = /Windows|тре[йюї]|tray|брандмауер|firewall|UAC/i
+function shown(x: unknown, out: string[] = []): string[] {
+  if (typeof x === 'string') out.push(x)
+  else if (Array.isArray(x)) x.forEach(v => shown(v, out))
+  else if (x && typeof x === 'object') for (const [k, v] of Object.entries(x)) if (!['key', 'icon'].includes(k)) shown(v, out)
+  return out
+}
+
+test('TestNoWindowsWordOnMac: first run', () => {
+  const dxMac = { PublicNetwork: false, FirewallMayBlock: true, NoLAN: true, Cancelled: false }
+  const ctxs: FRContext[] = [
+    { devices: [], platform: 'darwin' },
+    { devices: [d], dx: dxMac, copied: true, addError: true, platform: 'darwin' },
+    { devices: [d], added: d, name: 'VenusE 3.0', first: { soc: 10, grid: 'off' as const, offFor: 60e3 }, settings: { autostart: true, minimizeToTray: true }, trayHint: true, platform: 'darwin' },
+  ]
+  for (const l of ['uk', 'en'] as const) {
+    setLocale(l)
+    const texts = FR_STATES.flatMap(st => ctxs.flatMap(c => shown(firstRunModel(st, c))))
+    expect(texts.filter(s => WINDOWS_WORDS.test(s))).toEqual([])
+  }
+})
+
+test('on a Mac: the firewall block opens settings, no tray tip', () => {
+  const v = firstRunModel('noneFound', { devices: [], dx: { ...dx, FirewallMayBlock: true }, platform: 'darwin' })
+  expect(v.dx[0]).toMatchObject({ key: 'firewall', title: 'Немає дозволу на локальну мережу', action: { key: 'firewall', label: 'Відкрити налаштування' } })
+  const done = firstRunModel('done', { devices: [d], added: d, name: 'VenusE 3.0', settings: { autostart: true, minimizeToTray: true }, trayHint: true, platform: 'darwin' })
+  expect(done.done?.trayHint).toBeUndefined()
+  expect(done.done?.toggles.map(x => x.label)).toEqual(['Відкривати під час входу в систему', 'Згортати в рядок меню при закритті'])
+  expect(firstRunModel('lanGuide', { devices: [], platform: 'darwin' }).steps?.[1]).toBe('Якщо macOS запитає дозвіл на доступ до локальної мережі, натисніть «Дозволити».')
+})

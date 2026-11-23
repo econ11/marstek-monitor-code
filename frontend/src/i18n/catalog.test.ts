@@ -63,3 +63,12 @@ test('the ⓘ texts are the copy §15 texts, in both languages', () => {
   expect(rows.filter(r => en[r.key] !== r.en).map(r => r.key)).toEqual([])
   expect(uk['info.battery.cycles']).toMatch(/^Батарея розрахована на понад \{rated\} циклів/)
 })
+
+// macOS port, Task 2: a .mac key is a Mac variant of a key, in both languages.
+test('every .mac key is in both catalogues, with its base key', () => {
+  const mac = Object.keys({ ...uk, ...en }).filter(k => k.endsWith('.mac'))
+  expect(mac.length).toBeGreaterThanOrEqual(12)
+  const base = (k: string) => k.slice(0, -'.mac'.length)
+  expect(mac.filter(k => !(k in uk) || !(k in en))).toEqual([])
+  expect(mac.filter(k => !(base(k) in uk) || !(base(k) in en))).toEqual([])
+})

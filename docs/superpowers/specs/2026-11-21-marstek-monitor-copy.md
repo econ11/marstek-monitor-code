@@ -1076,6 +1076,26 @@
 | `smartscreen.install` | Встановити | Install | Основна; запускає інсталятор і закриває додаток |
 | `smartscreen.illustration.a11y` | Схема вікна «Windows захистив ваш ПК»: спочатку посилання «{moreInfo}», потім кнопка «{runAnyway}». | Diagram of the “Windows protected your PC” window: first the “{moreInfo}” link, then the “{runAnyway}” button. | |
 
+### 13.7 macOS: тексти `.mac`
+
+План macOS-порту (Task 2). Текст, що називає Windows, трей чи брандмауер, має на Mac варіант під тим самим ключем + `.mac`; його вибирає `pk(key, platform)` (`frontend/src/i18n/platform.ts`) за `SettingsView.Platform` = `darwin`. Решта текстів однакова. На Mac не показуються `onboarding.dx.netPublic.*` (macOS не повідомляє про загальнодоступну мережу) і `onboarding.done.trayHint` (підказка про панель задач Windows 11). `onboarding.dx.firewall.pending` / `.error` на Mac не виникають: дія відкриває налаштування, без UAC.
+
+| Ключ | UK | EN | Примітка |
+|---|---|---|---|
+| `settings.general.autostart.mac` | Відкривати під час входу в систему | Open at login | Також DONE першого запуску |
+| `settings.general.minimizeToTray.mac` | Згортати в рядок меню при закритті | Minimize to the menu bar when closed | Також DONE першого запуску |
+| `settings.general.language.desc.mac` | За замовчуванням — мова macOS. | macOS language by default. | |
+| `settings.general.language.system.mac` | Як у macOS | Same as macOS | |
+| `settings.notify.test.desc.mac` | Перевірити, що macOS показує сповіщення (наприклад, що їх не приховує режим зосередження). | Check that macOS shows notifications (for example, that a Focus mode doesn't hide them). | |
+| `settings.notify.test.sent.mac` | Надіслано. Не з'явилось? Відкрити налаштування сповіщень macOS | Sent. Didn't see it? Open macOS notification settings | Хвіст після «? » — кнопка |
+| `settings.notify.osDisabled.mac` | Сповіщення для Marstek Monitor вимкнено в macOS. Відкрити налаштування macOS | Notifications for Marstek Monitor are turned off in macOS. Open macOS settings | Хвіст після «. » — кнопка |
+| `settings.stations.trayShows.mac` | У рядку меню показується: {station} | Shown in the menu bar: {station} | |
+| `addStation.name.help.mac` | Так станція підписана в рядку меню та сповіщеннях. | This name appears in the menu bar and notifications. | Не в плані порту: базовий текст називає трей |
+| `help.localApi.firewall.mac` | Якщо macOS запитає дозвіл на доступ до локальної мережі, натисніть «Дозволити». | If macOS asks for access to the local network, click “Allow”. | |
+| `onboarding.dx.firewall.title.mac` | Немає дозволу на локальну мережу | No local network permission | |
+| `onboarding.dx.firewall.body.mac` | macOS не дозволяє Marstek Monitor шукати пристрої в локальній мережі. Увімкніть дозвіл у «Системних параметрах» → «Конфіденційність і безпека» → «Локальна мережа». | macOS doesn't let Marstek Monitor look for devices on the local network. Turn it on in System Settings → Privacy & Security → Local Network. | |
+| `onboarding.dx.firewall.action.mac` | Відкрити налаштування | Open settings | Відкриває «Локальна мережа» |
+
 ---
 
 ## 14. Рішення (підтверджено власником 2026-11-21)

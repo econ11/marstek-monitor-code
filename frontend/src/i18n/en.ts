@@ -640,4 +640,18 @@ export const en: Record<string, string> = {
   'outages.tooltip.longest.between': 'Longest: {duration} (between {from} and {to} – {end})',
   'overview.chart.tooltip.band.between': 'Grid off between {from} and {to} – {end} · {duration}',
   'outages.timeline.band.between': 'between {from} and {to} – {end} · {duration}',
+  // macOS port (copy §13.7): see uk.ts.
+  'settings.general.autostart.mac': 'Open at login',
+  'settings.general.minimizeToTray.mac': 'Minimize to the menu bar when closed',
+  'settings.general.language.desc.mac': 'macOS language by default.',
+  'settings.general.language.system.mac': 'Same as macOS',
+  'settings.notify.test.desc.mac': "Check that macOS shows notifications (for example, that a Focus mode doesn't hide them).",
+  'settings.notify.test.sent.mac': "Sent. Didn't see it? Open macOS notification settings",
+  'settings.notify.osDisabled.mac': 'Notifications for Marstek Monitor are turned off in macOS. Open macOS settings',
+  'settings.stations.trayShows.mac': 'Shown in the menu bar: {station}',
+  'addStation.name.help.mac': 'This name appears in the menu bar and notifications.',
+  'help.localApi.firewall.mac': 'If macOS asks for access to the local network, click “Allow”.',
+  'onboarding.dx.firewall.title.mac': 'No local network permission',
+  'onboarding.dx.firewall.body.mac': "macOS doesn't let Marstek Monitor look for devices on the local network. Turn it on in System Settings → Privacy & Security → Local Network.",
+  'onboarding.dx.firewall.action.mac': 'Open settings',
 }

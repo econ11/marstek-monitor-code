@@ -169,6 +169,7 @@ export function firstRunScreen(deps: FirstRunDeps): FirstRunScreen {
       ctx.trayHint = true
       deps.getSettings().then(v => {
         view = v
+        ctx.platform = v.Platform
         ctx.settings = { autostart: v.Autostart, minimizeToTray: v.S.MinimizeToTray }
         render()
       }, err => console.error('settings', err))
@@ -519,6 +520,8 @@ export function firstRunScreen(deps: FirstRunDeps): FirstRunScreen {
       offScan = deps.onScan(onDevice, scanDone)
       startScan()
       render()
+      // The platform picks the Mac texts (the diagnosis, the guide, DONE).
+      deps.getSettings().then(v => { ctx.platform = v.Platform; render() }, err => console.error('settings', err))
       deps.onState?.(st, ctx)
     },
     update(s) {

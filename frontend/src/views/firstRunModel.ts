@@ -1,4 +1,5 @@
 import type { Device, Diagnosis } from '../../bindings/github.com/econ11/marstek-monitor-code/app/models'
+import { pk } from '../i18n/platform'
 import { hmLong } from '../lib/format'
 import { getLocale, t } from '../lib/i18n'
 
@@ -139,6 +140,9 @@ export type FRContext = {
   toggleError?: 'autostart' | 'minimizeToTray'
   /** DONE: the tray tip is still shown (not dismissed). */
   trayHint?: boolean
+  /** SettingsView.Platform (runtime.GOOS): 'darwin' picks the Mac texts
+   *  (i18n/platform.ts) and drops the Windows tray tip. Unknown: Windows. */
+  platform?: string
 }
 
 export type FRAction = {
@@ -218,6 +222,7 @@ function rows(ctx: FRContext, actionable: boolean): FRRow[] {
 
 function dxBlocks(ctx: FRContext): FRDx[] {
   const dx = ctx.dx
+  const p = ctx.platform ?? ''
   if (!dx || dx.Cancelled) return []
   const out: FRDx[] = []
   // No LAN at all explains everything else: first.
@@ -228,8 +233,9 @@ function dxBlocks(ctx: FRContext): FRDx[] {
   }
   if (dx.FirewallMayBlock) {
     const pending = ctx.firewall === 'pending'
-    out.push({ key: 'firewall', title: t('onboarding.dx.firewall.title'), body: t('onboarding.dx.firewall.body'),
-      action: { key: 'firewall', label: t('onboarding.dx.firewall.action'), kind: 'secondary', busy: pending },
+    // On a Mac the action opens the Local Network settings (no UAC).
+    out.push({ key: 'firewall', title: t(pk('onboarding.dx.firewall.title', p)), body: t(pk('onboarding.dx.firewall.body', p)),
+      action: { key: 'firewall', label: t(pk('onboarding.dx.firewall.action', p)), kind: 'secondary', busy: pending },
       note: pending ? t('onboarding.dx.firewall.pending') : undefined,
       error: ctx.firewall === 'failed' ? t('onboarding.dx.firewall.error') : undefined })
   }
@@ -307,7 +313,7 @@ export function firstRunModel(st: FRState, ctx: FRContext): FRView {
     case 'lanGuide': {
       view.back = true
       view.head = { icon: 'info', title: t('help.localApi.title'), body: t('help.localApi.body') }
-      view.steps = [t('help.localApi.sameWifi'), t('help.localApi.firewall'), t('onboarding.lanGuide.after')]
+      view.steps = [t('help.localApi.sameWifi'), t(pk('help.localApi.firewall', ctx.platform ?? '')), t('onboarding.lanGuide.after')]
       view.template = {
         body: t('onboarding.lanGuide.supportTemplate.body', { model: ctx.devices[0]?.Model ?? 'Marstek', serial: t('onboarding.lanGuide.supportTemplate.serial') }),
         copied: ctx.copied ? t('onboarding.lanGuide.supportTemplate.copied') : undefined,
@@ -352,14 +358,15 @@ export function firstRunModel(st: FRState, ctx: FRContext): FRView {
           ? t('onboarding.done.summary', { model: d?.Model ?? '', address: d?.IP ?? '', sources, soc: Math.round(f.soc), gridState: gridText(f) })
           : t('onboarding.done.summary.waiting', { model: d?.Model ?? '', sources }),
       }
-      const s = ctx.settings
+      const s = ctx.settings, p = ctx.platform ?? ''
       view.done = {
-        name: { label: t('addStation.name.label'), help: t('addStation.name.help'), value: station, error: ctx.nameError ?? undefined },
+        name: { label: t('addStation.name.label'), help: t(pk('addStation.name.help', p)), value: station, error: ctx.nameError ?? undefined },
         toggles: s ? [
-          { key: 'autostart', label: t('settings.general.autostart'), on: s.autostart },
-          { key: 'minimizeToTray', label: t('settings.general.minimizeToTray'), on: s.minimizeToTray },
+          { key: 'autostart', label: t(pk('settings.general.autostart', p)), on: s.autostart },
+          { key: 'minimizeToTray', label: t(pk('settings.general.minimizeToTray', p)), on: s.minimizeToTray },
         ].map(x => ctx.toggleError === x.key ? { ...x, error: t('settings.save.error') } : x) as NonNullable<FRView['done']>['toggles'] : [],
-        trayHint: ctx.trayHint ? { text: t('onboarding.done.trayHint'), dismiss: t('onboarding.done.trayHint.dismiss.a11y') } : undefined,
+        // The tip is about the Windows 11 taskbar: not on a Mac.
+        trayHint: ctx.trayHint && p !== 'darwin' ? { text: t('onboarding.done.trayHint'), dismiss: t('onboarding.done.trayHint.dismiss.a11y') } : undefined,
       }
       view.actions = [{ key: 'overview', label: t('onboarding.done.action'), kind: 'primary' }]
       view.announce = t('addStation.added.announce', { station })
