@@ -73,7 +73,7 @@ notarize() { # <file to submit> <file to staple>
 		echo "notarization of $1: status '${status:-unknown}' (submission ${id:-none})" >&2
 		if [ -n "$id" ]; then
 			# Apple's log names the problems; the signer's identity is left out.
-			notary log "$id" 2>&1 | grep -v -i -E '"(teamId|signer|developer|certificate)' >&2 || true
+			notary log "$id" 2>&1 | grep -v -i -E '"(teamId|signer|developer|certificate)|Developer ID' >&2 || true
 		fi
 		fail "notarization of $1 failed"
 	fi
@@ -112,7 +112,11 @@ SHORT=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Con
 [ "$SHORT" = "$VERSION" ] || fail "CFBundleShortVersionString is $SHORT, want $VERSION"
 codesign --verify --deep --strict "$APP" || fail "codesign --verify --deep --strict failed"
 if [ -n "$IDENTITY" ]; then
-	codesign -dv "$APP" 2>&1 | grep -q 'flags=0x10000(runtime)' || fail "the hardened runtime is not set"
+	# Captured, not piped into grep -q: with pipefail an early grep exit can
+	# SIGPIPE codesign and fail a correctly signed build. Not printed (the
+	# output names the signer).
+	info=$(codesign -dv "$APP" 2>&1) || fail "codesign -dv failed"
+	case $info in *'flags=0x10000(runtime)'*) ;; *) fail "the hardened runtime is not set" ;; esac
 fi
 
 # 4. Notarize and staple the app (before it goes into the dmg).
