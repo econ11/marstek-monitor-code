@@ -367,8 +367,8 @@ func equalInts(a, b []int) bool {
 
 func TestMonitorRediscoversMovedStation(t *testing.T) {
 	st := openStore(t)
-	// Another host: a different loopback IP, the same port.
-	moved := startStationAt(t, "127.0.0.2:0", testMac)
+	// Another host: a different IP (lantest.OtherHost), the same port.
+	moved := startStationAt(t, lantest.OtherHost(t)+":0", testMac)
 	old := startStationAt(t, fmt.Sprintf("127.0.0.1:%d", moved.Addr.Port), testMac)
 	// The first rediscovery hears only a different device: it must be ignored.
 	var mu sync.Mutex

@@ -18,8 +18,9 @@ type PowerEvents struct {
 	queue chan bool // true = suspend, false = resume
 }
 
-// NewPowerEvents starts the handling goroutine. Install WndProc as
-// application.Options.Windows.WndProcInterceptor.
+// NewPowerEvents starts the handling goroutine. On Windows install WndProc as
+// application.Options.Windows.WndProcInterceptor; on macOS it subscribes to
+// the NSWorkspace sleep / wake notifications itself (power_darwin.go).
 func NewPowerEvents(suspend, resume func()) *PowerEvents {
 	p := &PowerEvents{queue: make(chan bool, 16)}
 	go func() {
@@ -31,6 +32,7 @@ func NewPowerEvents(suspend, resume func()) *PowerEvents {
 			}
 		}
 	}()
+	p.watchSystem()
 	return p
 }
 

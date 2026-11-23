@@ -1,8 +1,6 @@
 package app
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"encoding/xml"
 	"log/slog"
 	"math"
@@ -21,8 +19,6 @@ import (
 	"github.com/econ11/marstek-monitor-code/core/store"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
-	"github.com/wailsapp/wails/v3/pkg/w32"
-	"golang.org/x/sys/windows/registry"
 )
 
 // flapWindow mirrors the notify policy: grid_flapping reports the last 10 min.
@@ -455,46 +451,6 @@ func taggedID(tag string) string {
 	return "outage-" + tag
 }
 
-// push shows the toast described by o, with the logo image (file URI, may be
-// empty), at the given place; p.AppID and p.XML are filled in here.
-func (n *Notifier) push(o notifications.NotificationOptions, attribution, logo string, p toastPush) error {
-	o.Title = n.TitlePrefix + o.Title
-	// The click comes back through the Wails service, which expects its own
-	// launch payload.
-	payload, err := json.Marshal(notifications.NotificationPayload{
-		Action: notifications.DefaultActionIdentifier, Options: o})
-	if err != nil {
-		return err
-	}
-	// No banner also means no sound.
-	p.XML, err = toastXML(o.Title, o.Body, attribution, logo, base64.StdEncoding.EncodeToString(payload), p.SuppressPopup)
-	if err != nil {
-		return err
-	}
-	p.AppID = application.Get().Config().Name
-	n.iconOnce.Do(saveToastIcon)
-	return pushToast(p)
-}
-
-// saveToastIcon writes the app icon where the toast registration (IconUri,
-// set by the Wails service) expects it; without the file toasts show a blank
-// logo.
-func saveToastIcon() {
-	k, err := registry.OpenKey(registry.CURRENT_USER,
-		`Software\Classes\AppUserModelId\`+application.Get().Config().Name, registry.QUERY_VALUE)
-	if err != nil {
-		return
-	}
-	defer k.Close()
-	path, _, err := k.GetStringValue("IconUri")
-	if err != nil || path == "" {
-		return
-	}
-	if icon, err := application.NewIconFromResource(w32.GetModuleHandle(""), 3); err == nil {
-		_ = w32.SaveHIconAsPNG(icon, path)
-	}
-}
-
 // attribution is the small bottom line naming the station (copy.md 12.3).
 func attribution(s monitor.Snapshot) string {
 	name, model := s.Station.Name, s.Station.Model
@@ -589,4 +545,13 @@ func toastID(t notify.Toast) string {
 		return taggedID(tag)
 	}
 	return string(t.Kind) + "-" + strconv.FormatInt(t.At.Unix(), 10)
+}
+
+// toastPush is one toast to show. Tag and Group identify it in the
+// notification centre: a later toast with the same pair replaces it.
+type toastPush struct {
+	AppID         string
+	XML           string
+	Tag, Group    string
+	SuppressPopup bool // straight to the notification centre, no banner
 }

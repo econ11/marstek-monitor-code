@@ -63,7 +63,7 @@ func targetsOf(fs ...*lantest.FakeStation) func() []*net.UDPAddr {
 
 func TestScanReportsEachDeviceOnce(t *testing.T) {
 	a := lantest.StartAt(t, "127.0.0.1:0", info("aaaa"))
-	b := lantest.StartAt(t, "127.0.0.2:0", info("bbbb"))
+	b := lantest.StartAt(t, lantest.OtherHost(t)+":0", info("bbbb"))
 	var nb recorder
 	// b answers from the 2nd broadcast on; the 1st gets an RPC error (a busy station).
 	b.Handle("Marstek.GetDevice", func(json.RawMessage) (any, *lan.RPCError) {
@@ -90,7 +90,7 @@ func TestScanReportsEachDeviceOnce(t *testing.T) {
 		t.Fatalf("found = %+v, want aaaa then bbbb", got)
 	}
 	// The address is where the reply came from, not the payload's.
-	if got[0].IP != "127.0.0.1" || got[1].IP != "127.0.0.2" || !got[1].Sender.Equal(net.ParseIP("127.0.0.2")) {
+	if got[0].IP != "127.0.0.1" || got[1].IP != b.Addr.IP.String() || !got[1].Sender.Equal(b.Addr.IP) {
 		t.Fatalf("addresses = %q %q %v, want the senders", got[0].IP, got[1].IP, got[1].Sender)
 	}
 	if got[0].Device != "VenusE 3.0" || got[0].Ver != 151 {
@@ -103,7 +103,7 @@ func TestScanReportsEachDeviceOnce(t *testing.T) {
 
 func TestScanSkipsDeviceWithoutBLEMac(t *testing.T) {
 	a := lantest.StartAt(t, "127.0.0.1:0", info(""))
-	b := lantest.StartAt(t, "127.0.0.2:0", info("bbbb"))
+	b := lantest.StartAt(t, lantest.OtherHost(t)+":0", info("bbbb"))
 	var got []string
 	if err := Scan(context.Background(), newClient(t), targetsOf(a, b), func(d lan.DeviceInfo) {
 		got = append(got, d.BLEMac)

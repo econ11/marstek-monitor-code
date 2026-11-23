@@ -4,12 +4,10 @@ import (
 	"errors"
 	"log/slog"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/econ11/marstek-monitor-code/app/i18n"
@@ -275,7 +273,7 @@ func (s *SettingsService) ExportCSV(fromDay, toDay string) (paths []string, err 
 // CSV, so only an absolute path on a local drive letter (no UNC or \\?\
 // path: the check itself would reach the network) to an existing .csv file.
 func (s *SettingsService) ShowInFolder(path string) error {
-	if vol := filepath.VolumeName(path); len(vol) != 2 || vol[1] != ':' || !filepath.IsAbs(path) {
+	if !localAbsPath(path) {
 		return errors.New("settings: not a local absolute path")
 	}
 	if !strings.EqualFold(filepath.Ext(path), ".csv") {
@@ -290,17 +288,7 @@ func (s *SettingsService) ShowInFolder(path string) error {
 	}
 	sel := s.selectFile
 	if sel == nil {
-		sel = func(p string) error {
-			// explorer wants /select,"<path>" as one argument with the quotes
-			// inside it, which exec's own quoting does not produce.
-			cmd := exec.Command("explorer.exe")
-			cmd.SysProcAttr = &syscall.SysProcAttr{CmdLine: `explorer.exe /select,"` + p + `"`}
-			if err := cmd.Start(); err != nil {
-				return err
-			}
-			go cmd.Wait() // explorer's exit code means nothing
-			return nil
-		}
+		sel = revealFile
 	}
 	return sel(path)
 }
@@ -338,5 +326,5 @@ func (s *SettingsService) OpenWindowsNotificationSettings() error {
 	if open == nil {
 		open = application.Get().Browser.OpenURL
 	}
-	return open("ms-settings:notifications")
+	return open(notificationSettingsURL)
 }

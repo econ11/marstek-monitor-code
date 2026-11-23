@@ -1,3 +1,5 @@
+//go:build windows
+
 package app
 
 import (
@@ -50,15 +52,6 @@ const (
 	// maxTagUnits: Windows limits Tag and Group to 64 characters.
 	maxTagUnits = 64
 )
-
-// toastPush is one toast to show. Tag and Group identify it in the
-// notification centre: a later toast with the same pair replaces it.
-type toastPush struct {
-	AppID         string
-	XML           string
-	Tag, Group    string
-	SuppressPopup bool // straight to the notification centre, no banner
-}
 
 var (
 	winrtOnce  sync.Once

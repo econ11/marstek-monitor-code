@@ -27,6 +27,10 @@ func openTestStore(t *testing.T) *store.Store {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { st.Close() })
+	// Save with Language "" switches to the system language (en on an
+	// English Windows or Mac): the tests after this one expect it unchanged.
+	lang := i18n.Lang()
+	t.Cleanup(func() { i18n.SetLang(lang) })
 	return st
 }
 
@@ -191,7 +195,7 @@ func TestSettingsOpenWindowsNotificationSettings(t *testing.T) {
 	s := NewSettingsService(openTestStore(t), "", noMonitor, nil, nil)
 	var opened string
 	s.openURL = func(u string) error { opened = u; return nil }
-	if err := s.OpenWindowsNotificationSettings(); err != nil || opened != "ms-settings:notifications" {
+	if err := s.OpenWindowsNotificationSettings(); err != nil || opened != notificationSettingsURL {
 		t.Fatalf("opened %q, err %v", opened, err)
 	}
 }

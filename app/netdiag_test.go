@@ -238,13 +238,6 @@ func TestLANAdaptersNeedAGateway(t *testing.T) {
 	}
 }
 
-func TestPowerShellPathIsAbsolute(t *testing.T) {
-	got := powerShellPath(`C:\Windows\system32`)
-	if got != `C:\Windows\system32\WindowsPowerShell\v1.0\powershell.exe` || !filepath.IsAbs(got) {
-		t.Errorf("powerShellPath = %q", got)
-	}
-}
-
 func TestParseFirewallNullProgram(t *testing.T) {
 	got, err := parseFirewallFor([]byte(`{"Enabled":1}`), []byte(`{"DisplayName":"Marstek Monitor","Enabled":1,"Program":null}`), `C:\a\m.exe`)
 	if err != nil || !got {

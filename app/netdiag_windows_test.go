@@ -60,3 +60,10 @@ func TestSystemPowerShellPath(t *testing.T) {
 		t.Errorf("not there: %v", err)
 	}
 }
+
+func TestPowerShellPathIsAbsolute(t *testing.T) {
+	got := powerShellPath(`C:\Windows\system32`)
+	if got != `C:\Windows\system32\WindowsPowerShell\v1.0\powershell.exe` || !filepath.IsAbs(got) {
+		t.Errorf("powerShellPath = %q", got)
+	}
+}

@@ -15,7 +15,6 @@ import (
 	"github.com/econ11/marstek-monitor-code/core/notify"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
-	"golang.org/x/sys/windows"
 )
 
 // dndOptions are the "Не турбувати" submenu entries: notify.DNDOption key
@@ -150,7 +149,7 @@ func (t *Tray) refresh() {
 	key := trayIconKey(s.Grid, px)
 	if key != t.iconKey {
 		icon := iconForGrid(s.Grid)
-		b, err := trayPNG(icon, px)
+		b, err := trayImage(icon, px)
 		switch {
 		case err != nil:
 			if !t.iconFailLogged {
@@ -161,7 +160,7 @@ func (t *Tray) refresh() {
 			t.iconKey = key
 			t.iconFailLogged = false
 			slog.Debug("tray icon", "icon", string(icon), "px", px)
-			t.tray.SetIcon(b)
+			setTrayImage(t.tray, b)
 		}
 	}
 
@@ -268,17 +267,6 @@ func socText(soc *float64) string {
 		return ""
 	}
 	return strconv.Itoa(int(*soc + 0.5))
-}
-
-var procGetDpiForSystem = windows.NewLazySystemDLL("user32.dll").NewProc("GetDpiForSystem")
-
-// systemDPI is the system DPI, 0 when GetDpiForSystem is unavailable.
-func systemDPI() int {
-	if procGetDpiForSystem.Find() != nil {
-		return 0
-	}
-	dpi, _, _ := procGetDpiForSystem.Call()
-	return int(dpi)
 }
 
 // trayIconPx is the tray icon size for dpi: 16 px at 100%, scaled with the DPI.

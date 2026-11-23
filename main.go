@@ -470,8 +470,9 @@ func (r *runner) run(ctx context.Context) {
 	wg.Wait()
 }
 
-// dataDir is %LOCALAPPDATA%\MarstekMonitor; the simulator gets a temporary
-// folder that cleanup removes.
+// dataDir is %LOCALAPPDATA%\MarstekMonitor (macOS: ~/Library/Application
+// Support/MarstekMonitor); the simulator gets a temporary folder that
+// cleanup removes.
 func dataDir(simulate bool, simDir string) (dir string, cleanup func(), err error) {
 	if simDir != "" { // kept between simulated runs
 		return simDir, func() {}, os.MkdirAll(simDir, 0o755)
@@ -480,7 +481,7 @@ func dataDir(simulate bool, simDir string) (dir string, cleanup func(), err erro
 		dir, err = os.MkdirTemp("", appID+"-simulate-")
 		return dir, func() { os.RemoveAll(dir) }, err
 	}
-	base, err := os.UserCacheDir() // %LOCALAPPDATA%
+	base, err := userDataBase()
 	if err != nil {
 		return "", nil, err
 	}
