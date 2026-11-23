@@ -221,7 +221,7 @@ function notifications(v: SettingsView, off: boolean): SettingRow[] {
       id: 'noConnection.after', label: t('settings.notify.noConnection.after'), control: 'seg', value: String(n.NoLinkAfter), parent: 'noConnection',
       group: conn, disabled: !noLink, options: NO_LINK_MIN.map(m => ({ value: String(m * MIN_NS), label: t('duration.short.m', { m }) })),
     },
-    toggle('quiet', 'settings.notify.quiet', n.QuietEnabled, { group: quiet, icon: 'moon', info: { key: 'info.settings.quiet' } }),
+    toggle('quiet', 'settings.notify.quiet', n.QuietEnabled, { group: quiet, icon: 'moon', info: { key: pk('info.settings.quiet', v.Platform) } }),
     {
       id: 'quiet.range', label: t('settings.notify.quiet.range', { start: n.QuietStart, end: n.QuietEnd }), desc: t('settings.notify.quiet.range.desc'),
       control: 'time2', value: [n.QuietStart, n.QuietEnd], parent: 'quiet', group: quiet, disabled: !n.QuietEnabled,

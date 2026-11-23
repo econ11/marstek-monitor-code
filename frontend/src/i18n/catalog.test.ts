@@ -58,7 +58,7 @@ test('the ⓘ texts are the copy §15 texts, in both languages', () => {
   const doc = copyDoc.replace(/\r/g, '')
   const s15 = doc.slice(doc.indexOf('## 15.'), doc.indexOf('## 16.'))
   const rows = Array.from(s15.matchAll(/^\| `(info\.[\w.]+)` \| (.*?) \| (.*?) \| .*\|$/gm), (m: RegExpMatchArray) => ({ key: m[1], uk: m[2], en: m[3] }))
-  expect(rows.length).toBe(44)
+  expect(rows.length).toBe(45)
   expect(rows.filter(r => uk[r.key] !== r.uk).map(r => r.key)).toEqual([])
   expect(rows.filter(r => en[r.key] !== r.en).map(r => r.key)).toEqual([])
   expect(uk['info.battery.cycles']).toMatch(/^Батарея розрахована на понад \{rated\} циклів/)

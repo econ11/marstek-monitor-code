@@ -654,4 +654,7 @@ export const en: Record<string, string> = {
   'onboarding.dx.firewall.title.mac': 'No local network permission',
   'onboarding.dx.firewall.body.mac': "macOS doesn't let Marstek Monitor look for devices on the local network. Turn it on in System Settings → Privacy & Security → Local Network.",
   'onboarding.dx.firewall.action.mac': 'Open settings',
+  'onboarding.dx.firewall.pending.mac': 'Opening settings…',
+  'onboarding.dx.firewall.error.mac': "Couldn't open settings. Open System Settings → Privacy & Security → Local Network.",
+  'info.settings.quiet.mac': 'Quiet hours switch on every night on a schedule. Do not disturb is a one-off for a set time, from the menu bar icon. Low charge alerts come through either way.',
 }

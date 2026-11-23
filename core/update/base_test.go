@@ -12,14 +12,21 @@ func TestReleaseBasePinned(t *testing.T) {
 	if !releaseBuild {
 		t.Skip("needs -tags release")
 	}
+	// A loopback server (the dev build's end-to-end run) is ignored too.
+	for _, env := range [][2]string{
+		{"https://example.com/releases/", "https://example.com/api/latest"},
+		{"http://127.0.0.1:8080/", "http://127.0.0.1:8080/x"},
+	} {
+		t.Setenv("MARSTEK_UPDATE_BASE", env[0])
+		t.Setenv("MARSTEK_UPDATE_API", env[1])
+		if got := releasesBase(); got != ReleasesBase {
+			t.Fatalf("MARSTEK_UPDATE_BASE=%q: releasesBase() = %q, want %q", env[0], got, ReleasesBase)
+		}
+		if got := latestAPI(); got != LatestURL {
+			t.Fatalf("MARSTEK_UPDATE_API=%q: latestAPI() = %q, want %q", env[1], got, LatestURL)
+		}
+	}
 	t.Setenv("MARSTEK_UPDATE_BASE", "https://example.com/releases/")
-	t.Setenv("MARSTEK_UPDATE_API", "https://example.com/api/latest")
-	if got := releasesBase(); got != ReleasesBase {
-		t.Fatalf("releasesBase() = %q, want %q", got, ReleasesBase)
-	}
-	if got := latestAPI(); got != LatestURL {
-		t.Fatalf("latestAPI() = %q, want %q", got, LatestURL)
-	}
 	// Restore still pins to the real repo, not the override.
 	dl := "https://example.com/releases/download/v1.2.0/"
 	n := AssetName("1.2.0", "windows")
@@ -67,6 +74,26 @@ func TestDevBaseOverride(t *testing.T) {
 		t.Setenv("MARSTEK_UPDATE_API", c.env)
 		if got := latestAPI(); got != c.want {
 			t.Errorf("MARSTEK_UPDATE_API=%q: latestAPI() = %q, want %q", c.env, got, c.want)
+		}
+	}
+	// Lookalikes of the loopback server: neither override takes them.
+	for _, env := range []string{
+		"http://127.0.0.1@evil/",        // user info, host evil
+		"HTTP://127.0.0.1:80/",          // not the literal prefix
+		"http://[::1]:80/",              // IPv6 loopback
+		"http://localhost:80/",          // a name, not the address
+		"http://127.0.0.1:80/?x",        // query
+		"http://127.0.0.1:0/",           // port 0
+		"http://127.0.0.1:65536/",       // port out of range
+		"http://127.0.0.1.evil.com:80/", // another host
+	} {
+		t.Setenv("MARSTEK_UPDATE_BASE", env)
+		if got := releasesBase(); got != ReleasesBase {
+			t.Errorf("MARSTEK_UPDATE_BASE=%q: releasesBase() = %q, want %q", env, got, ReleasesBase)
+		}
+		t.Setenv("MARSTEK_UPDATE_API", env)
+		if got := latestAPI(); got != LatestURL {
+			t.Errorf("MARSTEK_UPDATE_API=%q: latestAPI() = %q, want %q", env, got, LatestURL)
 		}
 	}
 

@@ -97,8 +97,10 @@ type apiRelease struct {
 // Latest asks GitHub for the newest release; newer reports whether it is
 // newer than current (Newer). Any answer but 200 with a release whose tag is
 // semver is an error: offline, a rate limit (403 / 429), a 5xx, no release.
-// Only goos's installer and checksum are picked (AssetName): a release
-// without them has InstallerURL and ChecksumURL "".
+// Only goos's installer and checksum are picked (AssetName), and only from
+// the releases repo: an asset URL is kept when it is pinned under
+// releasesBase and ends in "/"+AssetName (+".sha256"), the rule Restore
+// uses. A release without them has InstallerURL and ChecksumURL "".
 func Latest(ctx context.Context, c HTTPDoer, current, goos string) (rel Release, newer bool, err error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, latestAPI(), nil)
 	if err != nil {
@@ -146,9 +148,13 @@ func Latest(ctx context.Context, c HTTPDoer, current, goos string) (rel Release,
 		for _, as := range a.Assets {
 			switch as.Name {
 			case name:
-				rel.InstallerURL = safeURL(as.URL)
+				if pinned(as.URL, "/"+name) {
+					rel.InstallerURL = as.URL
+				}
 			case name + ".sha256":
-				rel.ChecksumURL = safeURL(as.URL)
+				if pinned(as.URL, "/"+name+".sha256") {
+					rel.ChecksumURL = as.URL
+				}
 			}
 		}
 	}

@@ -2,7 +2,7 @@ import { afterEach, expect, test } from 'vitest'
 import type { Device, Diagnosis } from '../../bindings/github.com/econ11/marstek-monitor-code/app/models'
 import { setLocale } from '../lib/i18n'
 import {
-  FR_STATES, firstRunModel, firstRunStep, probeCode, readmeURL, toastNavigation, validIPv4,
+  FR_STATES, firstRunModel, firstRunStep, guessPlatform, probeCode, readmeURL, toastNavigation, validIPv4,
   type FRContext, type FREvent, type FRState,
 } from './firstRunModel'
 
@@ -297,7 +297,7 @@ test('readmeURL opens the local-API section', () => {
 // macOS port, Task 2 (Review Focus 5): on a Mac no text of the first run
 // names Windows, the tray, the firewall or UAC. The Mac never reports a
 // public network (netdiag_darwin), and its firewall action opens settings.
-const WINDOWS_WORDS = /Windows|тре[йюї]|tray|брандмауер|firewall|UAC/i
+const WINDOWS_WORDS = /Windows|тре[йюїя]|панел|tray|брандмауер|firewall|UAC/i
 function shown(x: unknown, out: string[] = []): string[] {
   if (typeof x === 'string') out.push(x)
   else if (Array.isArray(x)) x.forEach(v => shown(v, out))
@@ -310,6 +310,10 @@ test('TestNoWindowsWordOnMac: first run', () => {
   const ctxs: FRContext[] = [
     { devices: [], platform: 'darwin' },
     { devices: [d], dx: dxMac, copied: true, addError: true, platform: 'darwin' },
+    { devices: [], dx: dxMac, firewall: 'pending', platform: 'darwin' },
+    { devices: [], dx: dxMac, firewall: 'failed', platform: 'darwin' },
+    { devices: [], dx: { ...dxMac, PublicNetwork: true }, platform: 'darwin' },
+    { devices: [d], added: d, name: 'VenusE 3.0', settings: { autostart: false, minimizeToTray: false }, trayHint: true, platform: 'darwin' },
     { devices: [d], added: d, name: 'VenusE 3.0', first: { soc: 10, grid: 'off' as const, offFor: 60e3 }, settings: { autostart: true, minimizeToTray: true }, trayHint: true, platform: 'darwin' },
   ]
   for (const l of ['uk', 'en'] as const) {
@@ -326,4 +330,31 @@ test('on a Mac: the firewall block opens settings, no tray tip', () => {
   expect(done.done?.trayHint).toBeUndefined()
   expect(done.done?.toggles.map(x => x.label)).toEqual(['Відкривати під час входу в систему', 'Згортати в рядок меню при закритті'])
   expect(firstRunModel('lanGuide', { devices: [], platform: 'darwin' }).steps?.[1]).toBe('Якщо macOS запитає дозвіл на доступ до локальної мережі, натисніть «Дозволити».')
+})
+
+test('on a Mac: the firewall note and error name the settings, not a prompt', () => {
+  const at = (firewall: FRContext['firewall'], platform?: string) =>
+    firstRunModel('noneFound', { devices: [], dx: { ...dx, FirewallMayBlock: true }, firewall, platform }).dx[0]
+  expect(at('pending', 'darwin').note).toBe('Відкриваю налаштування…')
+  expect(at('failed', 'darwin').error).toBe('Не вдалося відкрити налаштування. Відкрийте «Системні параметри» → «Конфіденційність і безпека» → «Локальна мережа».')
+  expect(at('pending').note).toBe('Підтвердьте запит Windows…')
+  setLocale('en')
+  expect(at('pending', 'darwin').note).toBe('Opening settings…')
+  expect(at('failed', 'darwin').error).toBe("Couldn't open settings. Open System Settings → Privacy & Security → Local Network.")
+})
+
+test('on a Mac a public network is never shown, even if reported', () => {
+  const mac = firstRunModel('noneFound', { devices: [], dx: { ...dx, PublicNetwork: true }, platform: 'darwin' })
+  expect(mac.dx.map(x => x.key)).toEqual([])
+  const win = firstRunModel('noneFound', { devices: [], dx: { ...dx, PublicNetwork: true }, platform: 'windows' })
+  expect(win.dx.map(x => x.key)).toEqual(['netPublic'])
+})
+
+// Before getSettings resolves (or when it fails) the webview guesses.
+test('guessPlatform: darwin on a Mac webview, else unknown', () => {
+  expect(guessPlatform({ userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15', platform: 'MacIntel' })).toBe('darwin')
+  expect(guessPlatform({ userAgent: 'Mozilla/5.0', platform: 'MacIntel' })).toBe('darwin')
+  expect(guessPlatform({ userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edg/120.0', platform: 'Win32' })).toBe('')
+  expect(guessPlatform({})).toBe('')
+  expect(guessPlatform(undefined)).toBe('')
 })

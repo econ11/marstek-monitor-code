@@ -360,3 +360,32 @@ func TestRestorePlatform(t *testing.T) {
 		t.Error("restored on linux")
 	}
 }
+
+// Task 5 review: Latest keeps an asset URL only under the releases repo and
+// ending in the platform's asset name, the rule Restore uses (pinned): a
+// foreign host, a lookalike repo, another file or a query gives "".
+func TestLatestPinsAssetURLs(t *testing.T) {
+	const dl = "https://github.com/econ11/marstek-monitor/releases/download/v1.2.0/"
+	for _, goos := range []string{"windows", "darwin"} {
+		n := AssetName("1.2.0", goos)
+		for name, urls := range map[string][2]string{
+			"foreign host":   {"https://evil.example/" + n, "https://evil.example/" + n + ".sha256"},
+			"lookalike repo": {"https://github.com/econ11/marstek-monitor-evil/releases/download/v1.2.0/" + n, "https://github.com/econ11/marstek-monitor-evil/releases/download/v1.2.0/" + n + ".sha256"},
+			"other file":     {dl + "evil.exe", dl + "evil.sha256"},
+			"query":          {dl + n + "?x=1", dl + n + ".sha256?x=1"},
+			"dot dot":        {dl + "../../../../evil/" + n, dl + "../../../../evil/" + n + ".sha256"},
+		} {
+			body := `{"tag_name":"v1.2.0","assets":[` +
+				`{"name":"` + n + `","browser_download_url":"` + urls[0] + `"},` +
+				`{"name":"` + n + `.sha256","browser_download_url":"` + urls[1] + `"}]}`
+			d := server(t, func(w http.ResponseWriter, r *http.Request) { w.Write([]byte(body)) })
+			rel, _, err := Latest(context.Background(), d, "1.0.0", goos)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if rel.InstallerURL != "" || rel.ChecksumURL != "" {
+				t.Errorf("%s, %s: %+v", goos, name, rel)
+			}
+		}
+	}
+}

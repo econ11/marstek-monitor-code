@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from 'vitest'
 import type { SettingsView, UpdateView } from '../../bindings/github.com/econ11/marstek-monitor-code/app/models'
 import type { Snapshot } from '../../bindings/github.com/econ11/marstek-monitor-code/core/monitor/models'
-import { setLocale } from '../lib/i18n'
+import { setLocale, t } from '../lib/i18n'
 import { stationLabel } from '../lib/station'
 import { DONATE_URL, SECTIONS, notifyTestSent, panelGroups, retentionChange, settingsModel, splitAction, validateName, withChange, type SettingRow } from './settingsModel'
 
@@ -386,7 +386,7 @@ test('about: the one-click update phases and its failures', () => {
 
 // macOS port, Task 2 (Review Focus 5): on a Mac no text of Settings names
 // Windows, the tray, the firewall or UAC.
-const WINDOWS_WORDS = /Windows|тре[йюї]|tray|брандмауер|firewall|UAC/i
+const WINDOWS_WORDS = /Windows|тре[йюїя]|панел|tray|брандмауер|firewall|UAC/i
 /** Every text a value shows: its strings, without ids, keys and links. */
 function shown(x: unknown, out: string[] = []): string[] {
   if (typeof x === 'string') out.push(x)
@@ -402,11 +402,16 @@ test('TestNoWindowsWordOnMac: settings', () => {
   const avail = { Available: true, Latest: '1.1.0' } as UpdateView
   for (const l of ['uk', 'en'] as const) {
     setLocale(l)
-    const texts = [
-      ...SECTIONS.flatMap(sec => shown(settingsModel(mac, snap, sec, { update: avail, canInstall: true }))),
-      ...shown(settingsModel(mac, snap, 'notifications', { notificationsOff: true })),
-      ...notifyTestSent('darwin'),
+    const noMin = { ...mac, S: { ...mac.S, MinimizeToTray: false } } as SettingsView
+    const models = [
+      ...SECTIONS.map(sec => settingsModel(mac, snap, sec, { update: avail, canInstall: true })),
+      settingsModel(mac, snap, 'notifications', { notificationsOff: true }),
+      settingsModel(noMin, snap, 'general'),
     ]
+    // The ⓘ tips too: their text is t(info.key), not a string of the row.
+    const tips = models.flatMap(m => m.rows.filter(r => r.info).map(r => t(r.info!.key, r.info!.args)))
+    expect(tips.length).toBeGreaterThan(0)
+    const texts = [...models.flatMap(m => shown(m)), ...tips, ...notifyTestSent('darwin')]
     expect(texts.filter(s => WINDOWS_WORDS.test(s))).toEqual([])
   }
 })
@@ -418,4 +423,7 @@ test('on Windows the settings texts stay the Windows ones', () => {
   expect(row(settingsModel(mac, snap, 'general'), 'autostart').label).toBe('Відкривати під час входу в систему')
   expect(row(settingsModel(mac, snap, 'stations'), 'trayShows').label).toBe('У рядку меню показується: Дім')
   expect(notifyTestSent('darwin')).toEqual(["Надіслано. Не з'явилось?", 'Відкрити налаштування сповіщень macOS'])
+  const quiet = (v: SettingsView) => row(settingsModel(v, snap, 'notifications'), 'quiet').info!.key
+  expect(quiet(view)).toBe('info.settings.quiet')
+  expect(quiet(mac)).toBe('info.settings.quiet.mac')
 })

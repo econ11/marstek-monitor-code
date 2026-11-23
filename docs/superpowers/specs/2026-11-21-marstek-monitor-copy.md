@@ -1078,7 +1078,7 @@
 
 ### 13.7 macOS: тексти `.mac`
 
-План macOS-порту (Task 2). Текст, що називає Windows, трей чи брандмауер, має на Mac варіант під тим самим ключем + `.mac`; його вибирає `pk(key, platform)` (`frontend/src/i18n/platform.ts`) за `SettingsView.Platform` = `darwin`. Решта текстів однакова. На Mac не показуються `onboarding.dx.netPublic.*` (macOS не повідомляє про загальнодоступну мережу) і `onboarding.done.trayHint` (підказка про панель задач Windows 11). `onboarding.dx.firewall.pending` / `.error` на Mac не виникають: дія відкриває налаштування, без UAC.
+План macOS-порту (Task 2). Текст, що називає Windows, трей чи брандмауер, має на Mac варіант під тим самим ключем + `.mac`; його вибирає `pk(key, platform)` (`frontend/src/i18n/platform.ts`) за `SettingsView.Platform` = `darwin`. Решта текстів однакова. На Mac не показуються `onboarding.dx.netPublic.*` (macOS не повідомляє про загальнодоступну мережу) і `onboarding.done.trayHint` (підказка про панель задач Windows 11). Дія блоку брандмауера на Mac відкриває налаштування «Локальна мережа», без UAC; її `pending` / `error` мають свої `.mac`. Mac-варіант ⓘ `info.settings.quiet.mac` — у §15.
 
 | Ключ | UK | EN | Примітка |
 |---|---|---|---|
@@ -1095,6 +1095,8 @@
 | `onboarding.dx.firewall.title.mac` | Немає дозволу на локальну мережу | No local network permission | |
 | `onboarding.dx.firewall.body.mac` | macOS не дозволяє Marstek Monitor шукати пристрої в локальній мережі. Увімкніть дозвіл у «Системних параметрах» → «Конфіденційність і безпека» → «Локальна мережа». | macOS doesn't let Marstek Monitor look for devices on the local network. Turn it on in System Settings → Privacy & Security → Local Network. | |
 | `onboarding.dx.firewall.action.mac` | Відкрити налаштування | Open settings | Відкриває «Локальна мережа» |
+| `onboarding.dx.firewall.pending.mac` | Відкриваю налаштування… | Opening settings… | Поки налаштування відкриваються |
+| `onboarding.dx.firewall.error.mac` | Не вдалося відкрити налаштування. Відкрийте «Системні параметри» → «Конфіденційність і безпека» → «Локальна мережа». | Couldn't open settings. Open System Settings → Privacy & Security → Local Network. | Налаштування не відкрилися |
 
 ---
 
@@ -1202,6 +1204,7 @@
 |---|---|---|---|
 | `info.settings.poll` | Як часто питати станцію, коли щось відбувається. Коли світло є й нічого не змінюється, питаємо раз на 20 с — або рідше, якщо вибраний інтервал довший. | How often to check the station while something's happening. When the grid is on and nothing changes, we check every 20 s, or less often if your interval is longer, to go easy on the station. | «Опитування локально» |
 | `info.settings.quiet` | Тиха година вмикається щоночі за розкладом. «Не турбувати» — разово, на вибраний час, з меню іконки в треї. «Низький заряд» приходить в обох випадках. | Quiet hours switch on every night on a schedule. Do not disturb is a one-off for a set time, from the tray icon menu. Low charge alerts come through either way. | «Тиха година» |
+| `info.settings.quiet.mac` | Тиха година вмикається щоночі за розкладом. «Не турбувати» — разово, на вибраний час, кліком по іконці в рядку меню. «Низький заряд» приходить в обох випадках. | Quiet hours switch on every night on a schedule. Do not disturb is a one-off for a set time, from the menu bar icon. Low charge alerts come through either way. | «Тиха година», на Mac (§13.7) |
 | `info.settings.lowThreshold` | Коли заряд опуститься до цього рівня, ви отримаєте сповіщення. | You'll get a notification when charge drops to this level. | «Поріг сповіщення» |
 | `info.settings.noLinkAfter` | Сповіщення, якщо станція мовчить довше за вибраний час. Без світла роутер часто теж вимикається, тому за замовчуванням це вимкнено. | Lets you know if the station stays silent longer than this. Routers often go down in an outage too, so this is off by default. | «Немає зв'язку зі станцією» + «Після» |
 | `info.settings.retention` | Скільки зберігати на цьому комп'ютері відключення, події та історію заряду. Старіші записи ми видаляємо, але лічильник циклів не зменшується. | How long to keep outages, events and charge history on this PC. Older records are removed, but the cycle count never goes down. | «Зберігати історію» |

@@ -7,7 +7,7 @@ import { icon } from '../ui/icons'
 import { spinnerHTML } from '../ui/loading'
 import { escapeHTML as esc } from '../ui/tooltip'
 import {
-  ADD_TIMEOUT_MS, NETWORK_SETTINGS_URL, PROBE_GUARD_MS, firstRunModel, firstRunStep, probeCode, readmeURL, validIPv4,
+  ADD_TIMEOUT_MS, NETWORK_SETTINGS_URL, PROBE_GUARD_MS, firstRunModel, firstRunStep, guessPlatform, probeCode, readmeURL, validIPv4,
   type FRAction, type FRContext, type FREvent, type FRState, type FRView,
 } from './firstRunModel'
 import { validateName, withChange } from './settingsModel'
@@ -133,7 +133,8 @@ export function firstRunScreen(deps: FirstRunDeps): FirstRunScreen {
   const now = deps.now ?? Date.now
   let host: HTMLElement | null = null
   let st: FRState = 'discovering'
-  const ctx: FRContext = { devices: [] }
+  // Until getSettings answers (or if it fails), the webview's guess.
+  const ctx: FRContext = { devices: [], platform: guessPlatform(typeof navigator === 'undefined' ? undefined : navigator) }
   let view: SettingsView | null = null
   let scanning = false
   let probeRun = 0

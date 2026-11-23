@@ -220,6 +220,13 @@ function rows(ctx: FRContext, actionable: boolean): FRRow[] {
   }))
 }
 
+/** guessPlatform: the platform as the webview suggests it, for the texts
+ *  before getSettings answers (or when it fails): 'darwin' when the user
+ *  agent or navigator.platform names a Mac, else '' (the Windows texts). */
+export function guessPlatform(nav?: { userAgent?: string; platform?: string }): string {
+  return /Mac/.test(`${nav?.userAgent ?? ''} ${nav?.platform ?? ''}`) ? 'darwin' : ''
+}
+
 function dxBlocks(ctx: FRContext): FRDx[] {
   const dx = ctx.dx
   const p = ctx.platform ?? ''
@@ -227,7 +234,8 @@ function dxBlocks(ctx: FRContext): FRDx[] {
   const out: FRDx[] = []
   // No LAN at all explains everything else: first.
   if (dx.NoLAN) out.push({ key: 'noLan', title: t('onboarding.dx.noLan.title'), body: t('onboarding.dx.noLan.body.v1') })
-  if (dx.PublicNetwork) {
+  // macOS never reports a public network (netdiag_darwin); never show it there.
+  if (dx.PublicNetwork && p !== 'darwin') {
     out.push({ key: 'netPublic', title: t('onboarding.dx.netPublic.title'), body: t('onboarding.dx.netPublic.body'),
       action: { key: 'netSettings', label: t('common.action.howTo'), kind: 'link', external: true } })
   }
@@ -236,8 +244,8 @@ function dxBlocks(ctx: FRContext): FRDx[] {
     // On a Mac the action opens the Local Network settings (no UAC).
     out.push({ key: 'firewall', title: t(pk('onboarding.dx.firewall.title', p)), body: t(pk('onboarding.dx.firewall.body', p)),
       action: { key: 'firewall', label: t(pk('onboarding.dx.firewall.action', p)), kind: 'secondary', busy: pending },
-      note: pending ? t('onboarding.dx.firewall.pending') : undefined,
-      error: ctx.firewall === 'failed' ? t('onboarding.dx.firewall.error') : undefined })
+      note: pending ? t(pk('onboarding.dx.firewall.pending', p)) : undefined,
+      error: ctx.firewall === 'failed' ? t(pk('onboarding.dx.firewall.error', p)) : undefined })
   }
   return out
 }
