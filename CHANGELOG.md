@@ -1,5 +1,35 @@
 # Changelog
 
+## 1.1.0
+
+### Українською
+
+Перший випуск Marstek Monitor для macOS. Windows-версія працює як і раніше.
+
+- macOS 12 і новіші, одна програма для Apple Silicon та Intel. Встановлення: відкрити `marstek-monitor-1.1.0-macos.dmg` і перетягнути додаток у «Програми».
+- Програма підписана й нотаризована Apple, тому відкривається звичайним подвійним клацанням, без попереджень Gatekeeper.
+- Ті самі вкладки й сповіщення, що й на Windows. Іконка живе в рядку меню й показує, чи є світло; іконка в Dock з'являється, лише поки відкрите вікно.
+- Клік по сповіщенню відкриває вікно на потрібній вкладці.
+- «Відкривати під час входу в систему» в налаштуваннях. Дані зберігаються в `~/Library/Application Support/MarstekMonitor`.
+- Додаток просить дозвіл на доступ до локальної мережі; якщо його немає, підказує, де ввімкнути.
+- Оновлення в один клік і на Mac: завантаження, перевірка SHA-256 і підпису розробника, резервна копія бази, заміна програми й перезапуск. Працює, коли додаток лежить у «Програмах»; інакше пропонується «Завантажити».
+- Релізи тепер збираються на GitHub, і в кожному є файли для обох систем.
+- Windows: помітних змін немає. Перевірка оновлень бере з релізу лише інсталятор для Windows, а не файл для Mac.
+
+### English
+
+The first Marstek Monitor release for macOS. The Windows version works as before.
+
+- macOS 12 or later, one app for Apple Silicon and Intel. To install, open `marstek-monitor-1.1.0-macos.dmg` and drag the app into Applications.
+- The app is signed and notarized by Apple, so it opens with a normal double click and no Gatekeeper warning.
+- The same tabs and notifications as on Windows. The icon lives in the menu bar and shows whether the power is on; the Dock icon appears only while the window is open.
+- Clicking a notification opens the window on the matching tab.
+- "Open at login" in Settings. Data is kept in `~/Library/Application Support/MarstekMonitor`.
+- The app asks for Local Network access and, if it is missing, shows where to turn it on.
+- One-click update on the Mac too: download, SHA-256 and developer signature check, database backup, app swap and restart. It works when the app is in Applications; otherwise "Download" is offered.
+- Releases are now built on GitHub, and each one carries files for both systems.
+- Windows: no visible change. The update check takes only the Windows installer from a release, not the Mac file.
+
 ## 1.0.0
 
 ### Українською

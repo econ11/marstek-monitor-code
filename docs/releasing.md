@@ -41,6 +41,12 @@ or un-notarized dmg is never built for a release. The publish job fails without 
 `npm --prefix frontend test`, `npm --prefix frontend run typecheck`, and on macOS also
 `go test -tags release ./core/update/`.
 
+## Before the first signed release
+
+Once, on the owner's Mac: the Developer ID certificate, the App Store Connect API key, the
+releases token and the six secrets above, then a dry run. Step by step, in Ukrainian:
+`docs/macos-signing.md`, section «Налаштування підпису (один раз)».
+
 ## The release: tag → draft → publish
 
 1. `CHANGELOG.md` on `main` has a non-empty `## <version>` section (it becomes the notes;
