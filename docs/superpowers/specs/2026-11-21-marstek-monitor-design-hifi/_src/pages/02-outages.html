@@ -1,0 +1,276 @@
+<!--@head title="Відключення"-->
+<style>
+  .toolbar { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); position: relative; }
+  .toolbar .seg__item .icon { width: 14px; height: 14px; }
+  .toolbar__hint { margin-left: auto; font-size: var(--text-small); color: var(--color-text-subtle); }
+  .out-top { display: grid; grid-template-columns: 404px minmax(0, 1fr); gap: var(--space-4); margin-bottom: var(--space-4); }
+  .out-summary { display: grid; gap: var(--space-3); padding-top: var(--space-4); }
+  .out-summary .gauges { --cols: 2; }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--color-border); padding-top: var(--space-3); margin: 0 calc(var(--space-2) * -1); }
+  .stat { display: grid; gap: 2px; padding: 0 var(--space-2); }
+  .stat + .stat { border-left: 1px solid var(--color-border); padding-left: var(--space-3); }
+  .stat__v { font-size: var(--text-title); font-weight: 600; letter-spacing: -0.01em; color: var(--color-info); white-space: nowrap; }
+  .stat__m { font-size: var(--text-caption); color: var(--color-text-subtle); }
+  .bars .bar { fill: var(--color-warn); }
+  .bars .bar.cloud { fill: url(#cloud-hatch); }
+  .bars .val { fill: var(--color-text-muted); font-size: 11px; font-weight: 500; }
+  .bars .died { fill: var(--color-bad); }
+  .bar-g.is-selected .bar { stroke: var(--color-text-primary); stroke-width: 1.5; }
+  .bar-g:focus-visible { outline: none; }
+  .bar-g:focus-visible .bar { stroke: var(--color-focus); stroke-width: 2; }
+  .filter-chip { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 4px 0 10px; border-radius: var(--radius-pill); background: var(--color-surface-3); border: 1px solid var(--color-border-strong); font-size: var(--text-caption); }
+  .link-btn { border: 0; background: none; padding: 0 6px 0 2px; color: var(--color-info); font: inherit; }
+  .link-btn:hover { text-decoration: underline; }
+  .filter-chip .icon { width: 12px; height: 12px; }
+  .cal { top: 44px; left: 238px; width: 296px; padding: var(--space-4); display: none; }
+  .cal.is-open { display: block; }
+  .cal__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-3); font-weight: 500; }
+  .cal__grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px 0; text-align: center; font-size: var(--text-small); }
+  .cal__grid .dow { font-size: 11px; color: var(--color-text-subtle); height: 24px; display: grid; place-items: center; }
+  .cal__grid button { height: 32px; border: 0; background: transparent; border-radius: 0; color: var(--color-text-primary); padding: 0; }
+  .cal__grid button:hover { background: var(--color-overlay-hover); border-radius: 6px; }
+  .cal__grid button.in { background: var(--color-info-soft); }
+  .cal__grid button.a, .cal__grid button.b { background: var(--color-info); color: var(--color-text-on-accent); font-weight: 600; }
+  .cal__grid button.a { border-radius: 6px 0 0 6px; } .cal__grid button.b { border-radius: 0 6px 6px 0; }
+  .cal__grid button.future { color: var(--color-text-subtle); opacity: .45; cursor: default; }
+  .cal__grid button.has::after { content: ""; display: block; width: 4px; height: 4px; border-radius: 50%; background: var(--color-warn); margin: -6px auto 0; transform: translateY(6px); }
+  .cal__grid button.a.has::after, .cal__grid button.b.has::after { background: var(--color-text-on-accent); }
+  .cal__foot { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-3); }
+  .timeline { padding: var(--space-5) 0 var(--space-2); }
+</style>
+</head>
+<body>
+<!--@sprite-->
+<main class="doc">
+  <!--@docnav page="02-outages.html" title="Відключення"-->
+  <p class="doc-lede">Період «7 днів». Наведіть на стовпчик — тултіп; клік — фільтр таблиці (ще клік або × — зняти). Перемикач періоду працює: «Сьогодні» показує стрічку доби, «30 днів» — 30 стовпчиків. Кнопка з датами відкриває календар.</p>
+
+  <div class="win">
+    <!--@titlebar state="Без світла 3 год 27 хв"-->
+    <!--@appbar tab="outages" grid="off"-->
+    <div class="content">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Період" id="period">
+          <button class="seg__item" aria-pressed="false" data-value="1">Сьогодні</button>
+          <button class="seg__item" aria-pressed="true" data-value="7">7 днів</button>
+          <button class="seg__item" aria-pressed="false" data-value="30">30 днів</button>
+          <button class="seg__item" aria-pressed="false" data-value="custom" id="cal-btn" aria-haspopup="dialog"><!--@icon n="calendar"--><span id="range-label">15.11 – 21.11</span></button>
+        </div>
+        <span class="toolbar__hint">Дані за 15.11 – 21.11 · 1 пропуск без даних</span>
+        <div class="popover cal" id="cal" role="dialog" aria-label="Свій період">
+          <div class="cal__head"><button class="iconbtn" aria-label="Попередній місяць" style="transform:rotate(180deg)"><!--@icon n="chevron-right"--></button>Листопад 2026<button class="iconbtn" aria-label="Наступний місяць"><!--@icon n="chevron-right"--></button></div>
+          <div class="cal__grid" id="cal-grid"></div>
+          <div class="cal__foot"><button class="btn btn--ghost" id="cal-cancel">Скасувати</button><button class="btn btn--primary" id="cal-ok">Показати</button></div>
+        </div>
+      </div>
+
+      <div class="out-top">
+        <section class="panel out-summary" aria-label="Підсумок за період">
+          <div class="gauges" id="out-gauges">
+            <!--@gauge title="Світло" tone="good" pct="80" num="80" small="%" primary="32 год 22 хв без світла"-->
+            <!--@gauge title="Покриття" tone="good" pct="92" num="92" small="%" primary="1 раз розрядилась"-->
+          </div>
+          <div class="stats">
+            <div class="stat"><span class="label">Відключень</span><span class="stat__v" id="st-count">12</span><span class="stat__m" id="st-count-m">≈ 1,7 на день</span></div>
+            <div class="stat"><span class="label">Середнє</span><span class="stat__v" id="st-avg">2 год 42 хв</span><span class="stat__m">на відключення</span></div>
+            <div class="stat"><span class="label">Найдовше</span><span class="stat__v" id="st-max">7 год 10 хв</span><span class="stat__m" id="st-max-m">чт 19.11, 19:30</span></div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="bars-title">
+          <div class="panel__head">
+            <h2 class="panel__title" id="bars-title">Без світла по днях</h2>
+            <span class="panel__sub" id="bars-sub">години без світла</span>
+            <div class="legend">
+              <span><i style="background:var(--color-warn)"></i>без світла</span>
+              <span><i style="background:url(#)"><svg width="10" height="10" style="display:block;border-radius:3px"><rect width="10" height="10" fill="url(#cloud-hatch)"/></svg></i>частково з хмари</span>
+              <span><i style="background:var(--color-bad);border-radius:50%;width:8px;height:8px"></i>станція розрядилась</span>
+            </div>
+          </div>
+          <div class="chart bars" id="bars"></div>
+        </section>
+      </div>
+
+      <section class="panel panel--flush" aria-labelledby="ev-title">
+        <div class="panel__head">
+          <h2 class="panel__title" id="ev-title">Події</h2>
+          <span class="panel__sub" id="ev-sub">12 відключень</span>
+          <span id="chip-host"></span>
+        </div>
+        <div class="table-wrap">
+          <table class="table" id="ev">
+            <thead><tr><th scope="col">Початок</th><th scope="col">Кінець</th><th scope="col" class="num">Тривалість</th><th scope="col">Заряд на початку → в кінці</th><th scope="col">Примітка</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <ol class="doc-notes">
+    <li><b>Стовпчики</b> — жовті (жовтий = без світла). День, частину якого відновлено з хмари, заштрихований; день, коли станція вимкнулась, має червону крапку над стовпчиком. Над стовпчиком — значення, щоб не наводити мишу заради цифри.</li>
+    <li><b>Клік по стовпчику</b> залишає в таблиці лише відключення того дня (інші рядки ховаються), у шапці таблиці з'являється чип «чт 19.11 ×». Стовпчики фокусуються з клавіатури, Enter/Space = клік.</li>
+    <li><b>Шкала годин</b> завжди з нуля, крок 2 год; верх — найближче парне над максимумом. Для періодів &gt; 30 днів — стовпчики по тижнях, шкала «годин на тиждень».</li>
+    <li><b>Таблиця:</b> «сьогодні»/«вчора» замість дати для двох останніх днів; рядок, що триває, має пігулку замість кінця. Довгий текст примітки переноситься — рядок росте, нічого не обрізається.</li>
+  </ol>
+</main>
+
+<!--@script-->
+<!--@data-->
+<script>
+(function () {
+  const D = MMData, F = D.fmt, NS = 'http://www.w3.org/2000/svg';
+  const host = document.getElementById('bars');
+  let period = 7, selected = null;
+  const TODAY = 6;
+  const dayLabel = t => { const d = F.dayIndex(t); return d === TODAY ? 'сьогодні' : d === TODAY - 1 ? 'вчора' : F.dayShort(t); };
+
+  function setGauge(fig, pct, num, primary, secondary, title) {
+    fig.classList.toggle('gauge--empty', pct <= 0);
+    fig.querySelector('.gauge__fill').setAttribute('stroke-dasharray', `${pct} 100`);
+    fig.querySelector('.gauge__num').innerHTML = `${num}<small>%</small>`;
+    fig.querySelector('.gauge__primary').textContent = primary;
+    const sec = fig.querySelector('.gauge__secondary'); if (sec) sec.textContent = secondary;
+    if (title) fig.querySelector('.gauge__title').textContent = title;
+  }
+
+  function summary(days) {
+    const t0 = days[0].t, outs = D.outages.filter(o => o.start >= t0);
+    const span = days.reduce((a, d) => a + d.span, 0), off = days.reduce((a, d) => a + d.off, 0);
+    const done = outs.filter(o => !o.ongoing), died = outs.filter(o => o.diedAt).length;
+    const longest = outs.reduce((m, o) => ((o.end ?? D.NOW) - o.start > (m ? (m.end ?? D.NOW) - m.start : 0) ? o : m), null);
+    const g = document.querySelectorAll('#out-gauges .gauge');
+    const lightPct = Math.round((1 - off / span) * 100);
+    setGauge(g[0], lightPct, lightPct, `${F.dur(off)} без світла`, '');
+    const cov = done.length ? Math.round((done.length - died) / done.length * 100) : 100;
+    setGauge(g[1], cov, cov, died === 0 ? 'усі протягнула' : died === 1 ? '1 раз розрядилась' : `${died} рази розрядилась`, '');
+    document.getElementById('st-count').textContent = outs.length;
+    document.getElementById('st-count-m').textContent = `≈ ${(outs.length / Math.max(1, span / 24)).toFixed(1).replace('.', ',')} на день`;
+    document.getElementById('st-avg').textContent = outs.length ? F.dur(outs.reduce((a, o) => a + (o.end ?? D.NOW) - o.start, 0) / outs.length) : '—';
+    document.getElementById('st-max').textContent = longest ? F.dur((longest.end ?? D.NOW) - longest.start) : '—';
+    document.getElementById('st-max-m').textContent = longest ? `${F.dayShort(longest.start)}, ${F.time(longest.start)}` : '';
+    document.getElementById('ev-sub').textContent = `${outs.length} ${outs.length % 10 === 1 && outs.length !== 11 ? 'відключення' : 'відключень'}`;
+    return outs;
+  }
+
+  function tipHtml(d) {
+    const pct = Math.round(d.off / d.span * 100);
+    const L = d.longest;
+    const minCls = d.died ? 't-bad' : d.minSoc < 20 ? 't-bad' : '';
+    return `<div class="tip__title">${F.dayTip(d.t)}${d.d === TODAY ? ' (сьогодні)' : ''}</div><dl>
+      <dt>Відключень</dt><dd>${d.count}${d.ongoing ? ' (одне триває)' : ''}</dd>
+      <dt>Без світла</dt><dd>${F.dur(d.off)} <span class="t-subtle">(${pct}% доби)</span></dd>
+      ${L && d.count > 1 ? `<dt>Найдовше</dt><dd>${F.dur((L.o.end ?? D.NOW) - L.o.start)}</dd><dt class="sub"></dt><dd class="sub">${F.time(L.o.start)}–${L.o.end ? F.time(L.o.end) : 'триває'}</dd>` : ''}
+      <dt>Мін. заряд</dt><dd class="${minCls}">${d.minSoc}%${d.died ? ' — станція розрядилась' : ''}</dd></dl>
+      ${d.cloud ? '<div class="tip__foot">⋯ частково з хмари</div>' : ''}
+      ${d.count ? '<div class="tip__foot">Клацніть, щоб показати ці відключення в таблиці</div>' : ''}`;
+  }
+
+  function renderBars(days) {
+    const W = host.clientWidth, H = 250, P = { l: 40, r: 4, t: 22, b: 30 };
+    const max = Math.max(2, Math.ceil(Math.max(...days.map(d => d.off)) / 2) * 2);
+    const y = v => P.t + (1 - v / max) * (H - P.t - P.b);
+    const slot = (W - P.l - P.r) / days.length, bw = Math.min(44, slot * 0.56);
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="group" aria-label="Години без світла по днях"><g class="grid">`;
+    for (let v = 0; v <= max; v += 2) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" class="${v ? '' : 'base'}"/>`;
+    s += '</g><g class="axis">';
+    for (let v = 0; v <= max; v += 2) s += `<text x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end">${v ? v + ' год' : '0'}</text>`;
+    days.forEach((d, i) => {
+      const cx = P.l + slot * i + slot / 2;
+      const show = days.length <= 10 || i % 5 === (days.length - 1) % 5;
+      if (show) s += `<text x="${cx}" y="${H - 10}" text-anchor="middle" class="${d.d === TODAY ? 'strong' : ''}">${days.length <= 10 ? F.dayShort(d.t) : F.dm(d.t)}</text>`;
+    });
+    s += '</g>';
+    days.forEach((d, i) => {
+      const cx = P.l + slot * i + slot / 2, x = cx - bw / 2, top = y(d.off), h = Math.max(0, y(0) - top);
+      s += `<g class="bar-g${selected === d.d ? ' is-selected' : ''}" data-d="${d.d}" tabindex="${d.count ? 0 : -1}" role="button" aria-label="${F.dayLong(d.t)}: ${F.dur(d.off)} без світла" data-tip-idx="${i}">`;
+      s += `<rect class="bar-hit" x="${P.l + slot * i}" y="${P.t}" width="${slot}" height="${H - P.t - P.b}"/>`;
+      if (h > 0) s += `<path class="bar${d.cloud ? ' cloud' : ''}" d="M${x},${y(0)}V${top + 4}q0,-4 4,-4h${bw - 8}q4,0 4,4V${y(0)}Z"/>`;
+      if (days.length <= 10 && d.off > 0) s += `<text class="val" x="${cx}" y="${top - 6}" text-anchor="middle">${F.durShort(d.off)}</text>`;
+      if (d.died) s += `<circle class="died" cx="${cx + (days.length <= 10 ? 22 : 0)}" cy="${days.length <= 10 ? top - 10 : top - 6}" r="3.5"/>`;
+      s += '</g>';
+    });
+    s += '</svg>';
+    host.innerHTML = s;
+    host.classList.toggle('has-selection', selected != null);
+    host.querySelectorAll('.bar-g').forEach(g => {
+      const d = days[g.dataset.tipIdx];
+      const showTip = () => MM.tip.show(g, tipHtml(d), { rect: g.querySelector('.bar, .bar-hit').getBoundingClientRect() });
+      g.addEventListener('pointerenter', showTip);
+      g.addEventListener('focus', showTip);
+      g.addEventListener('pointerleave', MM.tip.hide);
+      g.addEventListener('blur', MM.tip.hide);
+      const act = () => { if (!d.count && !d.off) return; selected = selected === d.d ? null : d.d; MM.tip.hide(); render(); };
+      g.addEventListener('click', act);
+      g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); } });
+    });
+  }
+
+  function renderTimeline() {
+    const W = host.clientWidth, H = 196, P = { l: 34, r: 4 }, t0 = TODAY * 24;
+    const x = t => P.l + (t - t0) / 24 * (W - P.l - P.r);
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Сьогодні: відключення на шкалі доби"><g class="grid">`;
+    for (let hh = 0; hh <= 24; hh += 3) s += `<line x1="${x(t0 + hh)}" x2="${x(t0 + hh)}" y1="60" y2="132"/>`;
+    s += '</g><g class="axis">';
+    for (let hh = 0; hh <= 24; hh += 3) s += `<text x="${x(t0 + hh)}" y="152" text-anchor="middle">${String(hh).padStart(2, '0')}:00</text>`;
+    s += `</g><rect x="${P.l}" y="80" width="${W - P.l - P.r}" height="32" rx="6" fill="var(--color-good-soft)"/>`;
+    s += `<rect x="${x(D.NOW)}" y="80" width="${x(t0 + 24) - x(D.NOW)}" height="32" fill="var(--color-bg-page)" opacity=".7"/>`;
+    for (const o of D.outages.filter(o => (o.end ?? D.NOW) > t0)) {
+      const a = Math.max(o.start, t0), b = o.end ?? D.NOW;
+      s += `<rect x="${x(a)}" y="80" width="${x(b) - x(a)}" height="32" fill="var(--color-warn)" rx="3"/>`;
+      s += `<text x="${(x(a) + x(b)) / 2}" y="70" text-anchor="middle" class="band-label">${F.time(o.start)}–${o.end ? F.time(o.end) : 'зараз'} · ${F.dur(b - o.start)}</text>`;
+    }
+    s += `<line x1="${x(D.NOW)}" x2="${x(D.NOW)}" y1="74" y2="118" stroke="var(--color-text-primary)" stroke-width="1.5"/><text x="${x(D.NOW)}" y="132" text-anchor="middle" class="band-label" style="fill:var(--color-text-primary)">зараз</text>`;
+    s += '</svg>';
+    host.innerHTML = s;
+  }
+
+  function renderTable(outs) {
+    const tb = document.querySelector('#ev tbody');
+    const rows = outs.slice().reverse().filter(o => selected == null || F.dayIndex(o.start) === selected || (o.end && F.dayIndex(o.end) === selected && F.dayIndex(o.start) !== selected));
+    tb.innerHTML = rows.map(o => {
+      const end = o.ongoing ? '<span class="pill" data-tone="warn"><svg class="icon"><use href="#i-plug-off"/></svg>триває</span>'
+        : (F.dayIndex(o.end) === F.dayIndex(o.start) ? F.time(o.end) : `<span class="when">${F.time(o.end)}<small>${dayLabel(o.end)}</small></span>`);
+      const note = [];
+      if (o.diedAt) note.push(`<span class="t-bad">станція розрядилась о ${F.time(o.diedAt)}</span>`);
+      if (o.cloud) note.push('<span class="pill pill--outline"><svg class="icon"><use href="#i-cloud"/></svg>частково з хмари</span>');
+      const socEnd = o.ongoing ? `<span class="t-warn">${o.socEnd}%</span> <span class="t-subtle">зараз</span>` : `<span class="${o.diedAt ? 't-bad' : ''}">${o.socEnd}%</span>`;
+      return `<tr><td class="nowrap"><span class="when">${F.time(o.start)}<small>${dayLabel(o.start)}</small></span></td><td class="nowrap">${end}</td>
+        <td class="num nowrap">${F.dur((o.end ?? D.NOW) - o.start)}</td>
+        <td><span class="arrow-soc">${o.socStart}% <i>→</i> ${socEnd}</span></td><td>${note.join('') || '<span class="t-subtle">—</span>'}</td></tr>`;
+    }).join('');
+    const chip = document.getElementById('chip-host');
+    chip.innerHTML = selected == null ? '' : `<span class="filter-chip">Показано відключення за ${F.dayShort(selected * 24)} · <button class="link-btn">Показати всі</button></span>`;
+    const btn = chip.querySelector('button');
+    if (btn) btn.onclick = () => { selected = null; render(); };
+  }
+
+  function render() {
+    const days = D.days.slice(-period);
+    const outs = summary(days);
+    document.getElementById('bars-title').textContent = period === 1 ? 'Сьогодні по годинах' : 'Без світла по днях';
+    document.getElementById('bars-sub').textContent = period === 1 ? '00:00 – 24:00' : 'години без світла';
+    if (period === 1) renderTimeline(); else renderBars(days);
+    renderTable(outs);
+  }
+
+  document.getElementById('period').addEventListener('seg-change', e => {
+    if (e.detail === 'custom') { document.getElementById('cal').classList.add('is-open'); return; }
+    document.getElementById('cal').classList.remove('is-open');
+    period = Number(e.detail); selected = null; render();
+  });
+  // calendar
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = ['пн', 'вт', 'ср', 'чт', 'пт', 'сб', 'нд'].map(d => `<span class="dow">${d}</span>`).join('') + '<span></span>'.repeat(6) +
+    Array.from({ length: 30 }, (_, i) => { const n = i + 1, idx = n - 15; const has = idx >= -14 && idx <= 6 && D.days.find(d => d.d === idx && d.count);
+      const cls = [n === 15 ? 'a' : '', n === 21 ? 'b' : '', n > 15 && n < 21 ? 'in' : '', n > 21 ? 'future' : '', has ? 'has' : ''].join(' ');
+      return `<button class="${cls}" ${n > 21 ? 'aria-disabled="true"' : ''}>${n}</button>`; }).join('');
+  const closeCal = () => { document.getElementById('cal').classList.remove('is-open'); };
+  document.getElementById('cal-cancel').onclick = closeCal;
+  document.getElementById('cal-ok').onclick = () => { closeCal(); period = 7; render(); };
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(render);
+  window.addEventListener('resize', render);
+})();
+</script>
+</body>
+</html>

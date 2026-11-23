@@ -1,0 +1,122 @@
+<!--@head title="Діалоги"-->
+<style>
+  .set { display: grid; grid-template-columns: 216px minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+  .snav { display: grid; gap: 2px; }
+  .snav a { display: flex; align-items: center; gap: var(--space-3); height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-control); color: var(--color-text-muted); text-decoration: none; font-weight: 500; position: relative; }
+  .snav a[aria-current="page"] { background: var(--color-overlay-active); color: var(--color-text-primary); }
+  .snav a[aria-current="page"]::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--color-info); }
+  .sh { margin: 0 0 4px; font-size: var(--text-heading); font-weight: 600; }
+  .sd { margin: 0 0 var(--space-4); color: var(--color-text-muted); font-size: var(--text-small); }
+  .strow { display: grid; grid-template-columns: 20px 28px minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-3) var(--space-4); }
+  .strow + .strow { border-top: 1px solid var(--color-border); }
+  .strow .grip { color: var(--color-text-subtle); }
+  .dialog--sm { width: 480px; }
+  .btn--danger { background: transparent; color: var(--color-bad); border-color: rgb(255 122 114 / .45); }
+  .btn--danger:hover { background: var(--color-bad-soft); }
+  .choice { display: grid; gap: 4px; padding: var(--space-3) var(--space-4); border-radius: 10px; border: 1px solid var(--color-border-strong); background: var(--color-surface-2); }
+  .choice b { font-weight: 500; }
+  .choice span { font-size: var(--text-small); color: var(--color-text-muted); }
+  .snack { position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: var(--z-popover); display: flex; align-items: center; gap: var(--space-4); padding: 10px 10px 10px 16px; border-radius: 10px; background: var(--color-surface-3); border: 1px solid var(--color-border-strong); box-shadow: var(--shadow-popover); font-size: var(--text-small); }
+  .snack__bar { position: absolute; left: 12px; right: 12px; bottom: 3px; height: 2px; border-radius: 2px; background: var(--color-border-strong); overflow: hidden; }
+  .snack__bar::after { content: ""; position: absolute; inset: 0; width: 62%; background: var(--color-info); }
+  .ss { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+  .ss__shot { border-radius: 8px; background: #0C5A9E; color: #fff; padding: 16px 18px; font-family: "Segoe UI", sans-serif; font-size: 12px; line-height: 1.45; position: relative; min-height: 172px; }
+  .ss__shot h3 { margin: 0 0 8px; font-size: 18px; font-weight: 300; }
+  .ss__shot .u { text-decoration: underline; }
+  .ss__shot .btns { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 6px; }
+  .ss__shot .btns span { padding: 4px 12px; border: 1px solid rgb(255 255 255 / .8); font-size: 11px; }
+  .ss__mark { position: absolute; width: 22px; height: 22px; border-radius: 50%; background: var(--color-warn); color: #1a1a1a; font-weight: 700; font-size: 12px; display: grid; place-items: center; box-shadow: 0 0 0 3px rgb(242 182 61 / .35); }
+  .ss__steps { margin: 0; padding: 0; list-style: none; display: grid; gap: var(--space-3); align-content: start; }
+  .ss__steps li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; font-size: var(--text-small); color: var(--color-text-muted); }
+  .ss__steps li b { color: var(--color-text-primary); font-weight: 500; }
+  .ss__steps .n { width: 22px; height: 22px; border-radius: 50%; background: var(--color-warn); color: #1a1a1a; font-weight: 700; font-size: 12px; display: grid; place-items: center; }
+  .sum { font-family: var(--font-mono); font-size: 11.5px; color: var(--color-text-subtle); word-break: break-all; }
+</style>
+</head>
+<body>
+<!--@sprite-->
+<main class="doc">
+  <!--@docnav page="11-dialogs.html" title="Діалоги"-->
+  <p class="doc-lede">Два діалоги з flows: видалення станції (рішення власника — за замовчуванням архів, історія лишається) і бриф перед запуском непідписаного інсталятора оновлення.</p>
+
+  <div style="display:grid;gap:48px">
+  <section>
+    <h2 class="doc-h2" style="margin-top:0">Видалення станції (flows M3)</h2>
+    <div class="win">
+      <!--@titlebar-->
+      <!--@appbar tab="settings" grid="on" soc="100"-->
+      <div class="content">
+        <div class="set">
+          <nav class="snav"><a href="#"><!--@icon n="sliders"-->Загальні</a><a href="#"><!--@icon n="bell"-->Сповіщення</a><a href="#" aria-current="page"><!--@icon n="battery"-->Станції</a><a href="#"><!--@icon n="network"-->Підключення</a><a href="#"><!--@icon n="database"-->Дані та історія</a><a href="#"><!--@icon n="info"-->Про програму</a></nav>
+          <div>
+            <h2 class="sh">Станції</h2><p class="sd">Назви й порядок — як у перемикачі над вкладками.</p>
+            <div class="panel" style="padding:0">
+              <div class="strow"><span class="grip"><!--@icon n="grip"--></span><!--@minidial pct="100" tone="good" num="100"--><span><b style="font-weight:500">Дім</b> <span class="t-subtle" style="font-size:12px">Venus E 3.0 · LAN + хмара</span></span><button class="btn btn--ghost">Видалити</button></div>
+              <div class="strow"><span class="grip"><!--@icon n="grip"--></span><!--@minidial pct="100" tone="good" num="100"--><span><b style="font-weight:500">Дача</b> <span class="t-subtle" style="font-size:12px">Venus E 3.0 · хмара</span></span><button class="btn btn--ghost" style="background:var(--color-overlay-active)">Видалити</button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="scrim" aria-hidden="true"></div>
+      <div class="dialog dialog--sm" role="alertdialog" aria-modal="true" aria-labelledby="del-t" aria-describedby="del-d">
+        <div class="dialog__head"><div><h2 class="dialog__title" id="del-t">Прибрати станцію «Дача»?</h2><p class="dialog__desc" id="del-d">Додаток перестане стежити за нею. Сама станція й дані в хмарі Marstek не зміняться.</p></div></div>
+        <div class="dialog__body">
+          <div class="choice"><b>Припинити стежити</b><span>Історія лишається в «Станції → Архів»; станцію можна повернути.</span></div>
+          <div class="choice"><b class="t-bad">Видалити разом з історією</b><span>Історія за 94 дні: 312 відключень, журнал помилок і заряду.</span></div>
+        </div>
+        <div class="dialog__foot"><button class="btn btn--danger">Видалити з історією…</button><span style="flex:1"></span><button class="btn btn--secondary">Скасувати</button><button class="btn btn--primary">Припинити стежити</button></div>
+      </div>
+    </div>
+    <h2 class="doc-h2">Після «Припинити стежити» — 10 с на скасування</h2>
+    <div class="win win--short" style="height:auto">
+      <!--@titlebar-->
+      <!--@appbar tab="settings" grid="on" soc="100"-->
+      <div class="content" style="height:240px;position:relative">
+        <div class="snack" role="status"><span>«Дача» перенесено в архів.</span><button class="btn btn--ghost" style="color:var(--color-info)">Повернути</button><span class="snack__bar" aria-hidden="true"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="doc-h2" style="margin-top:0">SMARTSCREEN_BRIEF — перед запуском інсталятора оновлення (flows §6)</h2>
+    <div class="win">
+      <!--@titlebar-->
+      <!--@appbar tab="settings" grid="on" soc="100"-->
+      <div class="content"></div>
+      <div class="scrim" aria-hidden="true"></div>
+      <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="ss-t" style="width:720px">
+        <div class="dialog__head"><div><h2 class="dialog__title" id="ss-t">Встановити версію 1.3.0</h2><p class="dialog__desc">Windows покаже синє вікно-попередження. Це очікувано — ось як пройти його за два кліки.</p></div><button class="iconbtn" aria-label="Закрити"><!--@icon n="x"--></button></div>
+        <div class="dialog__body">
+          <div class="ss">
+            <div class="ss__shot" aria-hidden="true">
+              <h3>Windows захистив ваш ПК</h3>
+              <div>Microsoft Defender SmartScreen запобіг запуску нерозпізнаної програми…</div>
+              <div class="u" style="margin-top:6px">Докладніше</div>
+              <span class="ss__mark" style="left:96px;top:78px">1</span>
+              <div class="btns"><span>Виконати все одно</span><span>Не виконувати</span></div>
+              <span class="ss__mark" style="right:196px;bottom:40px">2</span>
+            </div>
+            <ol class="ss__steps">
+              <li><span class="n">1</span><span>Натисніть <b>«Докладніше»</b> — з'явиться кнопка запуску.</span></li>
+              <li><span class="n">2</span><span>Натисніть <b>«Виконати все одно»</b>.</span></li>
+              <li><span></span><span>Чому так: інсталятор не підписаний платним сертифікатом. Файл уже перевірено — сума SHA-256 збігається з опублікованою на GitHub.<span class="sum" style="display:block;margin-top:6px">SHA-256 9f2c…a41e ✓</span></span></li>
+            </ol>
+          </div>
+          <p class="note"><!--@icon n="info"-->Оновлення займе близько хвилини. Зараз без світла: дані за цей час дозавантажаться з хмари.</p>
+        </div>
+        <div class="dialog__foot"><button class="btn btn--secondary">Назад</button><button class="btn btn--primary">Встановити</button></div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <ol class="doc-notes">
+    <li><b>Видалення:</b> безпечна дія (архів) — основна синя кнопка праворуч; видалення історії — червоний контур ліворуч, далеко від основної, і відкриває друге підтвердження з кількістю даних. Підзаголовок каже, що станція і хмара не постраждають.</li>
+    <li><b>Скасування</b> — нижній рядок з таймером-смужкою 10 с; таймер стоїть, поки курсор/фокус на ньому.</li>
+    <li><b>SmartScreen:</b> схема синього вікна Windows (не скриншот, лише форма) з нумерованими мітками; кроки праворуч тими самими номерами. Показується перед кожним встановленням.</li>
+    <li><b>Рядки</b> — з каталогу: settings.stations.remove.*, settings.stations.deleteHistory.* (друге підтвердження «Видалити назавжди» з експортом CSV — той самий компонент діалогу), smartscreen.*.</li>
+  </ol>
+</main>
+<!--@script-->
+</body>
+</html>

@@ -1,0 +1,170 @@
+/* ==========================================================================
+   Marstek Monitor — design tokens (dark theme, v1)
+   Two layers: primitives (--p-*) never used by components directly;
+   semantic tokens (--color-*, --space-*, --text-*, ...) are what components use.
+   A future light theme restates ONLY the semantic block under
+   :root[data-theme="light"]; primitives stay constant.
+   Contrast ratios below are WCAG 2.x, measured against --color-surface-1
+   (#151A20, the card surface) unless stated otherwise.
+   ========================================================================== */
+
+:root {
+  /* ---------- Primitives: neutrals (blue-graphite, hue ~215) ---------- */
+  --p-ink-950: #0B0E12;   /* window chrome / title bar */
+  --p-ink-900: #0E1115;   /* page */
+  --p-ink-850: #151A20;   /* surface 1 — cards, panels */
+  --p-ink-800: #1B2129;   /* surface 2 — popovers, hover rows, inputs */
+  --p-ink-750: #222932;   /* surface 3 — dialogs, tooltips */
+  --p-ink-700: #29303A;   /* gauge track, chart baseline */
+  --p-ink-650: #313944;   /* strong border, toggle off */
+  --p-ink-400: #8A94A1;   /* subtle text   5.5:1 on s1 */
+  --p-ink-300: #A6AEB9;   /* muted text    7.8:1 on s1 */
+  --p-ink-100: #E8EBEF;   /* primary text 14.6:1 on s1 */
+
+  /* ---------- Primitives: signal hues (one step each, tuned for dark) ---------- */
+  --p-green-400: #4FCB8D;  /* 8.6:1 on s1 */
+  --p-green-300: #7FDDAE;
+  --p-green-900: #12261D;  /* tint surface */
+  --p-amber-400: #F2B63D;  /* 9.6:1 on s1 */
+  --p-amber-300: #F7CD77;
+  --p-amber-900: #2A2418;
+  --p-blue-400:  #6DB3FF;  /* 8.0:1 on s1 */
+  --p-blue-300:  #9CCBFF;
+  --p-blue-900:  #13202F;
+  --p-red-400:   #FF7A72;  /* 6.9:1 on s1 */
+  --p-red-300:   #FFA39D;
+  --p-red-900:   #2C1617;
+
+  /* ======================= Semantic ======================= */
+  color-scheme: dark;
+
+  /* Surfaces — elevation is lightness, +~0.03 L per step */
+  --color-bg-chrome:   var(--p-ink-950);
+  --color-bg-page:     var(--p-ink-900);
+  --color-surface-1:   var(--p-ink-850);
+  --color-surface-2:   var(--p-ink-800);
+  --color-surface-3:   var(--p-ink-750);
+  --color-overlay-hover:  rgb(255 255 255 / 0.04);
+  --color-overlay-active: rgb(255 255 255 / 0.07);
+  --color-scrim:       rgb(5 7 10 / 0.62);
+
+  /* Text */
+  --color-text-primary: var(--p-ink-100);
+  --color-text-muted:   var(--p-ink-300);
+  --color-text-subtle:  var(--p-ink-400);  /* never on surface-3 for body text */
+  --color-text-on-accent: #0B1520;
+
+  /* Lines */
+  --color-border:        rgb(255 255 255 / 0.07);
+  --color-border-strong: rgb(255 255 255 / 0.13);
+  --color-gridline:      rgb(255 255 255 / 0.06);
+  --color-track:         var(--p-ink-700);
+
+  /* THE COLOUR RULE — one meaning per hue, nowhere else
+     good   = green : charge level OK, charging, grid present, no errors
+     power  = amber : discharging, no grid (outage)
+     info   = blue  : neutral magnitudes — time, counters, cycles, kWh capacity
+     bad    = red   : threshold crossed — SOC < alert threshold, temp out of range, error */
+  --color-good:      var(--p-green-400);
+  --color-good-soft: var(--p-green-900);
+  --color-warn:      var(--p-amber-400);   /* "no grid / discharging", not "warning" */
+  --color-warn-soft: var(--p-amber-900);
+  --color-info:      var(--p-blue-400);
+  --color-info-soft: var(--p-blue-900);
+  --color-bad:       var(--p-red-400);
+  --color-bad-soft:  var(--p-red-900);
+
+  /* Charts */
+  --color-chart-outage-band: rgb(166 174 185 / 0.10);  /* grey band = no grid */
+  --color-chart-outage-hatch: rgb(166 174 185 / 0.16);
+  --color-chart-gap-stroke:  var(--p-ink-400);           /* dashed frame = no data */
+  --color-chart-crosshair:   rgb(232 235 239 / 0.35);
+
+  /* Focus — 2px ring, measured ≥ 3:1 against every surface it can sit on */
+  --color-focus: #8CC4FF;   /* 9.5:1 on s1, 8.0:1 on s3 */
+  --ring-width: 2px;
+  --ring-offset: 2px;
+
+  /* ---------- Type ---------- */
+  --font-sans: "IBM Plex Sans", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+
+  /* 6 sizes, ratio ≈ 1.2 for a dense instrument UI. Body is 14 (desktop, scanned at arm's length). */
+  --text-caption: 12px;  /* labels, axis ticks, meta, UPPERCASE section labels */
+  --text-small:   13px;  /* table cells, pills, secondary lines */
+  --text-body:    14px;  /* default */
+  --text-title:   16px;  /* card titles, dialog list items */
+  --text-heading: 20px;  /* settings section heading, dialog title */
+  --text-numeral: 28px;  /* gauge value (one size for every gauge) */
+
+  --leading-tight: 1.15;
+  --leading-snug:  1.35;
+  --leading-body:  1.5;
+
+  --weight-regular: 400;
+  --weight-medium:  500;   /* tabs, buttons, values in rows */
+  --weight-semibold: 600;  /* numerals, headings */
+
+  --tracking-caps:     0.07em;
+  --tracking-numeral: -0.02em;
+  --tracking-heading: -0.01em;
+
+  /* ---------- Space (8px grid, 4px half-step for tight UI) ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* ---------- Radii ---------- */
+  --radius-xs: 4px;       /* chart bars (top corners), checkbox */
+  --radius-control: 6px;  /* buttons, inputs, segmented items, tooltip */
+  --radius-card: 10px;    /* panels */
+  --radius-dialog: 12px;  /* dialogs, popovers */
+  --radius-pill: 999px;
+
+  /* ---------- Elevation: only floating layers get shadows ---------- */
+  --shadow-popover:
+    0 1px 0 0 rgb(255 255 255 / 0.05) inset,
+    0 8px 24px -6px rgb(0 0 0 / 0.55),
+    0 2px 6px -2px rgb(0 0 0 / 0.4);
+  --shadow-dialog:
+    0 1px 0 0 rgb(255 255 255 / 0.06) inset,
+    0 24px 48px -12px rgb(0 0 0 / 0.65),
+    0 4px 12px -4px rgb(0 0 0 / 0.5);
+
+  /* ---------- Motion ---------- */
+  --duration-instant: 100ms;  /* hover colour, press */
+  --duration-fast:    150ms;  /* tooltip in, toggle thumb */
+  --duration-normal:  200ms;  /* popover, segmented indicator */
+  --duration-slow:    280ms;  /* dialog enter */
+  --duration-data:    600ms;  /* gauge fill / chart transitions on new data — slow on purpose, data is not UI */
+  --ease-standard:   cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ---------- Z (in-window layers; tooltips portalled to <body>) ---------- */
+  --z-sticky: 100;
+  --z-popover: 1000;
+  --z-scrim: 1100;
+  --z-dialog: 1200;
+  --z-tooltip: 1500;
+
+  /* ---------- Component tokens (only where a value is unique) ---------- */
+  --gauge-size: 120px;          /* rendered dial box */
+  --gauge-stroke: 10;           /* in viewBox units (viewBox 0 0 120 120, r = 50) */
+  --titlebar-height: 32px;
+  --header-height: 52px;
+  --control-height: 32px;
+  --row-height: 40px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-normal: 1ms;
+    --duration-slow: 1ms;
+    --duration-data: 1ms;
+  }
+}

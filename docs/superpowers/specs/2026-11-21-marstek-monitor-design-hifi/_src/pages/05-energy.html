@@ -1,0 +1,115 @@
+<!--@head title="Енергія"-->
+<style>
+  .toolbar { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+  .toolbar .icon { width: 14px; height: 14px; }
+  .en { display: grid; grid-template-columns: 248px minmax(0, 1fr); gap: var(--space-4); }
+  .totals { display: grid; align-content: start; padding: 0; }
+  .total { padding: var(--space-4) var(--space-5); display: grid; gap: 2px; }
+  .total + .total { border-top: 1px solid var(--color-border); }
+  .total__v { font-size: var(--text-numeral); font-weight: 600; letter-spacing: var(--tracking-numeral); line-height: 1.1; }
+  .total__v small { font-size: 14px; font-weight: 500; color: var(--color-text-muted); margin-left: 4px; letter-spacing: 0; }
+  .total__m { font-size: var(--text-caption); color: var(--color-text-subtle); }
+  .gb .bar.c { fill: var(--color-good); }
+  .gb .bar.d { fill: var(--color-warn); }
+  .pv-variant { width: 1100px; display: grid; grid-template-columns: 248px 1fr; gap: var(--space-5); align-items: center; background: var(--color-bg-page); border: 1px solid rgb(255 255 255 / .08); border-radius: 8px; padding: var(--space-5); }
+  .pv-variant .panel { padding: var(--space-4) var(--space-2) var(--space-3); }
+  .pv-variant .gauges { --cols: 1; }
+</style>
+</head>
+<body>
+<!--@sprite-->
+<main class="doc">
+  <!--@docnav page="05-energy.html" title="Енергія"-->
+  <p class="doc-lede">Другорядна вкладка: той самий перемикач періоду, що у «Відключеннях». Зелений = заряд, жовтий = розряд (правило кольору). Наведіть на пару стовпчиків — тултіп на весь день.</p>
+
+  <div class="win">
+    <!--@titlebar state="Без світла 3 год 27 хв"-->
+    <!--@appbar tab="energy" grid="off"-->
+    <div class="content">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Період" id="period">
+          <button class="seg__item" aria-pressed="false" data-value="1">Сьогодні</button>
+          <button class="seg__item" aria-pressed="true" data-value="7">7 днів</button>
+          <button class="seg__item" aria-pressed="false" data-value="30">30 днів</button>
+          <button class="seg__item" aria-pressed="false" data-value="7"><!--@icon n="calendar"-->15.11 – 21.11</button>
+        </div>
+      </div>
+      <div class="en">
+        <section class="panel totals" aria-label="Підсумки">
+          <div class="total"><span class="label">Заряджено</span><span class="total__v t-good" id="tot-c">—</span></div>
+          <div class="total"><span class="label">Віддано</span><span class="total__v t-warn" id="tot-d">—</span><span class="total__m" id="tot-d-m"></span></div>
+          <div class="total"><span class="label">ККД циклу</span><span class="total__v t-info" id="tot-e">—</span></div>
+        </section>
+        <section class="panel" aria-labelledby="gb-title">
+          <div class="panel__head">
+            <h2 class="panel__title" id="gb-title">кВт·год по днях</h2>
+            <div class="legend"><span><i style="background:var(--color-good)"></i>заряд</span><span><i style="background:var(--color-warn)"></i>розряд</span></div>
+          </div>
+          <div class="chart gb" id="gb"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <ol class="doc-notes">
+    <li><b>Згруповані стовпчики:</b> пара на день, 2 px між ними, ширина пари ≤ 40 px. Hover/фокус — уся колонка дня (широка невидима зона), тултіп над вищим стовпчиком.</li>
+    <li><b>Підсумки зліва</b> — числа, не кільця: це суми, а не частки. Кольори — за правилом: заряд зелений, розряд жовтий, ККД (нейтральне) синій.</li>
+    <li><b>Десятковий знак — кома</b> (29,2 кВт·год), як прийнято в українській; в англійській — крапка. Форматує Intl.NumberFormat за мовою інтерфейсу.</li>
+  </ol>
+
+  <h2 class="doc-h2">Тільки якщо підключені сонячні панелі</h2>
+  <div class="pv-variant">
+    <div class="panel"><div class="gauges">
+      <!--@gauge title="Мережа / сонце" tone="info" pct="70" num="70" small="%" primary="з мережі · 30% сонце"-->
+    </div></div>
+    <p class="doc-lede" style="margin:0">Те саме кільце: заповнення = частка заряду з мережі (синє, нейтральне). Стає першим блоком лівої колонки над «Заряджено»; у тултіпі денного стовпчика з'являється рядок «сонце X кВт·год». Без PV блок не рендериться зовсім — не «0%».</p>
+  </div>
+</main>
+<!--@script-->
+<!--@data-->
+<script>
+(function () {
+  const D = MMData, F = D.fmt, host = document.getElementById('gb');
+  let period = 7;
+  function render() {
+    const days = D.days.slice(-period);
+    const c = days.reduce((a, d) => a + d.chg, 0), d_ = days.reduce((a, d) => a + d.dis, 0), dOut = days.reduce((a, d) => a + d.disOutage, 0);
+    document.getElementById('tot-c').innerHTML = `${F.kwh(c)}<small>кВт·год</small>`;
+    document.getElementById('tot-d').innerHTML = `${F.kwh(d_)}<small>кВт·год</small>`;
+    document.getElementById('tot-d-m').textContent = `під час відключень ${F.kwh(dOut)}`;
+    document.getElementById('tot-e').innerHTML = `${Math.min(96, Math.round(d_ / c * 100 * 0.97))}<small>%</small>`;
+    const W = host.clientWidth, H = 420, P = { l: 40, r: 4, t: 16, b: 30 };
+    const max = Math.max(2, Math.ceil(Math.max(...days.map(d => Math.max(d.chg, d.dis))) / 2) * 2);
+    const y = v => P.t + (1 - v / max) * (H - P.t - P.b);
+    const slot = (W - P.l - P.r) / days.length, bw = Math.min(18, slot * 0.3);
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="group" aria-label="Заряд і розряд по днях"><g class="grid">`;
+    for (let v = 0; v <= max; v += 2) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" class="${v ? '' : 'base'}"/>`;
+    s += '</g><g class="axis">';
+    for (let v = 0; v <= max; v += 2) s += `<text x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+    days.forEach((d, i) => { const cx = P.l + slot * i + slot / 2; if (days.length <= 10 || i % 5 === 4) s += `<text x="${cx}" y="${H - 10}" text-anchor="middle" class="${d.d === 6 ? 'strong' : ''}">${days.length <= 10 ? F.dayShort(d.t) : F.dm(d.t)}</text>`; });
+    s += '</g>';
+    const bar = (x, v, cls) => { const top = y(v), h = y(0) - top; return h < 1 ? '' : `<path class="bar ${cls}" d="M${x},${y(0)}V${top + 3}q0,-3 3,-3h${bw - 6}q3,0 3,3V${y(0)}Z"/>`; };
+    days.forEach((d, i) => {
+      const cx = P.l + slot * i + slot / 2;
+      s += `<g class="bar-g" data-i="${i}" tabindex="0" role="img" aria-label="${F.dayLong(d.t)}: заряд ${F.kwh(d.chg)}, розряд ${F.kwh(d.dis)} кВт·год"><rect class="bar-hit" x="${P.l + slot * i}" y="${P.t}" width="${slot}" height="${H - P.t - P.b}"/>`;
+      s += bar(cx - bw - 1, d.chg, 'c') + bar(cx + 1, d.dis, 'd') + '</g>';
+    });
+    host.innerHTML = s + '</svg>';
+    host.querySelectorAll('.bar-g').forEach(g => {
+      const d = days[g.dataset.i];
+      const html = `<div class="tip__title">${F.dayLong(d.t)}${d.d === 6 ? '<small>до 15:17</small>' : ''}</div><dl>
+        <dt><span class="t-good">●</span> Заряд</dt><dd>${F.kwh(d.chg)} кВт·год</dd>
+        <dt><span class="t-warn">●</span> Розряд</dt><dd>${F.kwh(d.dis)} кВт·год</dd><dt class="sub">під час відключень</dt><dd class="sub">${F.kwh(d.disOutage)}</dd>
+        ${d.peak ? `<dt>Пік розряду</dt><dd>${Math.round(d.peak.w / 10) * 10} Вт <span class="t-subtle">о ${F.time(d.peak.t)}</span></dd>` : ''}</dl>`;
+      const on = () => { const bars = g.querySelectorAll('.bar'); const r = (bars.length ? [...bars] : [g.querySelector('.bar-hit')]).map(b => b.getBoundingClientRect()); const top = Math.min(...r.map(q => q.top)); const L = Math.min(...r.map(q => q.left)), R = Math.max(...r.map(q => q.right)); MM.tip.show(g, html, { rect: { left: L, right: R, width: R - L, top, bottom: top + 10, height: 10 } }); };
+      g.addEventListener('pointerenter', on); g.addEventListener('focus', on);
+      g.addEventListener('pointerleave', MM.tip.hide); g.addEventListener('blur', MM.tip.hide);
+    });
+  }
+  document.getElementById('period').addEventListener('seg-change', e => { period = Math.max(1, Number(e.detail)); render(); });
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(render);
+  window.addEventListener('resize', render);
+})();
+</script>
+</body>
+</html>

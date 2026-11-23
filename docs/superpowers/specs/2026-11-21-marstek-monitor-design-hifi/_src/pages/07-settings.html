@@ -1,0 +1,112 @@
+<!--@head title="Налаштування"-->
+<style>
+  .set { display: grid; grid-template-columns: 216px minmax(0, 1fr); gap: var(--space-5); align-items: start; }
+  .snav { display: grid; gap: 2px; position: sticky; top: 0; }
+  .snav a { display: flex; align-items: center; gap: var(--space-3); height: 36px; padding: 0 var(--space-3); border-radius: var(--radius-control); color: var(--color-text-muted); text-decoration: none; font-weight: 500; position: relative; transition: background-color var(--duration-instant), color var(--duration-instant); }
+  .snav a:hover { background: var(--color-overlay-hover); color: var(--color-text-primary); }
+  .snav a[aria-current="page"] { background: var(--color-overlay-active); color: var(--color-text-primary); }
+  .snav a[aria-current="page"]::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 3px; border-radius: 3px; background: var(--color-info); }
+  .snav .ver { margin-top: var(--space-5); padding: 0 var(--space-3); font-size: var(--text-caption); color: var(--color-text-subtle); }
+  .sh { margin: 0 0 4px; font-size: var(--text-heading); font-weight: 600; letter-spacing: var(--tracking-heading); }
+  .sd { margin: 0 0 var(--space-5); color: var(--color-text-muted); font-size: var(--text-small); }
+  .grp { margin-bottom: var(--space-4); }
+  .grp > .label { display: block; margin: 0 0 var(--space-2) var(--space-1); }
+  .grp .panel { padding: 0; }
+  .opt { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: var(--space-3); align-items: start; padding: var(--space-3) var(--space-4); }
+  .opt + .opt { border-top: 1px solid var(--color-border); }
+  .opt__icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--color-surface-2); color: var(--color-text-muted); }
+  .opt__t { font-weight: 500; line-height: 1.35; }
+  .opt__d { font-size: var(--text-small); color: var(--color-text-subtle); line-height: 1.4; margin-top: 2px; }
+  .opt .switch { margin-top: 6px; }
+  .opt__sub { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-3); flex-wrap: wrap; font-size: var(--text-small); color: var(--color-text-muted); }
+  .is-off .opt__sub { opacity: .45; }
+  .is-off .opt__sub * { pointer-events: none; }
+  .sd-row { display: flex; align-items: flex-start; gap: var(--space-4); margin-bottom: var(--space-5); }
+  .sd-row .sd { margin: 0; }
+  .sd-row .btn { margin-left: auto; flex: none; }
+  .cmp { width: 1100px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .cmp__col { display: grid; gap: 8px; align-content: start; }
+  .cmp__col > .label { margin-left: 4px; }
+  .cmp .panel { padding: 0; }
+  .emo { width: 32px; height: 32px; display: grid; place-items: center; font-size: 18px; font-family: "Segoe UI Emoji", "Apple Color Emoji", sans-serif; }
+  .toast-demo { position: fixed; right: 16px; bottom: 16px; width: 364px; z-index: 2000; background: #2C2C2C; border: 1px solid rgb(255 255 255 / .09); border-radius: 8px; padding: 12px 16px 14px; font-family: "Segoe UI Variable Text", "Segoe UI", var(--font-sans); color: #fff; box-shadow: 0 12px 28px rgb(0 0 0 / .45); }
+  .toast-demo .toast__app { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #C5C5C5; margin-bottom: 10px; }
+  .toast-demo .toast__app em { margin-left: auto; font-style: normal; color: #9A9A9A; }
+  .toast-demo .toast__t { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .toast-demo .toast__b { font-size: 14px; color: #D6D6D6; }
+  .toast-demo .toast__attr { margin-top: 8px; font-size: 12px; color: #9A9A9A; }
+  .timerange { display: inline-flex; align-items: center; gap: var(--space-2); }
+  .badge-always { display: inline-flex; gap: 4px; align-items: center; font-size: var(--text-caption); color: var(--color-text-muted); }
+</style>
+</head>
+<body>
+<!--@sprite-->
+<main class="doc">
+  <!--@docnav page="07-settings.html" title="Налаштування"-->
+  <p class="doc-lede">Окремий екран (⚙ праворуч у панелі вкладок). Ліворуч — розділи, праворуч — розділ «Сповіщення». Перемикачі працюють; вимкнений «Немає зв'язку» гасить свій вибір часу.</p>
+
+  <div class="win">
+    <!--@titlebar state="Без світла 3 год 27 хв"-->
+    <!--@appbar tab="settings" grid="off"-->
+    <div class="content">
+      <div class="set">
+        <nav class="snav" aria-label="Розділи налаштувань">
+          <a href="#"><!--@icon n="sliders"-->Загальні</a>
+          <a href="#" aria-current="page"><!--@icon n="bell"-->Сповіщення</a>
+          <a href="#"><!--@icon n="battery"-->Станції</a>
+          <a href="#"><!--@icon n="network"-->Підключення</a>
+          <a href="#"><!--@icon n="database"-->Дані та історія</a>
+          <a href="#"><!--@icon n="info"-->Про програму</a>
+          <div class="ver">Marstek Monitor 1.0.0</div>
+        </nav>
+
+        <div>
+          <h2 class="sh">Сповіщення</h2>
+          <div class="sd-row"><p class="sd">Спливають у кутку екрана, навіть коли вікно додатка закрите.</p><button class="btn btn--secondary" id="test-toast"><!--@icon n="bell"-->Надіслати тестове сповіщення</button></div>
+
+          <div class="grp"><span class="label">Світло</span><div class="panel">
+            <div class="opt"><span class="opt__icon"><!--@icon n="plug-off"--></span><div><div class="opt__t" id="o1">Зникло світло</div><div class="opt__d">З прогнозом, на скільки вистачить заряду.</div></div><button class="switch" role="switch" aria-checked="true" aria-labelledby="o1"></button></div>
+            <div class="opt"><span class="opt__icon"><!--@icon n="plug"--></span><div><div class="opt__t" id="o2">Світло з'явилось</div><div class="opt__d">Скільки тривало відключення і коли станція зарядиться.</div></div><button class="switch" role="switch" aria-checked="true" aria-labelledby="o2"></button></div>
+          </div></div>
+
+          <div class="grp"><span class="label">Батарея</span><div class="panel">
+            <div class="opt" data-dependent><span class="opt__icon"><!--@icon n="battery"--></span><div><div class="opt__t" id="o3">Низький заряд</div><div class="opt__d">Коли заряд опускається до порогу. Приходить і в тиху годину.</div>
+              <div class="opt__sub">Поріг
+                <div class="seg seg--sm" role="group" aria-label="Поріг низького заряду">
+                  <button class="seg__item" aria-pressed="false">10%</button><button class="seg__item" aria-pressed="true">20%</button><button class="seg__item" aria-pressed="false">30%</button><button class="seg__item" aria-pressed="false">40%</button><button class="seg__item" aria-pressed="false">50%</button>
+                </div></div></div>
+              <button class="switch" role="switch" aria-checked="true" aria-labelledby="o3"></button></div>
+            <div class="opt"><span class="opt__icon"><!--@icon n="zap"--></span><div><div class="opt__t" id="o4">Станція заряджена до 100%</div><div class="opt__d">Один раз, коли заряд досягне 100%.</div></div><button class="switch" role="switch" aria-checked="true" aria-labelledby="o4"></button></div>
+            <div class="opt"><span class="opt__icon"><!--@icon n="battery"--></span><div><div class="opt__t" id="o8">Станція, ймовірно, розрядилась</div><div class="opt__d">Лише коли цей комп'ютер живиться не від станції і бачить це наживо. Увімкнено за замовчуванням.</div></div><button class="switch" role="switch" aria-checked="true" aria-labelledby="o8"></button></div>
+            <div class="opt"><span class="opt__icon"><!--@icon n="alert"--></span><div><div class="opt__t" id="o5">Нова помилка або попередження</div><div class="opt__d">З поясненням і порадою, що робити.</div></div><button class="switch" role="switch" aria-checked="true" aria-labelledby="o5"></button></div>
+          </div></div>
+
+          <div class="grp"><span class="label">Зв'язок</span><div class="panel">
+            <div class="opt is-off" data-dependent><span class="opt__icon"><!--@icon n="wifi-off"--></span><div><div class="opt__t" id="o6">Немає зв'язку зі станцією</div><div class="opt__d">Якщо даних немає ні локально, ні з хмари довше, ніж вказано. Вимкнено за замовчуванням: без світла роутер теж може вимкнутись.</div>
+              <div class="opt__sub"><label for="nolink">Після</label><select class="select" id="nolink"><option>5 хв</option><option selected>10 хв</option><option>15 хв</option><option>30 хв</option><option>60 хв</option></select></div></div>
+              <button class="switch" role="switch" aria-checked="false" aria-labelledby="o6"></button></div>
+          </div></div>
+
+          <div class="grp"><span class="label">Тиха година</span><div class="panel">
+            <div class="opt" data-dependent><span class="opt__icon"><!--@icon n="moon"--></span><div><div class="opt__t" id="o7">Тиха година</div><div class="opt__d">Вночі сповіщення не показуються, крім «Низький заряд».</div>
+              <div class="opt__sub"><span class="timerange"><label class="sr-only" for="q1">Початок</label><input class="input mono" id="q1" value="23:00" inputmode="numeric"> – <label class="sr-only" for="q2">Кінець</label><input class="input mono" id="q2" value="07:00" inputmode="numeric"></span></div></div>
+              <button class="switch" role="switch" aria-checked="true" aria-labelledby="o7"></button></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <ol class="doc-notes">
+    <li><b>Лінійні іконки, без емодзі</b> — квадрат 32 px, один набір (stroke 1,75), нейтральний колір (погоджено власником). Емодзі лишаються лише в самих toast-ах.</li>
+    <li><b>«Надіслати тестове сповіщення»</b> — вторинна кнопка поруч із вступом; надсилає справжній toast (клацніть — показано справа внизу). Рядки тостa — чернетка, ключа в каталозі ще немає. Якщо Windows сповіщення вимкнені — замість кнопки банер settings.notify.osDisabled.</li><li><b>Перемикач</b> застосовується одразу, без кнопки «Зберегти». Вимкнений — залежні контроли зникають до 45% і стають недоступні, але видно, що там буде.</li>
+    <li><b>Поріг</b> — сегментний контрол, а не випадний список: 5 варіантів видно одразу, вибір один клік. За замовчуванням 20%.</li>
+    <li><b>Ширина під англійську:</b> рядки опису переносяться, контрол праворуч завжди на своєму місці — +30% тексту нічого не ламає.</li>
+  </ol>
+
+</main>
+<div class="toast-demo" id="toast-demo" role="status" hidden><div class="toast__app"><svg viewBox="0 0 16 16" width="16" height="16"><rect x="1.5" y="3.5" width="12" height="8" rx="1" fill="none" stroke="#fff"/><rect x="3" y="5" width="6" height="5" fill="#4FCB8D"/></svg>Marstek Monitor<em>зараз</em></div><div class="toast__t">🔔 Тестове сповіщення</div><div class="toast__b">Якщо ви це бачите — сповіщення працюють.</div><div class="toast__attr">Дім · Venus E 3.0</div></div>
+<!--@script-->
+<script>document.getElementById("test-toast").addEventListener("click",()=>{const t=document.getElementById("toast-demo");t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,5000);});</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<h2>Головний екран v3: всі кільця в одному стилі</h2>
+<p class="subtitle">Одна товщина, сірий трек, заокруглені кінці, однакова розкладка тексту. Потужність тепер теж повне кільце: заповнення = поточна потужність від максимуму в поточному напрямку; колір і підпис кажуть, заряд це чи розряд.</p>
+
+<style>
+  .mk { font-family: system-ui, sans-serif; color:#e6e6e6; background:#16181d; border-radius:8px; padding:14px; }
+  .mk .row { display:flex; gap:12px; flex-wrap:wrap; }
+  .mk .card { background:#20232a; border-radius:8px; padding:10px 12px; flex:1; min-width:120px; }
+  .mk .lbl { font-size:11px; color:#9aa0a6; text-transform:uppercase; letter-spacing:.04em; }
+  .mk .sm { font-size:12px; color:#b5b9bf; }
+  .mk .ok { color:#5ad17a; } .mk .bad { color:#ef6b6b; }
+  .mk svg { width:100%; display:block; }
+  .mk .gauge { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .mk .gauge svg { width:110px; }
+  .mk .tabs { display:flex; gap:14px; font-size:12px; color:#9aa0a6; border-bottom:1px solid #2c3038; padding-bottom:6px; margin-bottom:10px; }
+  .mk .tabs b { color:#e6e6e6; border-bottom:2px solid #5aa9ff; padding-bottom:5px; }
+  .mk .track { fill:none; stroke:#2c3038; stroke-width:11; }
+  .mk .fill { fill:none; stroke-width:11; stroke-linecap:round; }
+  .mk .v { fill:#e6e6e6; font-size:22px; font-weight:600; }
+  .mk .u { fill:#9aa0a6; font-size:9px; }
+</style>
+
+<div class="mockup">
+  <div class="mockup-header">Огляд — верхній ряд</div>
+  <div class="mockup-body">
+  <div class="mk">
+    <div class="tabs"><b>Огляд</b><span>Відключення</span><span>Помилки</span><span>Батарея</span><span>Енергія</span><span style="margin-left:auto">⚙</span></div>
+    <div class="row">
+      <div class="card gauge"><div class="lbl">Заряд</div>
+        <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="217 302" transform="rotate(-90 60 60)"/>
+        <text x="60" y="66" text-anchor="middle" class="v">72%</text></svg>
+        <div class="sm">3.7 з 5.12 кВт·г</div></div>
+
+      <div class="card gauge"><div class="lbl">Потужність</div>
+        <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#f2b84b" stroke-dasharray="158 302" transform="rotate(-90 60 60)"/>
+        <text x="60" y="62" text-anchor="middle" class="v" style="fill:#f2b84b">420</text><text x="60" y="78" text-anchor="middle" class="u">Вт · розряд</text></svg>
+        <div class="sm">з 2 500 Вт макс.</div></div>
+
+      <div class="card gauge"><div class="lbl">До розряду</div>
+        <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5aa9ff" stroke-dasharray="205 302" transform="rotate(-90 60 60)"/>
+        <text x="60" y="62" text-anchor="middle" class="v">7:30</text><text x="60" y="78" text-anchor="middle" class="u">год : хв</text></svg>
+        <div class="sm">до 10% · ≈ о 22:45</div></div>
+
+      <div class="card gauge"><div class="lbl">Світло сьогодні</div>
+        <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="262 302" transform="rotate(-90 60 60)"/>
+        <text x="60" y="66" text-anchor="middle" class="v">87%</text></svg>
+        <div class="sm">2 відкл. · 3 г 10 хв без світла</div></div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:20px">
+  <div class="mockup-header">Той самий стан, але станція заряджається</div>
+  <div class="mockup-body">
+  <div class="mk"><div class="row">
+      <div class="card gauge"><div class="lbl">Потужність</div>
+        <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="211 302" transform="rotate(-90 60 60)"/>
+        <text x="60" y="62" text-anchor="middle" class="v" style="fill:#5ad17a">1750</text><text x="60" y="78" text-anchor="middle" class="u">Вт · заряд</text></svg>
+        <div class="sm">з 2500 Вт макс.</div></div>
+      <div class="card gauge"><div class="lbl">До повного</div>
+        <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5aa9ff" stroke-dasharray="217 302" transform="rotate(-90 60 60)"/>
+        <text x="60" y="62" text-anchor="middle" class="v">0:52</text><text x="60" y="78" text-anchor="middle" class="u">год : хв</text></svg>
+        <div class="sm">до 100% · ≈ о 16:10</div></div>
+      <div class="card gauge" style="visibility:hidden"></div><div class="card gauge" style="visibility:hidden"></div>
+  </div></div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:20px">
+  <div class="mockup-header">Інші кільця (на своїх вкладках) — в тому ж стилі</div>
+  <div class="mockup-body">
+  <div class="mk"><div class="row">
+    <div class="card gauge"><div class="lbl">Світло за 7 днів</div>
+      <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="232 302" transform="rotate(-90 60 60)"/>
+      <text x="60" y="66" text-anchor="middle" class="v">77%</text></svg><div class="sm">39 г без світла</div></div>
+    <div class="card gauge"><div class="lbl">Здоров'я</div>
+      <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="293 302" transform="rotate(-90 60 60)"/>
+      <text x="60" y="66" text-anchor="middle" class="v">97%</text></svg><div class="sm">4.97 з 5.12 кВт·г</div></div>
+    <div class="card gauge"><div class="lbl">Ресурс циклів</div>
+      <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5aa9ff" stroke-dasharray="7 302" transform="rotate(-90 60 60)"/>
+      <text x="60" y="66" text-anchor="middle" class="v">142</text></svg><div class="sm">з ~6000 циклів</div></div>
+    <div class="card gauge"><div class="lbl">Покриття відкл.</div>
+      <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="284 302" transform="rotate(-90 60 60)"/>
+      <text x="60" y="66" text-anchor="middle" class="v">94%</text></svg><div class="sm">1 раз розрядилась раніше</div></div>
+    <div class="card gauge"><div class="lbl">Температура</div>
+      <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5aa9ff" stroke-dasharray="120 302" transform="rotate(-90 60 60)"/>
+      <text x="60" y="66" text-anchor="middle" class="v">18°</text></svg><div class="sm">норма 0…45 °C</div></div>
+    <div class="card gauge"><div class="lbl">Мережа / сонце</div>
+      <svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48" stroke="#f2b84b"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5aa9ff" stroke-dasharray="211 302" transform="rotate(-90 60 60)"/>
+      <text x="60" y="66" text-anchor="middle" class="v">70%</text></svg><div class="sm">з мережі · 30% сонце</div></div>
+  </div></div>
+  </div>
+</div>
+<p class="subtitle" style="margin-top:12px">Правило кольору: зелений — добре / заряд, жовтий — розряд, синій — нейтральне значення (час, лічильник), червоний — погано (вмикається на порогах, напр. заряд &lt; 20%, температура поза нормою).</p>

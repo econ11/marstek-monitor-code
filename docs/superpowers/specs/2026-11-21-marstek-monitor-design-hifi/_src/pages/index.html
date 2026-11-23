@@ -1,0 +1,120 @@
+<!--@head title="Зміст"-->
+<style>
+  .hero { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 48px; align-items: center; margin-bottom: 24px; }
+  .hero h1 { font-size: 40px; line-height: 1.1; letter-spacing: -0.03em; font-weight: 600; margin: 0 0 12px; }
+  .hero p { color: var(--color-text-muted); max-width: 62ch; margin: 0; }
+  .screens { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .scr { display: grid; gap: 4px; padding: 16px; border-radius: var(--radius-card); background: var(--color-surface-1); border: 1px solid var(--color-border); text-decoration: none; color: inherit; transition: border-color var(--duration-instant), background-color var(--duration-instant); }
+  .scr:hover { border-color: var(--color-border-strong); background: var(--color-surface-2); }
+  .scr b { font-weight: 500; }
+  .scr span { font-size: 13px; color: var(--color-text-subtle); }
+  .scr i { font-style: normal; font-size: 12px; color: var(--color-text-subtle); font-family: var(--font-mono); }
+  .swatches { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .sw { border-radius: var(--radius-card); border: 1px solid var(--color-border); overflow: hidden; background: var(--color-surface-1); }
+  .sw__chip { height: 64px; display: flex; align-items: flex-end; padding: 10px 12px; font-weight: 600; color: var(--color-text-on-accent); }
+  .sw__body { padding: 12px; font-size: 13px; display: grid; gap: 2px; }
+  .sw__body code { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-muted); }
+  .sw__body span { color: var(--color-text-subtle); }
+  .neutrals { display: flex; border-radius: var(--radius-card); overflow: hidden; border: 1px solid var(--color-border); margin-top: 12px; }
+  .neutrals div { flex: 1; height: 56px; padding: 8px 10px; font-size: 11px; font-family: var(--font-mono); display: flex; align-items: flex-end; }
+  .type { display: grid; gap: 0; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface-1); }
+  .type > div { display: grid; grid-template-columns: 160px minmax(0, 1fr); gap: 24px; align-items: baseline; padding: 12px 20px; }
+  .type > div + div { border-top: 1px solid var(--color-border); }
+  .type code { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-subtle); }
+  .anatomy { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 32px; align-items: center; background: var(--color-surface-1); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: 24px; }
+  .anatomy ul { margin: 0; padding-left: 18px; color: var(--color-text-muted); font-size: 13px; display: grid; gap: 6px; }
+  .anatomy b { color: var(--color-text-primary); font-weight: 500; }
+  .kit { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; padding: 20px; background: var(--color-surface-1); border: 1px solid var(--color-border); border-radius: var(--radius-card); }
+</style>
+</head>
+<body>
+<!--@sprite-->
+<main class="doc">
+  <div class="hero">
+    <div>
+      <h1>Marstek Monitor — hi-fi</h1>
+      <p>Нічний прилад, а не дашборд. Синьо-графітова темрява, один рівний ритм кілець, кольори, що мають рівно одне значення кожен. Усе розраховано на погляд із-за плеча під час блекауту: «є світло чи ні, скільки лишилось, коли вимкнеться».</p>
+    </div>
+    <div class="panel" style="padding:16px 8px 12px"><div class="gauges" style="--cols:1">
+      <!--@gauge title="До розряду" tone="info" pct="68.9" num="7:30" unit="год : хв" primary="до 10% · ≈ о 22:47"-->
+    </div></div>
+  </div>
+
+  <h2 class="doc-h2">Екрани</h2>
+  <div class="screens">
+    <a class="scr" href="01-overview.html"><i>01</i><b>Огляд</b><span>Розряд без світла + варіанти: заряд, очікування, низький, застарілі дані</span></a>
+    <a class="scr" href="02-outages.html"><i>02</i><b>Відключення</b><span>Період, кільця, стовпчики з тултіпами, фільтр таблиці, календар</span></a>
+    <a class="scr" href="03-errors.html"><i>03</i><b>Помилки</b><span>Журнал станції і зв'язку з фільтром</span></a>
+    <a class="scr" href="04-battery.html"><i>04</i><b>Батарея</b><span>Здоров'я, цикли, температура, ємність по місяцях</span></a>
+    <a class="scr" href="05-energy.html"><i>05</i><b>Енергія</b><span>Підсумки, згруповані стовпчики, кільце PV</span></a>
+    <a class="scr" href="06-stations.html"><i>06</i><b>Станції</b><span>Перемикач відкрито + вікно «Додати станцію»</span></a>
+    <a class="scr" href="07-settings.html"><i>07</i><b>Налаштування</b><span>Розділ «Сповіщення»</span></a>
+    <a class="scr" href="08-tray-toasts.html"><i>08</i><b>Трей і сповіщення</b><span>7 станів іконки (з STALE), тултіпи, меню з «Не турбувати», 8 toast</span></a>
+    <a class="scr" href="09-states.html"><i>09</i><b>Стани зв'язку</b><span>Скелетони, застарілі дані, немає зв'язку, «ймовірно, розрядилась», картка пропуску, чесні дірки</span></a>
+    <a class="scr" href="10-first-run.html"><i>10</i><b>Перший запуск</b><span>Нічого не знайдено, інструкція API, хмара не впустила, станцію додано</span></a>
+    <a class="scr" href="11-dialogs.html"><i>11</i><b>Діалоги</b><span>Видалення станції (архів), бриф SmartScreen перед оновленням</span></a>
+  </div>
+
+  <h2 class="doc-h2">Правило кольору — одне значення на колір</h2>
+  <div class="swatches">
+    <div class="sw"><div class="sw__chip" style="background:var(--color-good)">Добре</div><div class="sw__body"><code>--color-good #4FCB8D</code>заряд, заряджається, світло є, без помилок<span>8,6 : 1 на картці</span></div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--color-warn)">Без світла</div><div class="sw__body"><code>--color-warn #F2B63D</code>розряд, мережі немає. Не «попередження»<span>9,6 : 1 на картці</span></div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--color-info)">Нейтральне</div><div class="sw__body"><code>--color-info #6DB3FF</code>час, лічильники, кВт·год, керуючі елементи<span>8,0 : 1 на картці</span></div></div>
+    <div class="sw"><div class="sw__chip" style="background:var(--color-bad)">Погано</div><div class="sw__body"><code>--color-bad #FF7A72</code>тільки за порогом: заряд &lt; порогу, t° поза нормою, помилка<span>6,9 : 1 на картці</span></div></div>
+  </div>
+  <div class="neutrals">
+    <div style="background:#0B0E12;color:#A6AEB9">chrome #0B0E12</div>
+    <div style="background:#0E1115;color:#A6AEB9">page #0E1115</div>
+    <div style="background:#151A20;color:#A6AEB9">surface-1 #151A20</div>
+    <div style="background:#1B2129;color:#A6AEB9">surface-2 #1B2129</div>
+    <div style="background:#222932;color:#A6AEB9">surface-3 #222932</div>
+    <div style="background:#29303A;color:#E8EBEF">track #29303A</div>
+    <div style="background:#8A94A1;color:#0E1115">subtle #8A94A1</div>
+    <div style="background:#A6AEB9;color:#0E1115">muted #A6AEB9</div>
+    <div style="background:#E8EBEF;color:#0E1115">primary #E8EBEF</div>
+  </div>
+
+  <h2 class="doc-h2">Типографіка — IBM Plex Sans + Plex Mono, табличні цифри</h2>
+  <div class="type">
+    <div><code>numeral 28 / 600</code><span style="font-size:28px;font-weight:600;letter-spacing:-0.02em">72% · 7:30 · 1750 Вт</span></div>
+    <div><code>heading 20 / 600</code><span style="font-size:20px;font-weight:600;letter-spacing:-0.01em">Додати станцію</span></div>
+    <div><code>title 16 / 500</code><span style="font-size:16px;font-weight:500">Без світла по днях · Ґанок, їжак, Євген</span></div>
+    <div><code>body 14 / 400</code><span>Станція вимкнулась о 01:20 — спрацював захист від глибокого розряду.</span></div>
+    <div><code>small 13 / 400</code><span style="font-size:13px;color:var(--color-text-muted)">2 год 00 хв · 100% → 84%</span></div>
+    <div><code>caption 12 caps</code><span class="label">Попереднє відключення</span></div>
+    <div><code>mono 12.5</code><span class="mono">192.168.1.47 · E07 · 0x2A13</span></div>
+  </div>
+
+  <h2 class="doc-h2">Кільце — анатомія</h2>
+  <div class="anatomy">
+    <div class="panel" style="padding:16px 8px 12px"><div class="gauges" style="--cols:1">
+      <!--@gauge title="Потужність" tone="warn" pct="16.8" num="420" small="Вт" primary="розряд" ptone="warn" secondary="з 2 500 Вт макс."-->
+    </div></div>
+    <ul>
+      <li><b>Коробка 120 × 120 px</b>, viewBox 0 0 120 120, r = 50, штрих 10 → зовнішній діаметр 110, внутрішній 90.</li>
+      <li><b>Трек</b> <code>--color-track</code>, заповнення — колір тону, <b>stroke-linecap: round</b>, старт о 12-й, за годинниковою (rotate −90°), <code>pathLength="100"</code> → dasharray = відсоток.</li>
+      <li><b>0%</b> — заповнення не малюється взагалі (інакше круглий кінець дає крапку). <b>100%</b> — повне коло.</li>
+      <li><b>Заголовок</b> над кільцем: 12 px caps, muted. <b>Значення</b> в центрі: 28/600 (23 px для 4 цифр з одиницею), одиниця 15/500 muted; для часу — підпис «год : хв» 11 px під числом.</li>
+      <li><b>Під кільцем</b> два рядки: основний 13/500 (може мати колір тону: «розряд»), другорядний 12 subtle.</li>
+      <li><b>Стани:</b> тон good / warn / info / bad; <code>.gauge--stale</code> — заповнення і число сірі. Зміна значення — 600 мс ease-standard, без анімації при reduced-motion.</li>
+    </ul>
+  </div>
+
+  <h2 class="doc-h2">Дрібні компоненти</h2>
+  <div class="kit">
+    <div class="seg" role="group" aria-label="Приклад"><button class="seg__item" aria-pressed="false">Сьогодні</button><button class="seg__item" aria-pressed="true">7 днів</button><button class="seg__item" aria-pressed="false">30 днів</button></div>
+    <span class="pill" data-tone="warn"><!--@icon n="plug-off"-->без світла 3:27</span>
+    <span class="pill" data-tone="good"><!--@icon n="plug"-->світло є</span>
+    <span class="pill" data-tone="bad"><!--@icon n="alert"-->помилка</span>
+    <span class="pill"><!--@icon n="cloud"-->хмара · 2 хв тому</span>
+    <button class="btn btn--primary"><!--@icon n="plus"-->Додати</button>
+    <button class="btn btn--secondary">Скасувати</button>
+    <button class="switch" role="switch" aria-checked="true" aria-label="Приклад"></button>
+    <button class="switch" role="switch" aria-checked="false" aria-label="Приклад"></button>
+    <span class="btn btn--secondary" data-tip="&lt;div class=&quot;tip__title&quot;&gt;Тултіп&lt;/div&gt;Один компонент, переноситься в body, зсувається і перевертається біля країв." tabindex="0">Наведіть для тултіпа</span>
+  </div>
+  <p class="doc-lede" style="margin-top:24px">Токени — <a class="link" href="tokens.css">tokens.css</a>. Опис напряму, компонентів і правил — README.md поруч. Сторінки зібрані з <code class="mono">_src/</code> командою <code class="mono">node _src/build.mjs</code>.</p>
+</main>
+<!--@script-->
+</body>
+</html>

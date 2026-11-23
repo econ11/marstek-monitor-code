@@ -1,0 +1,293 @@
+<!--@head title="Стани зв'язку"-->
+<style>
+  .ov-main { display: grid; gap: var(--space-4); min-width: 0; align-content: start; }
+  .ov-gauges { padding: var(--space-4) var(--space-2) var(--space-3); }
+  .stack-doc { display: grid; gap: var(--space-7); }
+  .state-h { display: flex; align-items: baseline; gap: 12px; margin: 0 0 12px; }
+  .state-h code { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-subtle); }
+  .state-h b { font-weight: 500; font-size: 15px; }
+  .state-h span { color: var(--color-text-muted); font-size: 13px; }
+  .is-dim .gauges, .is-dim .status__value, .is-dim .status__meta { opacity: .55; }
+  .skel-gauge { display: grid; justify-items: center; gap: 10px; padding: 4px 12px 8px; }
+  .skel-gauge + .skel-gauge { border-left: 1px solid var(--color-border); }
+  .skel-line { height: 10px; }
+  .card-gap { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: var(--space-3); align-items: start; padding: var(--space-3) var(--space-4); border-radius: var(--radius-card); background: var(--color-surface-1); border: 1px dashed var(--color-chart-gap-stroke); }
+  .card-gap > .icon { width: 18px; height: 18px; margin-top: 2px; color: var(--color-text-muted); }
+  .card-gap .t { font-weight: 500; }
+  .card-gap .d { font-size: var(--text-small); color: var(--color-text-muted); margin-top: 2px; }
+  .card-gap .a { margin-top: 6px; font-size: var(--text-small); }
+  .appbar[data-grid="unknown"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: repeating-linear-gradient(90deg, var(--color-text-subtle) 0 6px, transparent 6px 12px); opacity: .6; }
+  .frag { width: 1100px; background: var(--color-bg-page); border: 1px solid rgb(255 255 255 / .08); border-radius: 8px; padding: var(--space-5); display: grid; gap: var(--space-4); }
+  .frag .bars .bar { fill: var(--color-warn); }
+  .frag .nodata { fill: url(#gap-hatch); stroke: var(--color-chart-gap-stroke); stroke-dasharray: 3 3; }
+  .frag .zero { fill: var(--color-text-subtle); }
+  .frag .val { fill: var(--color-text-muted); font-size: 11px; font-weight: 500; }
+  .approx { color: var(--color-text-muted); }
+  .stat-note { font-size: var(--text-caption); color: var(--color-text-subtle); display: flex; gap: 6px; align-items: center; }
+</style>
+</head>
+<body>
+<!--@sprite-->
+<main class="doc">
+  <!--@docnav page="09-states.html" title="Стани зв'язку"-->
+  <p class="doc-lede">Огляд у кожному стані автомата зв'язку (flows §2.6) і чесні «дірки» в історії (§3.2). Правило: вісь «Зв'язок» вирішує, чи можна показувати вісь «Живлення» як поточну. Коли ні — значення сірішають, прогнози стають «—», жовта рейка вимикається (стан світла невідомий) і замість неї — сіра пунктирна.</p>
+
+  <div class="stack-doc">
+
+  <!-- 1. CONNECTING, no data ever -->
+  <section>
+    <div class="state-h"><code>CONNECTING</code><b>Перші дані ще не надійшли</b><span>скелетони в геометрії кілець — жодних нулів</span></div>
+    <div class="win">
+      <!--@titlebar-->
+      <header class="appbar" data-grid="none">
+        <button class="station-btn"><span class="minidial" aria-hidden="true"><svg viewBox="0 0 48 48"><circle class="track" cx="24" cy="24" r="18"/></svg></span><span class="station-btn__text"><span class="station-btn__name">Дім</span><span class="station-btn__model">Venus E 3.0</span></span><svg class="icon"><use href="#i-chevron-down"/></svg></button>
+        <nav class="tabs"><a class="tab" aria-current="page" href="#">Огляд</a><a class="tab" href="#">Відключення</a><a class="tab" href="#">Помилки</a><a class="tab" href="#">Батарея</a><a class="tab" href="#">Енергія</a></nav>
+        <div class="appbar__end"><a class="iconbtn" href="#" aria-label="Налаштування"><svg class="icon icon--lg"><use href="#i-settings"/></svg></a></div>
+      </header>
+      <div class="content" aria-busy="true">
+        <div class="split">
+          <div class="ov-main">
+            <p class="note" style="margin:0" role="status"><!--@icon n="loader"-->Чекаємо перших даних від станції…</p>
+            <section class="panel ov-gauges" aria-hidden="true"><div class="gauges">
+              <div class="skel-gauge"><span class="skel skel-line" style="width:56px"></span><span class="skel-ring"></span><span class="skel skel-line" style="width:110px"></span></div>
+              <div class="skel-gauge"><span class="skel skel-line" style="width:80px"></span><span class="skel-ring"></span><span class="skel skel-line" style="width:96px"></span></div>
+              <div class="skel-gauge"><span class="skel skel-line" style="width:76px"></span><span class="skel-ring"></span><span class="skel skel-line" style="width:120px"></span></div>
+              <div class="skel-gauge"><span class="skel skel-line" style="width:104px"></span><span class="skel-ring"></span><span class="skel skel-line" style="width:100px"></span></div>
+            </div></section>
+            <section class="panel" aria-hidden="true">
+              <div class="panel__head"><h2 class="panel__title">Заряд станції, %</h2></div>
+              <div class="chart" id="soc-skel"></div>
+              <p class="note" style="margin:8px 0 0">Графік з'явиться, щойно надійдуть перші дані.</p>
+            </section>
+          </div>
+          <aside class="panel panel--flush" aria-hidden="true"><div class="status">
+            <div class="status__row"><span class="skel" style="width:32px;height:32px;border-radius:8px"></span><span class="status__body"><span class="skel skel-line" style="width:60px;margin:4px 0"></span><span class="skel skel-line" style="width:170px"></span></span></div>
+            <div class="status__row"><span class="skel" style="width:32px;height:32px;border-radius:8px"></span><span class="status__body"><span class="skel skel-line" style="width:140px;margin:4px 0"></span><span class="skel skel-line" style="width:190px"></span></span></div>
+            <div class="status__row"><span class="skel" style="width:32px;height:32px;border-radius:8px"></span><span class="status__body"><span class="skel skel-line" style="width:70px;margin:4px 0"></span><span class="skel skel-line" style="width:110px"></span></span></div>
+            <div class="status__row"><span class="skel" style="width:32px;height:32px;border-radius:8px"></span><span class="status__body"><span class="skel skel-line" style="width:70px;margin:4px 0"></span><span class="skel skel-line" style="width:160px"></span></span></div>
+            <div class="status__row"><span class="status__icon"><!--@icon n="loader"--></span><span class="status__body"><span class="label">Джерело даних</span><span class="status__value">LAN · підключаємось…</span></span></div>
+          </div></aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. STALE -->
+  <section>
+    <div class="state-h"><code>STALE</code><b>Дані застарілі</b><span>15:17, останній вимір 15:15 — LAN мовчить, хмара старша за поріг</span></div>
+    <div class="win">
+      <!--@titlebar state="Дані застарілі"-->
+      <!--@appbar tab="overview" grid="unknown" soc="73" soctone="mute"-->
+      <div class="content">
+        <div class="split">
+          <div class="ov-main">
+            <div class="banner" role="status"><!--@icon n="clock"--><div><div class="banner__t">Дані застарілі — останні о 15:15</div><div class="banner__d">Станція не відповідає. Пробуємо знову…</div></div></div>
+            <section class="panel ov-gauges" aria-label="Останні відомі значення"><div class="gauges">
+              <!--@gauge title="Заряд" tone="good" stale="1" pct="73" num="73" small="%" primary="3,7 з 5,12 кВт·год" aria="Заряд: 73% (застаріле значення, станом на 15:15)"-->
+              <!--@gauge title="Потужність" tone="warn" stale="1" pct="16.6" num="415" unit="Вт · розряд" primary="з 2 500 Вт макс." aria="Потужність: 415 Вт, розряд (застаріле значення, станом на 15:15)"-->
+              <!--@gauge title="До розряду" tone="info" stale="1" pct="0" num="—" unit="год : хв" primary="до 10% · —"-->
+              <!--@gauge title="Без світла сьогодні" tone="warn" stale="1" pct="35.5" num="5:25" unit="год : хв" primary="2 відключення"-->
+            </div></section>
+            <section class="panel">
+              <div class="panel__head"><h2 class="panel__title">Заряд станції, %</h2></div>
+              <div class="chart" id="soc-stale"></div>
+            </section>
+          </div>
+          <aside class="panel panel--flush"><div class="status is-dim-rows">
+            <div class="status__row"><span class="status__icon"><!--@icon n="plug"--></span><span class="status__body"><span class="label">Світло</span><span class="status__value">невідомо</span><span class="status__meta">останнє: немає з 11:50</span></span></div>
+            <div class="status__row"><span class="status__icon"><!--@icon n="history"--></span><span class="status__body"><span class="label">Попереднє відключення</span><span class="status__value">сьогодні 06:10–08:10 · 2 год 00 хв</span></span></div>
+            <div class="status__row"><span class="status__icon" data-tone="good"><!--@icon n="check-circle"--></span><span class="status__body"><span class="label">Помилки</span><span class="status__value">нових немає</span></span></div>
+            <div class="status__row"><span class="status__icon" data-tone="info"><!--@icon n="battery"--></span><span class="status__body"><span class="label">Батарея</span><span class="status__value">142 цикли · 97% ємності</span></span></div>
+            <div class="status__row"><span class="status__icon"><!--@icon n="clock"--></span><span class="status__body"><span class="label">Джерело даних</span><span class="status__value">LAN · 2 хв тому</span><span class="status__meta">хмара · 9 хв тому</span></span></div>
+          </div></aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. NO_LINK -->
+  <section>
+    <div class="state-h"><code>NO_LINK</code><b>Немає зв'язку</b><span>15:25, даних немає 10 хв; останній відомий стан — без світла, тож підказка про роутер</span></div>
+    <div class="win">
+      <!--@titlebar state="Немає зв'язку зі станцією"-->
+      <!--@appbar tab="overview" grid="unknown" soc="73" soctone="mute"-->
+      <div class="content">
+        <div class="split">
+          <div class="ov-main">
+            <div class="banner" role="alert"><!--@icon n="wifi-off"--><div><div class="banner__t">Немає зв'язку зі станцією</div><div class="banner__d">Ні локально, ні через хмару. Останні дані о 15:15. Пробуємо знову.</div><div class="banner__d" style="margin-top:4px">Якщо немає світла, роутер теж міг вимкнутись.</div></div></div>
+            <section class="panel ov-gauges is-dim"><div class="gauges">
+              <!--@gauge title="Заряд" tone="good" stale="1" pct="73" num="73" small="%" unit="о 15:15" primary="3,7 з 5,12 кВт·год"-->
+              <!--@gauge title="Потужність" tone="warn" stale="1" pct="0" num="—" unit="Вт" primary="з 2 500 Вт макс."-->
+              <!--@gauge title="До розряду" tone="info" stale="1" pct="0" num="—" unit="год : хв" primary="до 10% · —"-->
+              <!--@gauge title="Без світла сьогодні" tone="warn" stale="1" pct="35.5" num="5:25" unit="год : хв" primary="є пропуски в даних"-->
+            </div></section>
+            <section class="panel">
+              <div class="panel__head"><h2 class="panel__title">Заряд станції, %</h2></div>
+              <div class="chart" id="soc-nolink"></div>
+            </section>
+          </div>
+          <aside class="panel panel--flush"><div class="status">
+            <div class="status__row"><span class="status__icon"><!--@icon n="plug"--></span><span class="status__body"><span class="label">Світло</span><span class="status__value">невідомо</span><span class="status__meta">останнє: немає з 11:50 · ≥ 3 год 25 хв</span></span></div>
+            <div class="status__row"><span class="status__icon"><!--@icon n="history"--></span><span class="status__body"><span class="label">Попереднє відключення</span><span class="status__value">сьогодні 06:10–08:10 · 2 год 00 хв</span></span></div>
+            <div class="status__row"><span class="status__icon" data-tone="good"><!--@icon n="check-circle"--></span><span class="status__body"><span class="label">Помилки</span><span class="status__value">нових немає</span></span></div>
+            <div class="status__row"><span class="status__icon" data-tone="info"><!--@icon n="battery"--></span><span class="status__body"><span class="label">Батарея</span><span class="status__value">142 цикли · 97% ємності</span></span></div>
+            <div class="status__row"><span class="status__icon" data-tone="bad"><!--@icon n="wifi-off"--></span><span class="status__body"><span class="label">Джерело даних</span><span class="status__value">немає зв'язку</span><span class="status__meta">LAN — 10 хв тому · хмара — 15 хв тому</span></span></div>
+          </div></aside>
+        </div>
+      </div>
+    </div>
+    <div style="width:1100px;margin-top:16px;display:grid;gap:8px">
+      <span class="label">Діагноз, що вимагає дії (єдиний такий): сеанс у хмарі завершився</span>
+      <div class="banner"><!--@icon n="cloud"--><div><div class="banner__t">Потрібно знову увійти в Marstek</div><div class="banner__d">Без цього історія, поки ПК вимкнений, не дозавантажиться.</div></div><a class="btn btn--primary" href="07-settings.html">Увійти</a></div>
+      <span class="label" style="margin-top:8px">Тихий варіант: CONNECTING після сну / старту, є старі дані</span>
+      <div class="banner banner--quiet banner--info"><!--@icon n="loader"--><div><div class="banner__t" style="font-weight:400">Шукаємо станцію в локальній мережі…</div></div></div>
+      <span class="label" style="margin-top:8px">LIVE через хмару (LAN втрачено) — не банер, а рядок у «Джерело даних»</span>
+      <div class="banner banner--quiet banner--info"><!--@icon n="cloud"--><div><div class="banner__t" style="font-weight:400">Локально станція не відповідає — дані з хмари, оновлюються рідше.</div></div></div>
+    </div>
+  </section>
+
+  <!-- 4. LIKELY_DEAD live -->
+  <section>
+    <div class="state-h"><code>LIKELY_DEAD</code><b>Ймовірно, розрядилась — виявлено наживо</b><span>пт 20.11, 01:50; ноутбук живиться окремо, станція зникла з усіх джерел о 01:20 на 10%</span></div>
+    <div class="win">
+      <!--@titlebar state="Станція, ймовірно, розрядилась"-->
+      <!--@appbar tab="overview" grid="unknown" soc="10" soctone="mute"-->
+      <div class="content">
+        <div class="split">
+          <div class="ov-main">
+            <div class="banner" role="alert" style="border-color:rgb(255 122 114 / .45)"><!--@icon n="battery"--><div><div class="banner__t">Станція, ймовірно, розрядилась</div><div class="banner__d">01:20 · заряд перед цим 10%. Світла немає з 19:30. Щойно з'явиться світло, станція ввімкнеться сама.</div></div></div>
+            <section class="panel ov-gauges is-dim"><div class="gauges">
+              <!--@gauge title="Заряд" tone="bad" stale="1" pct="10" num="10" small="%" unit="о 01:20" primary="станція розрядилась ≈ о 01:20"-->
+              <!--@gauge title="Потужність" tone="warn" stale="1" pct="0" num="—" unit="Вт" primary="з 2 500 Вт макс."-->
+              <!--@gauge title="До розряду" tone="info" stale="1" pct="0" num="—" unit="год : хв" primary="—"-->
+              <!--@gauge title="Без світла сьогодні" tone="warn" stale="1" pct="72.7" num="1:20" unit="год : хв" primary="1 відключення, триває"-->
+            </div></section>
+            <section class="panel">
+              <div class="panel__head"><h2 class="panel__title">Заряд станції, %</h2></div>
+              <div class="chart" id="soc-dead"></div>
+            </section>
+          </div>
+          <aside class="panel panel--flush"><div class="status">
+            <div class="status__row status__row--hero"><span class="status__icon" data-tone="warn"><!--@icon n="plug-off"--></span><span class="status__body"><span class="label">Світло</span><span class="status__value">немає з 19:30 · ≥ 5 год 50 хв</span><span class="status__meta">на 01:20, далі невідомо</span></span></div>
+            <div class="status__row"><span class="status__icon"><!--@icon n="history"--></span><span class="status__body"><span class="label">Попереднє відключення</span><span class="status__value">учора 07:00–09:00 · 2 год 00 хв</span></span></div>
+            <div class="status__row"><span class="status__icon" data-tone="bad"><!--@icon n="alert"--></span><span class="status__body"><span class="label">Помилки</span><span class="status__value">1 нова</span></span></div>
+            <div class="status__row"><span class="status__icon" data-tone="info"><!--@icon n="battery"--></span><span class="status__body"><span class="label">Батарея</span><span class="status__value">142 цикли · 97% ємності</span></span></div>
+            <div class="status__row"><span class="status__icon" data-tone="bad"><!--@icon n="wifi-off"--></span><span class="status__body"><span class="label">Джерело даних</span><span class="status__value">немає зв'язку</span><span class="status__meta">останні дані о 01:20</span></span></div>
+          </div></aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Back after a gap, retroactive LIKELY_DEAD -->
+  <section>
+    <div class="state-h"><code>LIVE</code> + картка пропуску<b>Повернення після пропуску (заднім числом)</b><span>пт 20.11, 02:45; ПК вимкнувся разом зі станцією, світло з'явилось о 02:40</span></div>
+    <div class="win">
+      <!--@titlebar-->
+      <!--@appbar tab="overview" grid="on" soc="11" soctone="bad"-->
+      <div class="content">
+        <div class="split">
+          <div class="ov-main">
+            <div class="card-gap"><!--@icon n="history"--><div><div class="t">Поки додаток не працював · 01:20–02:40</div><div class="d">Станція, ймовірно, розрядилась ≈ о 01:20 (заряд перед цим 10%). Світло з'явилось о 02:40. Хмара за цей час даних не віддала.</div><div class="a"><a class="link" href="02-outages.html">Показати у Відключеннях</a></div></div><button class="iconbtn" aria-label="Закрити"><!--@icon n="x"--></button></div>
+            <section class="panel ov-gauges"><div class="gauges">
+              <!--@gauge title="Заряд" tone="bad" pct="11" num="11" small="%" primary="0,6 з 5,12 кВт·год"-->
+              <!--@gauge title="Потужність" tone="good" pct="70" num="1750" unit="Вт · заряд" utone="good" primary="з 2500 Вт макс."-->
+              <!--@gauge title="До повного" tone="info" pct="11" num="3:12" unit="год : хв" primary="до 100% · ≈ о 05:57"-->
+              <!--@gauge title="Без світла сьогодні" tone="warn" pct="97" num="2:40" unit="год : хв" primary="є пропуски в даних"-->
+            </div></section>
+            <section class="panel">
+              <div class="panel__head"><h2 class="panel__title">Заряд станції, %</h2></div>
+              <div class="chart" id="soc-back"></div>
+            </section>
+          </div>
+          <aside class="panel panel--flush"><div class="status">
+            <div class="status__row"><span class="status__icon" data-tone="good"><!--@icon n="plug"--></span><span class="status__body"><span class="label">Світло</span><span class="status__value">є з 02:40 · 5 хв</span></span></div>
+            <div class="status__row"><span class="status__icon"><!--@icon n="history"--></span><span class="status__body"><span class="label">Попереднє відключення</span><span class="status__value">учора 19:30–02:40 · ≈ 7 год 10 хв</span><span class="status__meta">станція розрядилась о 01:20</span></span></div>
+            <div class="status__row"><span class="status__icon" data-tone="bad"><!--@icon n="alert"--></span><span class="status__body"><span class="label">Помилки</span><span class="status__value">1 нова</span></span></div>
+            <div class="status__row"><span class="status__icon" data-tone="info"><!--@icon n="battery"--></span><span class="status__body"><span class="label">Батарея</span><span class="status__value">143 цикли · 97% ємності</span></span></div>
+            <div class="status__row"><span class="status__icon" data-tone="good"><!--@icon n="wifi"--></span><span class="status__body"><span class="label">Джерело даних</span><span class="status__value"><span class="live">LAN · 2 с тому</span></span></span></div>
+          </div></aside>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Outages: hatched day vs zero day, ≥ durations -->
+  <section>
+    <div class="state-h"><code>§3.2</code><b>Відключення: чесні дірки</b><span>фрагмент вкладки; спостереження з вт 17.11</span></div>
+    <div class="frag">
+      <div class="panel">
+        <div class="panel__head"><h2 class="panel__title">Без світла по днях</h2><span class="panel__sub">години без світла</span>
+          <div class="legend"><span><i style="background:var(--color-warn)"></i>без світла</span><span><i class="dash" style="background:url(#)"></i>немає даних</span><span><i style="background:var(--color-text-subtle);height:2px;vertical-align:3px"></i>0 відключень</span></div></div>
+        <div class="chart bars" id="frag-bars"></div>
+        <div class="stat-note"><!--@icon n="info" cls="icon--sm"-->1 відключення з неточною тривалістю — у середній і найдовшій пораховано за нижньою межею.</div>
+      </div>
+      <div class="panel panel--flush">
+        <div class="table-wrap"><table class="table">
+          <thead><tr><th>Початок</th><th>Кінець</th><th class="num">Тривалість</th><th>Заряд на початку → в кінці</th><th>Примітка</th></tr></thead>
+          <tbody>
+            <tr><td><span class="when">11:50<small>сьогодні</small></span></td><td><span class="pill pill--outline"><!--@icon n="wifi-off"-->зв'язок втрачено</span></td><td class="num nowrap">≥ 3 год 25 хв<br><small class="t-subtle">на 15:15</small></td><td><span class="arrow-soc">100% <i>→</i> <span class="t-subtle">—</span></span></td><td class="t-subtle">тривалість заморожена до відновлення зв'язку</td></tr>
+            <tr><td><span class="when"><span class="approx">≈ 21:40</span><small>пт 20.11</small></span></td><td><span class="when">23:05<small>пт 20.11</small></span></td><td class="num nowrap">≥ 1 год 25 хв</td><td><span class="arrow-soc"><span class="t-subtle">—</span> <i>→</i> 71%</span></td><td>почалось, поки додаток не працював</td></tr>
+            <tr><td><span class="when">19:30<small>чт 19.11</small></span></td><td><span class="when">02:40<small>пт 20.11</small></span></td><td class="num nowrap">≈ 7 год 10 хв</td><td><span class="arrow-soc">100% <i>→</i> <span class="t-bad">10%</span></span></td><td><span class="t-bad">станція розрядилась о 01:20</span> <span class="t-subtle">· є пропуск у даних</span></td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </section>
+  </div>
+
+  <ol class="doc-notes">
+    <li><b>Сірий = не поточне.</b> STALE / NO_LINK / LIKELY_DEAD: кільця без кольору стану (заповнення і число сірі), прогнози «—». У NO_LINK у центрі «Заряду» — останнє значення з міткою «о 15:15», потужність — «—» (не вигадана).</li>
+    <li><b>Рейка:</b> жовта лише коли «без світла» — свіжий факт. Невідомо → сіра пунктирна рейка. Світло є → рейки немає.</li>
+    <li><b>Банери:</b> STALE — нейтральний з годинником (не тривога); NO_LINK — той самий компонент з wifi-off і підказкою про роутер; LIKELY_DEAD — червонувата рамка. Один банер за раз, найважливіший.</li>
+    <li><b>Графік:</b> STALE — лінія сіра й обривається на останньому вимірі, далі нічого; NO_LINK — відкрита пунктирна рамка до «зараз»; LIKELY_DEAD — рамка з причиною «ймовірно, розрядилась». Наведіть на хвіст — тултіп пояснює.</li>
+    <li><b>Картка пропуску</b> — пунктирна рамка (та сама мова, що й «немає даних» на графіку), закривається ×, не повертається для того самого пропуску. Текст — чернетка, ключа в каталозі немає.</li>
+    <li><b>Дні у Відключеннях:</b> день цілком у пропуску — штрихований стовпчик на всю висоту з «немає даних» (не нуль); день з 0 відключень — тонка риска на нулі; дні до початку спостережень не малюються.</li>
+  </ol>
+</main>
+
+<!--@script-->
+<!--@data-->
+<!--@soc-->
+<script>
+(function () {
+  const D = MMData, h = D.h;
+  const go = () => {
+    MMSoc.render(document.getElementById('soc-skel'), { skeleton: true, height: 200 });
+    MMSoc.render(document.getElementById('soc-stale'), { now: D.NOW, lastData: D.h(6, 15, 15), tail: 'stale', height: 200 });
+    MMSoc.render(document.getElementById('soc-nolink'), { now: D.NOW + 8 / 60, lastData: D.h(6, 15, 15), tail: 'nolink', height: 200 });
+    MMSoc.render(document.getElementById('soc-dead'), { now: h(5, 1, 50), lastData: h(5, 1, 20), tail: 'dead', height: 200 });
+    MMSoc.render(document.getElementById('soc-back'), { now: h(5, 2, 45), height: 200 });
+    bars();
+  };
+  function bars() {
+    const host = document.getElementById('frag-bars');
+    const days = [['нд 15.11', null, 'before'], ['пн 16.11', null, 'before'], ['вт 17.11', 1.6, 'partial'], ['ср 18.11', 2.25], ['чт 19.11', 0, 'zero'], ['пт 20.11', null, 'nodata'], ['сб 21.11', 5.42, 'partial']];
+    const W = host.clientWidth, H = 220, P = { l: 40, r: 4, t: 22, b: 30 }, max = 6;
+    const y = v => P.t + (1 - v / max) * (H - P.t - P.b);
+    const slot = (W - P.l - P.r) / days.length, bw = 44;
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"><g class="grid">`;
+    for (let v = 0; v <= max; v += 2) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" class="${v ? '' : 'base'}"/>`;
+    s += '</g><g class="axis">';
+    for (let v = 0; v <= max; v += 2) s += `<text x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end">${v ? v + ' год' : '0'}</text>`;
+    days.forEach(([l], i) => s += `<text x="${P.l + slot * i + slot / 2}" y="${H - 10}" text-anchor="middle" class="${i === 6 ? 'strong' : ''}">${l}</text>`);
+    s += '</g>';
+    const obs = P.l + slot * 2;
+    s += `<rect x="${P.l}" y="${P.t}" width="${obs - P.l}" height="${H - P.t - P.b}" fill="rgb(255 255 255 / .015)"/><line x1="${obs}" x2="${obs}" y1="${P.t}" y2="${H - P.b}" stroke="var(--color-border-strong)"/><text class="gap-label" x="${obs - 8}" y="${y(2) + 4}" text-anchor="end" style="fill:var(--color-text-subtle);font-size:11px">спостереження з вт 17.11</text>`;
+    days.forEach(([l, v, kind], i) => {
+      const cx = P.l + slot * i + slot / 2, x = cx - bw / 2;
+      if (kind === 'before') return;
+      if (kind === 'nodata') { s += `<rect class="nodata" x="${x}" y="${P.t}" width="${bw}" height="${y(0) - P.t}" rx="4"/><text class="val" x="${cx}" y="${P.t + (y(0) - P.t) / 2}" text-anchor="middle" transform="rotate(-90 ${cx} ${P.t + (y(0) - P.t) / 2})">немає даних</text>`; return; }
+      if (kind === 'zero') { s += `<rect class="zero" x="${x}" y="${y(0) - 2}" width="${bw}" height="2" rx="1"/><text class="val" x="${cx}" y="${y(0) - 8}" text-anchor="middle">0</text>`; return; }
+      const top = y(v);
+      s += `<path class="bar" d="M${x},${y(0)}V${top + 4}q0,-4 4,-4h${bw - 8}q4,0 4,4V${y(0)}Z"/>`;
+      s += `<text class="val" x="${cx}" y="${top - 6}" text-anchor="middle">${kind === 'partial' ? '≥ ' : ''}${D.fmt.durShort(v)}</text>`;
+    });
+    host.innerHTML = s + '</svg>';
+  }
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(go);
+  window.addEventListener('resize', go);
+})();
+</script>
+</body>
+</html>

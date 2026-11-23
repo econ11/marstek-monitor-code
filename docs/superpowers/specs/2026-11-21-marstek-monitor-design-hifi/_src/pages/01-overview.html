@@ -1,0 +1,145 @@
+<!--@head title="Огляд"-->
+<style>
+  .ov-main { display: grid; gap: var(--space-4); min-width: 0; }
+  .ov-gauges { padding: var(--space-4) var(--space-2) var(--space-3); }
+  .soc-legend { margin-top: var(--space-2); }
+  .legend .ln { width: 14px; height: 2px; border-radius: 2px; background: var(--color-good); display: inline-block; margin-right: 6px; vertical-align: 3px; }
+  .legend .th { width: 14px; border-top: 1px dashed var(--color-bad); display: inline-block; margin-right: 6px; vertical-align: 3px; opacity: .8; }
+  .variants { display: grid; gap: var(--space-5); width: 1100px; }
+  .variant { background: var(--color-bg-page); border: 1px solid rgb(255 255 255 / .08); border-radius: 8px; padding: var(--space-5); display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: var(--space-5); align-items: center; }
+  .variant__name { font-weight: 500; }
+  .variant__name p { margin: 4px 0 0; font-size: 13px; color: var(--color-text-muted); font-weight: 400; }
+  .stale-bar { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-small); color: var(--color-warn); padding: 0 var(--space-3) var(--space-3); margin: 0 var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-border); }
+  .stale-bar span { color: var(--color-text-muted); }
+</style>
+</head>
+<body>
+<!--@sprite-->
+<main class="doc">
+  <!--@docnav page="01-overview.html" title="Огляд"-->
+  <p class="doc-lede">Стан «розряд, без світла» о 15:17 суботи 21.11. Наведіть мишу на графік — перехрестя з тултіпом; на кільця — короткі пояснення. Нижче вікна — варіанти верхнього ряду: заряд, очікування, низький заряд. Стани зв'язку (скелетони, застарілі дані, немає зв'язку, «ймовірно, розрядилась») — на сторінці <a class="link" href="09-states.html">09 · Стани</a>.</p>
+
+  <div class="win">
+    <!--@titlebar state="Без світла 3 год 27 хв"-->
+    <!--@appbar tab="overview" grid="off" soc="72"-->
+    <div class="content">
+      <div class="split">
+        <div class="ov-main">
+          <section class="panel ov-gauges" aria-label="Поточний стан">
+            <div class="gauges">
+              <!--@gauge title="Заряд" tone="good" pct="72" num="72" small="%" primary="3,7 з 5,12 кВт·год" tip="#tip-soc"-->
+              <!--@gauge title="Потужність" tone="warn" pct="16.8" num="420" unit="Вт · розряд" utone="warn" primary="з 2 500 Вт макс." tip="#tip-power"-->
+              <!--@gauge title="До розряду" tone="info" pct="68.9" num="7:30" unit="год : хв" primary="до 10% · ≈ о 22:47" tip="#tip-eta"-->
+              <!--@gauge title="Без світла сьогодні" tone="warn" pct="35.7" num="5:27" unit="год : хв" primary="2 відключення" tip="#tip-light"-->
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="soc-title">
+            <div class="panel__head">
+              <h2 class="panel__title" id="soc-title">Заряд станції, %</h2>
+              <div class="seg seg--sm" role="group" aria-label="Період графіка" id="soc-range">
+                <button class="seg__item" aria-pressed="true" data-value="24">24 год</button>
+                <button class="seg__item" aria-pressed="false" data-value="168">7 днів</button>
+                <button class="seg__item" aria-pressed="false" data-value="720">30 днів</button>
+              </div>
+            </div>
+            <div class="chart" id="soc"></div>
+            <div class="legend soc-legend">
+              <span><span class="ln"></span>заряд</span>
+              <span><i style="background:var(--color-chart-outage-band);box-shadow:inset 0 0 0 1px rgb(166 174 185 / .18)"></i>без світла</span>
+              <span><i class="dash"></i>немає даних</span>
+              <span><span class="th"></span>поріг сповіщення</span>
+            </div>
+          </section>
+        </div>
+
+        <aside class="panel panel--flush" aria-label="Зведення">
+          <div class="status">
+            <a class="status__row status__row--hero" href="02-outages.html">
+              <span class="status__icon" data-tone="warn"><!--@icon n="plug-off"--></span>
+              <span class="status__body"><span class="label">Світло</span><span class="status__value">немає з 11:50 · 3 год 27 хв</span></span>
+            </a>
+            <a class="status__row" href="02-outages.html">
+              <span class="status__icon"><!--@icon n="history"--></span>
+              <span class="status__body"><span class="label">Попереднє відключення</span><span class="status__value">сьогодні 06:10–08:10 · 2 год 00 хв</span><span class="status__meta">100% → 84%</span></span>
+            </a>
+            <a class="status__row" href="03-errors.html">
+              <span class="status__icon" data-tone="good"><!--@icon n="check-circle"--></span>
+              <span class="status__body"><span class="label">Помилки</span><span class="status__value">нових немає</span></span>
+            </a>
+            <a class="status__row" href="04-battery.html">
+              <span class="status__icon" data-tone="info"><!--@icon n="battery"--></span>
+              <span class="status__body"><span class="label">Батарея</span><span class="status__value">142 цикли · 97% ємності</span></span>
+            </a>
+            <div class="status__row" data-tip="#tip-source" tabindex="0">
+              <span class="status__icon" data-tone="good"><!--@icon n="wifi"--></span>
+              <span class="status__body"><span class="label">Джерело даних</span><span class="status__value"><span class="live">LAN · 3 с тому</span></span></span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <ol class="doc-notes">
+    <li><b>Рейка відключення.</b> Поки світла немає, під панеллю вкладок горить 2-px жовта лінія, а в заголовку вікна — «Без світла 3 год 27 хв». Видно з іншого кінця кімнати; не анімується.</li>
+    <li><b>Одне кільце на все.</b> 120 px, штрих 10, сірий трек, заокруглені кінці, старт о 12-й, за годинниковою. Заголовок над, значення в центрі, два рядки під.</li>
+    <li><b>Кільця часу:</b> повне коло = станція повна. «До розряду» і «Вистачить на» — частка енергії, що лишилась понад нижню межу 10% (72% → 69% кола); «До повного» — поточний заряд (63% → 63% кола).</li><li><b>«Без світла сьогодні»</b> — у центрі години без світла, а не відсоток. Жовте заповнення = частка дня, що вже минула, без світла. Відсотки — лише в статистиці на вкладці «Відключення».</li>
+    <li><b>Перший рядок справа — головний.</b> «Світло» — єдиний рядок із тонованим тлом, бо це перше питання під час блекауту.</li>
+    <li><b>Графік:</b> сіра смуга = мережі не було (підпис над смугою, якщо вміщається); штрихована рамка = даних немає (ПК вимкнений / станція вимкнулась). Лінія ніколи не з'єднує точки через пропуск.</li>
+    <li><b>Тултіпи</b> — один компонент на весь додаток: переноситься в &lt;body&gt;, зсувається і перевертається, щоб не вийти за межі вікна (спробуйте навести на правий край графіка).</li>
+  </ol>
+
+  <h2 class="doc-h2">Варіанти верхнього ряду</h2>
+  <div class="variants">
+    <div class="variant">
+      <div class="variant__name">Заряд<p>Мережа є, станція заряджається. Рейки немає.</p></div>
+      <div class="panel ov-gauges"><div class="gauges">
+        <!--@gauge title="Заряд" tone="good" pct="63" num="63" small="%" primary="3,2 з 5,12 кВт·год"-->
+        <!--@gauge title="Потужність" tone="good" pct="70" num="1750" unit="Вт · заряд" utone="good" primary="з 2500 Вт макс."-->
+        <!--@gauge title="До повного" tone="info" pct="63" num="1:38" unit="год : хв" primary="до 100% · ≈ о 16:55"-->
+        <!--@gauge title="Без світла сьогодні" tone="warn" pct="35.7" num="5:27" unit="год : хв" primary="2 відключення"-->
+      </div></div>
+    </div>
+    <div class="variant">
+      <div class="variant__name">Очікування<p>Повна, мережа є, P ≈ 0. Порожнє кільце потужності — без крапки.</p></div>
+      <div class="panel ov-gauges"><div class="gauges">
+        <!--@gauge title="Заряд" tone="good" pct="100" num="100" small="%" primary="5,12 з 5,12 кВт·год"-->
+        <!--@gauge title="Потужність" tone="info" pct="0" num="0" unit="Вт · очікування" primary="ні заряду, ні розряду"-->
+        <!--@gauge title="Вистачить на" tone="info" pct="100" num="10:14" unit="год : хв" primary="при сер. 450 Вт у відкл."-->
+        <!--@gauge title="Без світла сьогодні" tone="warn" pct="0" num="0:00" unit="год : хв" primary="без відключень"-->
+      </div></div>
+    </div>
+    <div class="variant">
+      <div class="variant__name">Низький заряд<p>SOC нижче порогу сповіщення — кільце і підпис червоні.</p></div>
+      <div class="panel ov-gauges"><div class="gauges">
+        <!--@gauge title="Заряд" tone="bad" pct="17" num="17" small="%" primary="0,9 з 5,12 кВт·год"-->
+        <!--@gauge title="Потужність" tone="warn" pct="17.6" num="440" unit="Вт · розряд" utone="warn" primary="з 2 500 Вт макс."-->
+        <!--@gauge title="До розряду" tone="info" pct="7.8" num="0:35" unit="год : хв" primary="до 10% · ≈ о 15:52"-->
+        <!--@gauge title="Без світла сьогодні" tone="warn" pct="59" num="9:02" unit="год : хв" primary="1 відключення"-->
+      </div></div>
+    </div>
+  </div>
+</main>
+
+<template id="tip-soc"><div class="tip__title">Заряд 72%</div><dl><dt>Енергія</dt><dd>3,69 кВт·год</dd><dt>Понад 10%</dt><dd>3,17 кВт·год</dd><dt>Номінал</dt><dd>5,12 кВт·год</dd></dl><div class="tip__foot">Червоніє нижче порогу сповіщення (20%).</div></template>
+<template id="tip-power"><div class="tip__title">Розряд 420 Вт</div><dl><dt>Зараз</dt><dd>420 Вт</dd><dt>Сер. за 5 хв</dt><dd>415 Вт</dd><dt>Макс. розряду</dt><dd>2 500 Вт</dd></dl><div class="tip__foot">Заповнення кільця = потужність / максимум у поточному напрямку.</div></template>
+<template id="tip-eta"><div class="tip__title">До розряду ≈ 7 год 30 хв</div><dl><dt>Вимкнеться</dt><dd>≈ о 22:47</dd><dt>Нижній поріг</dt><dd>10%</dd><dt>Розрахунок</dt><dd>3,17 кВт·год / 415 Вт</dd></dl><div class="tip__foot">Кільце — скільки енергії лишилось понад 10%: повне коло = станція повна.</div></template>
+<template id="tip-light"><div class="tip__title">Без світла сьогодні<small>00:00 – 15:17</small></div><dl><dt>06:10–08:10</dt><dd>2 год 00 хв</dd><dt>з 11:50</dt><dd class="t-warn">3 год 27 хв, триває</dd><dt>Разом</dt><dd>5 год 27 хв</dd></dl><div class="tip__foot">Кільце — частка дня, що минула, без світла.</div></template>
+<template id="tip-source"><div class="tip__title">Джерела даних</div><dl><dt>Локальна мережа</dt><dd class="t-good">3 с тому</dd><dt>Хмара Marstek</dt><dd>1 хв тому</dd><dt>Bluetooth</dt><dd class="sub">немає адаптера</dd></dl><div class="tip__foot">Показуємо найсвіжіше; при рівній свіжості LAN &gt; BLE &gt; хмара.</div></template>
+
+<!--@script-->
+<!--@data-->
+<!--@soc-->
+<script>
+(function () {
+  const host = document.getElementById('soc');
+  let range = 24;
+  const go = () => MMSoc.render(host, { range });
+  document.getElementById('soc-range').addEventListener('seg-change', e => { range = Number(e.detail); go(); });
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(go);
+  window.addEventListener('resize', go);
+})();
+</script>
+</body>
+</html>

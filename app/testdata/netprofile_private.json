@@ -1,0 +1,10 @@
+[
+    {
+        "InterfaceAlias":  "Ethernet",
+        "NetworkCategory":  1
+    },
+    {
+        "InterfaceAlias":  "Office",
+        "NetworkCategory":  2
+    }
+]

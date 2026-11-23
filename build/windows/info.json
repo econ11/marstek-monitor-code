@@ -1,0 +1,17 @@
+{
+	"fixed": {
+		"file_version": "0.0.1",
+		"product_version": "0.0.1"
+	},
+	"info": {
+		"0409": {
+			"FileVersion": "0.0.1",
+			"ProductVersion": "0.0.1",
+			"CompanyName": "econ11",
+			"FileDescription": "Marstek home battery monitor",
+			"LegalCopyright": "(c) 2026 econ11",
+			"ProductName": "Marstek Monitor",
+			"Comments": "Tray app monitoring a Marstek battery over LAN"
+		}
+	}
+}

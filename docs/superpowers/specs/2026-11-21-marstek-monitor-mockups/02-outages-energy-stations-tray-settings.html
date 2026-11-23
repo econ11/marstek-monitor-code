@@ -1,0 +1,306 @@
+<h2>Доопрацювання v3: тултіпи всередині графіка</h2>
+<p class="subtitle">Блоки 1, 3, 4 — погоджені, тут їх немає. На графіках <b>наведіть мишу на стовпчик</b> — з'явиться підказка (один тултіп показаний закріпленим як приклад).</p>
+
+<style>
+  .mk { font-family: system-ui, "Segoe UI", sans-serif; color:#e6e6e6; background:#16181d; border-radius:10px; padding:16px; }
+  .mk .row { display:flex; gap:12px; flex-wrap:wrap; }
+  .mk .card { background:#20232a; border-radius:10px; padding:12px 14px; flex:1; min-width:120px; }
+  .mk .lbl { font-size:11px; color:#9aa0a6; text-transform:uppercase; letter-spacing:.05em; }
+  .mk .sm { font-size:12px; color:#b5b9bf; }
+  .mk .xs { font-size:11px; color:#8a9097; }
+  .mk .ok { color:#5ad17a; } .mk .bad { color:#ef6b6b; } .mk .warn { color:#f2b84b; } .mk .info { color:#5aa9ff; }
+  .mk .tabs { display:flex; gap:16px; font-size:12px; color:#9aa0a6; border-bottom:1px solid #2c3038; padding-bottom:7px; margin-bottom:12px; align-items:center; }
+  .mk .tabs b { color:#e6e6e6; border-bottom:2px solid #5aa9ff; padding-bottom:6px; }
+  .seg { display:inline-flex; background:#2a2e36; border-radius:7px; padding:2px; font-size:12px; }
+  .seg span { padding:3px 10px; border-radius:5px; color:#9aa0a6; }
+  .seg span.on { background:#3a404b; color:#e6e6e6; }
+  .tag { display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px; background:#5aa9ff22; color:#5aa9ff; margin-left:6px; vertical-align:middle; }
+  .blk { margin-top:26px; }
+
+  /* bar chart */
+  .chart { display:flex; gap:0; height:170px; position:relative; margin-top:10px; }
+  .yax { width:34px; display:flex; flex-direction:column; justify-content:space-between; font-size:10px; color:#8a9097; text-align:right; padding-right:6px; height:150px; }
+  .plot { flex:1; position:relative; height:150px; border-left:1px solid #2c3038; border-bottom:1px solid #3a3f48; }
+  .grid { position:absolute; left:0; right:0; border-top:1px dashed #2a2e35; }
+  .bars { position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:space-around; padding:0 6px; }
+  .bcol { position:relative; display:flex; align-items:flex-end; gap:3px; height:100%; cursor:pointer; padding:0 4px; border-radius:4px 4px 0 0; }
+  .bcol:hover { background:#ffffff08; }
+  .bar { width:22px; border-radius:4px 4px 0 0; }
+  .bar.r { background:linear-gradient(#ef6b6b,#c9555599); }
+  .bar.g { width:14px; background:linear-gradient(#5ad17a,#3f9e5a99); }
+  .bar.y { width:14px; background:linear-gradient(#f2b84b,#c4923499); }
+  .xl { position:absolute; bottom:-18px; left:50%; transform:translateX(-50%); font-size:10px; color:#8a9097; white-space:nowrap; }
+  .tip { display:none; position:absolute; top:4px; left:calc(100% + 6px); background:#2c3139; border:1px solid #3d434d; border-radius:8px; padding:8px 10px; font-size:11px; color:#d6d9de; white-space:nowrap; z-index:5; box-shadow:0 6px 18px #0008; line-height:1.6; text-align:left; }
+  .tip b { color:#fff; font-size:12px; }
+  .bcol:hover .tip, .tip.pin { display:block; }
+  .bcol.flip .tip { left:auto; right:calc(100% + 6px); }
+  .bcol:hover ~ .bcol .tip.pin, .bars:hover .tip.pin { display:none; }
+  .bars .bcol:hover .tip { display:block; }
+  .legend { display:flex; gap:14px; font-size:11px; color:#9aa0a6; }
+  .legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:5px; vertical-align:-1px; }
+
+  /* station switcher */
+  .pop { background:#23272f; border:1px solid #353a44; border-radius:12px; box-shadow:0 12px 32px #000a; padding:8px; width:360px; }
+  .st { display:flex; gap:12px; align-items:center; padding:10px; border-radius:9px; }
+  .st.on { background:#2d323b; outline:1px solid #5aa9ff55; }
+  .st:hover { background:#2a2f37; }
+  .pill { display:inline-flex; align-items:center; gap:4px; font-size:10px; padding:2px 7px; border-radius:10px; background:#2f343d; color:#b5b9bf; }
+  .pill.ok { background:#5ad17a1f; color:#5ad17a; } .pill.bad { background:#ef6b6b1f; color:#ef6b6b; } .pill.info { background:#5aa9ff1f; color:#5aa9ff; }
+  .tile { flex:1; min-width:150px; background:#262a32; border:1px solid #353a44; border-radius:12px; padding:14px; }
+  .tile.rec { border-color:#5aa9ff88; background:linear-gradient(#5aa9ff12,#262a32); }
+  .tile .ico { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px; margin-bottom:10px; }
+  .btn { display:inline-block; font-size:12px; padding:6px 14px; border-radius:7px; background:#5aa9ff; color:#0d1117; font-weight:600; }
+  .btn.ghost { background:#2f343d; color:#e6e6e6; font-weight:500; }
+
+  /* tray */
+  .tray { display:flex; gap:22px; align-items:flex-end; flex-wrap:wrap; }
+  .ti { text-align:center; }
+  .taskbar { display:inline-flex; gap:10px; align-items:center; background:#1c1f25; border:1px solid #2c3038; border-radius:8px; padding:6px 10px; }
+  .toast { display:flex; gap:10px; background:#2b2f37; border:1px solid #3a3f48; border-radius:10px; padding:10px 12px; width:330px; box-shadow:0 8px 22px #0008; }
+  .toast .app { font-size:10px; color:#9aa0a6; margin-bottom:3px; }
+  .toast .t { font-size:13px; font-weight:600; }
+  .toast .b { font-size:12px; color:#c4c8ce; margin-top:2px; }
+
+  /* settings */
+  .set { display:flex; background:#1b1e24; border-radius:12px; overflow:hidden; min-height:330px; }
+  .nav { width:170px; background:#191c21; border-right:1px solid #2a2e35; padding:12px 8px; font-size:13px; }
+  .nav div { padding:8px 10px; border-radius:7px; color:#b5b9bf; display:flex; gap:9px; align-items:center; }
+  .nav div.on { background:#2a2f38; color:#fff; }
+  .pane { flex:1; padding:16px 20px; }
+  .grp { background:#22262d; border-radius:10px; margin-bottom:14px; }
+  .item { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:11px 14px; border-bottom:1px solid #2a2e35; }
+  .item:last-child { border-bottom:0; }
+  .item .n { font-size:13px; color:#e6e6e6; } .item .d { font-size:11px; color:#8a9097; margin-top:2px; }
+  .sw { width:34px; height:19px; border-radius:10px; background:#5aa9ff; position:relative; flex:none; }
+  .sw::after { content:""; position:absolute; right:3px; top:3px; width:13px; height:13px; border-radius:50%; background:#fff; }
+  .sw.off { background:#3a3f48; } .sw.off::after { right:auto; left:3px; }
+  .dd { font-size:12px; background:#2c3139; border:1px solid #3a3f48; border-radius:6px; padding:4px 10px; color:#e6e6e6; white-space:nowrap; }
+</style>
+
+<!-- 2 -->
+<div class="blk option" data-choice="2-outages-v2" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>2. Відключення — графік з шкалою і тултіпами</h3>
+<div class="mk">
+  <div class="tabs"><span>Огляд</span><b>Відключення</b><span>Помилки</span><span>Батарея</span><span>Енергія</span>
+    <span style="margin-left:auto" class="seg"><span>Сьогодні</span><span class="on">7 днів</span><span>30 днів</span><span>📅 15.11 – 21.11</span></span></div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div class="lbl">Без світла по днях</div>
+      <div class="legend"><span><i style="background:#ef6b6b"></i>години без світла</span></div>
+    </div>
+    <div class="chart">
+      <div class="yax"><span>8 г</span><span>6 г</span><span>4 г</span><span>2 г</span><span>0</span></div>
+      <div class="plot">
+        <div class="grid" style="top:0"></div><div class="grid" style="top:25%"></div><div class="grid" style="top:50%"></div><div class="grid" style="top:75%"></div>
+        <div class="bars">
+          <div class="bcol"><div class="bar r" style="height:50%"></div><span class="xl">пт 15.11</span>
+            <div class="tip"><b>Пт, 15 листопада</b><br>Відключень: 2<br>Без світла: <b>4 г 00 хв</b><br>Найдовше: 2 г 30 хв (18:00–20:30)<br>Мін. заряд: 58%</div></div>
+          <div class="bcol"><div class="bar r" style="height:75%"></div><span class="xl">сб 16.11</span>
+            <div class="tip"><b>Сб, 16 листопада</b><br>Відключень: 3<br>Без світла: <b>6 г 00 хв</b><br>Найдовше: 3 г 00 хв<br>Мін. заряд: 34%</div></div>
+          <div class="bcol"><div class="bar r" style="height:37%"></div><span class="xl">нд 17.11</span>
+            <div class="tip"><b>Нд, 17 листопада</b><br>Відключень: 1<br>Без світла: <b>3 г 00 хв</b><br>Мін. заряд: 61%</div></div>
+          <div class="bcol"><div class="bar r" style="height:88%"></div><span class="xl">пн 18.11</span>
+            <div class="tip pin"><b>Пн, 18 листопада</b><br>Відключень: 3<br>Без світла: <b>7 г 05 хв</b> (29% доби)<br>Найдовше: 6 г 10 хв (19:30–01:40)<br>Мін. заряд: <span class="bad">10% — станція вимкнулась</span><br><span class="info">Клік — показати ці відключення в таблиці</span></div></div>
+          <div class="bcol flip"><div class="bar r" style="height:56%"></div><span class="xl">вт 19.11</span>
+            <div class="tip"><b>Вт, 19 листопада</b><br>Відключень: 2<br>Без світла: <b>4 г 30 хв</b><br>Мін. заряд: 47%</div></div>
+          <div class="bcol flip"><div class="bar r" style="height:31%"></div><span class="xl">ср 20.11</span>
+            <div class="tip"><b>Ср, 20 листопада</b><br>Відключень: 1<br>Без світла: <b>2 г 15 хв</b><br>Мін. заряд: 71%<br><span class="xs">⋯ частково з хмари</span></div></div>
+          <div class="bcol flip"><div class="bar r" style="height:40%"></div><span class="xl">чт 21.11</span>
+            <div class="tip"><b>Чт, 21 листопада (сьогодні)</b><br>Відключень: 2 (одне триває)<br>Без світла: <b>3 г 12 хв</b><br>Мін. заряд: 63%</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="height:22px"></div>
+    <div class="xs">Для «30 днів» стовпчики по днях, для довших періодів — по тижнях. Клік по стовпчику фільтрує таблицю нижче.</div>
+  </div>
+  <div class="xs" style="margin-top:8px">Кільця, статистика і таблиця подій — як у попередньому варіанті.</div>
+</div>
+</div></div>
+
+<!-- 5 -->
+<div class="blk option" data-choice="5-energy-v2" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>5. Енергія — шкала, тултіпи, вибір періоду</h3>
+<div class="mk">
+  <div class="tabs"><span>Огляд</span><span>Відключення</span><span>Помилки</span><span>Батарея</span><b>Енергія</b>
+    <span style="margin-left:auto" class="seg"><span>Сьогодні</span><span class="on">7 днів</span><span>30 днів</span><span>📅 15.11 – 21.11</span></span></div>
+  <div class="row">
+    <div class="card" style="flex:none;display:flex;flex-direction:column;gap:10px;justify-content:center;min-width:170px">
+      <div><div class="lbl">Заряджено</div><div style="font-size:20px;font-weight:600" class="ok">31.4 кВт·г</div></div>
+      <div><div class="lbl">Віддано</div><div style="font-size:20px;font-weight:600" class="warn">26.8 кВт·г</div></div>
+      <div><div class="lbl">ККД циклу</div><div style="font-size:20px;font-weight:600">85%</div></div>
+    </div>
+    <div class="card" style="flex:3">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div class="lbl">кВт·г по днях</div>
+        <div class="legend"><span><i style="background:#5ad17a"></i>заряд</span><span><i style="background:#f2b84b"></i>розряд</span></div>
+      </div>
+      <div class="chart">
+        <div class="yax"><span>8</span><span>6</span><span>4</span><span>2</span><span>0</span></div>
+        <div class="plot">
+          <div class="grid" style="top:0"></div><div class="grid" style="top:25%"></div><div class="grid" style="top:50%"></div><div class="grid" style="top:75%"></div>
+          <div class="bars">
+            <div class="bcol"><div class="bar g" style="height:52%"></div><div class="bar y" style="height:44%"></div><span class="xl">пт</span>
+              <div class="tip"><b>Пт, 15 листопада</b><br><span class="ok">Заряд:</span> 4.2 кВт·г<br><span class="warn">Розряд:</span> 3.5 кВт·г</div></div>
+            <div class="bcol"><div class="bar g" style="height:70%"></div><div class="bar y" style="height:60%"></div><span class="xl">сб</span>
+              <div class="tip"><b>Сб, 16 листопада</b><br><span class="ok">Заряд:</span> 5.6 кВт·г<br><span class="warn">Розряд:</span> 4.8 кВт·г</div></div>
+            <div class="bcol"><div class="bar g" style="height:41%"></div><div class="bar y" style="height:35%"></div><span class="xl">нд</span>
+              <div class="tip"><b>Нд, 17 листопада</b><br><span class="ok">Заряд:</span> 3.3 кВт·г<br><span class="warn">Розряд:</span> 2.8 кВт·г</div></div>
+            <div class="bcol"><div class="bar g" style="height:80%"></div><div class="bar y" style="height:72%"></div><span class="xl">пн</span>
+              <div class="tip pin"><b>Пн, 18 листопада</b><br><span class="ok">Заряд:</span> 6.4 кВт·г<br>&nbsp;&nbsp;з мережі 6.4 · сонце 0<br><span class="warn">Розряд:</span> 5.8 кВт·г<br>&nbsp;&nbsp;під час відключень 5.1<br>Пік розряду: 780 Вт о 21:12</div></div>
+            <div class="bcol flip"><div class="bar g" style="height:58%"></div><div class="bar y" style="height:50%"></div><span class="xl">вт</span>
+              <div class="tip"><b>Вт, 19 листопада</b><br><span class="ok">Заряд:</span> 4.6 кВт·г<br><span class="warn">Розряд:</span> 4.0 кВт·г</div></div>
+            <div class="bcol flip"><div class="bar g" style="height:38%"></div><div class="bar y" style="height:30%"></div><span class="xl">ср</span>
+              <div class="tip"><b>Ср, 20 листопада</b><br><span class="ok">Заряд:</span> 3.0 кВт·г<br><span class="warn">Розряд:</span> 2.4 кВт·г</div></div>
+            <div class="bcol flip"><div class="bar g" style="height:54%"></div><div class="bar y" style="height:44%"></div><span class="xl">чт</span>
+              <div class="tip"><b>Чт, 21 листопада</b><br><span class="ok">Заряд:</span> 4.3 кВт·г<br><span class="warn">Розряд:</span> 3.5 кВт·г</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="height:22px"></div>
+    </div>
+  </div>
+  <div class="xs" style="margin-top:8px">Кільце «Мережа / сонце» з'являється, лише якщо підключені панелі.</div>
+</div>
+</div></div>
+
+<!-- 6 -->
+<div class="blk option" data-choice="6-stations-v2" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>6. Кілька станцій — перемикач і додавання</h3>
+<div class="mk">
+  <div class="row" style="align-items:flex-start;gap:20px">
+    <div>
+      <div class="xs" style="margin-bottom:6px">Клік по назві станції над вкладками відкриває:</div>
+      <div class="pop">
+        <div class="st on">
+          <svg viewBox="0 0 120 120" width="44" height="44"><circle cx="60" cy="60" r="46" fill="none" stroke="#2c3038" stroke-width="14"/><circle cx="60" cy="60" r="46" fill="none" stroke="#5ad17a" stroke-width="14" stroke-linecap="round" stroke-dasharray="208 289" transform="rotate(-90 60 60)"/><text x="60" y="70" text-anchor="middle" fill="#e6e6e6" font-size="30" font-weight="700">72</text></svg>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">Дім <span class="xs" style="font-weight:400">· Venus E 3.0</span></div>
+            <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap"><span class="pill bad">● без світла 1:12</span><span class="pill">↓ 420 Вт</span><span class="pill info">LAN</span></div>
+          </div>
+          <span class="ok" style="font-size:14px">✓</span>
+        </div>
+        <div class="st">
+          <svg viewBox="0 0 120 120" width="44" height="44"><circle cx="60" cy="60" r="46" fill="none" stroke="#2c3038" stroke-width="14"/><circle cx="60" cy="60" r="46" fill="none" stroke="#5ad17a" stroke-width="14" stroke-linecap="round" stroke-dasharray="289 289" transform="rotate(-90 60 60)"/><text x="60" y="70" text-anchor="middle" fill="#e6e6e6" font-size="28" font-weight="700">100</text></svg>
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:600">Дача <span class="xs" style="font-weight:400">· Venus E 3.0</span></div>
+            <div style="display:flex;gap:5px;margin-top:5px;flex-wrap:wrap"><span class="pill ok">● світло є</span><span class="pill">очікування</span><span class="pill">☁ хмара · 2 хв тому</span></div>
+          </div>
+        </div>
+        <div style="border-top:1px solid #333842;margin:6px 4px 4px"></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 8px;font-size:12px"><span class="info">＋ Додати станцію</span><span class="xs">Керувати станціями…</span></div>
+      </div>
+    </div>
+
+    <div style="flex:1;min-width:300px">
+      <div class="xs" style="margin-bottom:6px">«Додати станцію» — вікно з трьома способами:</div>
+      <div class="card" style="background:#1d2026;border:1px solid #2f343d;padding:18px">
+        <div style="font-size:16px;font-weight:600">Додати станцію</div>
+        <div class="xs" style="margin:3px 0 14px">Одна станція може мати і локальне, і хмарне підключення — додаток сам обирає найсвіжіші дані.</div>
+        <div class="row">
+          <div class="tile rec"><div class="ico" style="background:#5aa9ff22">📶</div><div style="font-size:13px;font-weight:600">Пошук у мережі</div><div class="xs" style="margin-top:4px">Знайде станції у вашому Wi-Fi. Найшвидші дані, без інтернету.</div><div class="pill info" style="margin-top:8px">рекомендовано</div></div>
+          <div class="tile"><div class="ico" style="background:#a78bfa22">☁️</div><div style="font-size:13px;font-weight:600">Акаунт Marstek</div><div class="xs" style="margin-top:4px">Увійти тим самим акаунтом, що й у телефоні. Працює звідусіль, дає історію.</div></div>
+          <div class="tile"><div class="ico" style="background:#9aa0a622">⌨️</div><div style="font-size:13px;font-weight:600">IP вручну</div><div class="xs" style="margin-top:4px">Якщо автопошук не знайшов станцію.</div></div>
+        </div>
+        <div style="margin-top:14px;background:#262a32;border-radius:10px;padding:10px 12px">
+          <div class="xs" style="margin-bottom:6px">Знайдено в мережі:</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px">
+            <span>🔋 Venus E 3.0 <span class="xs">· 192.168.1.47 · VNSE3-0 · прошивка v151</span></span><span class="btn">Додати</span>
+          </div>
+          <div class="xs" style="margin-top:8px">Не бачите своєї? Локальний API треба увімкнути на станції — <span class="info">як це зробити</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div></div>
+
+<!-- 7 -->
+<div class="blk option" data-choice="7-tray-v2" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>7. Трей і сповіщення</h3>
+<div class="mk">
+  <div class="lbl" style="margin-bottom:10px">Іконка в треї — «батарейка» з рівнем заряду + значок стану</div>
+  <div class="tray">
+    <!-- helper: battery glyph -->
+    <div class="ti">
+      <svg width="64" height="64" viewBox="0 0 32 32"><rect x="3" y="9" width="23" height="14" rx="3" fill="none" stroke="#e6e6e6" stroke-width="2"/><rect x="27" y="13" width="2.5" height="6" rx="1" fill="#e6e6e6"/><rect x="5.5" y="11.5" width="13" height="9" rx="1.5" fill="#5ad17a"/></svg>
+      <div class="sm">світло є · 72%</div></div>
+    <div class="ti">
+      <svg width="64" height="64" viewBox="0 0 32 32"><rect x="3" y="9" width="23" height="14" rx="3" fill="none" stroke="#e6e6e6" stroke-width="2"/><rect x="27" y="13" width="2.5" height="6" rx="1" fill="#e6e6e6"/><rect x="5.5" y="11.5" width="13" height="9" rx="1.5" fill="#f2b84b"/><circle cx="25" cy="24" r="6" fill="#16181d"/><circle cx="25" cy="24" r="5" fill="#f2b84b"/><path d="M23 21.5v2.5M27 21.5v2.5M22.5 24h5M25 24v3" stroke="#16181d" stroke-width="1.3" stroke-linecap="round"/><path d="M21.5 27.5l7-7" stroke="#16181d" stroke-width="1.3"/></svg>
+      <div class="sm">без світла · 72%</div></div>
+    <div class="ti">
+      <svg width="64" height="64" viewBox="0 0 32 32"><rect x="3" y="9" width="23" height="14" rx="3" fill="none" stroke="#ef6b6b" stroke-width="2"/><rect x="27" y="13" width="2.5" height="6" rx="1" fill="#ef6b6b"/><rect x="5.5" y="11.5" width="3.5" height="9" rx="1.5" fill="#ef6b6b"/><circle cx="25" cy="24" r="6" fill="#16181d"/><circle cx="25" cy="24" r="5" fill="#ef6b6b"/><path d="M25 21.3v3.4" stroke="#16181d" stroke-width="1.6" stroke-linecap="round"/><circle cx="25" cy="26.6" r=".9" fill="#16181d"/></svg>
+      <div class="sm">низький · 15%</div></div>
+    <div class="ti">
+      <svg width="64" height="64" viewBox="0 0 32 32"><rect x="3" y="9" width="23" height="14" rx="3" fill="none" stroke="#e6e6e6" stroke-width="2"/><rect x="27" y="13" width="2.5" height="6" rx="1" fill="#e6e6e6"/><rect x="5.5" y="11.5" width="15" height="9" rx="1.5" fill="#5ad17a"/><path d="M13.5 10.5l-3 5.5h3.5l-2 5.5 5-7h-3.5l2-4z" fill="#16181d"/></svg>
+      <div class="sm">заряджається</div></div>
+    <div class="ti">
+      <svg width="64" height="64" viewBox="0 0 32 32"><rect x="3" y="9" width="23" height="14" rx="3" fill="none" stroke="#8a9097" stroke-width="2" stroke-dasharray="3 2"/><rect x="27" y="13" width="2.5" height="6" rx="1" fill="#8a9097"/><circle cx="25" cy="24" r="6" fill="#16181d"/><circle cx="25" cy="24" r="5" fill="#8a9097"/><path d="M22.8 21.8l4.4 4.4M27.2 21.8l-4.4 4.4" stroke="#16181d" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div class="sm">немає зв'язку</div></div>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+    <div class="taskbar">
+      <span class="xs">реальний розмір:</span>
+      <svg width="16" height="16" viewBox="0 0 32 32"><rect x="3" y="9" width="23" height="14" rx="3" fill="none" stroke="#e6e6e6" stroke-width="2.4"/><rect x="27" y="13" width="2.5" height="6" rx="1" fill="#e6e6e6"/><rect x="5.5" y="11.5" width="13" height="9" rx="1.5" fill="#f2b84b"/><circle cx="25" cy="24" r="6" fill="#1c1f25"/><circle cx="25" cy="24" r="5" fill="#f2b84b"/></svg>
+      <span class="xs">🔊 📶 14:17</span>
+    </div>
+    <div style="background:#2b2f37;border:1px solid #3a3f48;border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.6">
+      <b>Дім · Venus E</b><br>72% · розряд 420 Вт<br><span class="warn">Без світла 1 г 12 хв</span> · вистачить на 7:30
+    </div>
+  </div>
+
+  <div class="lbl" style="margin:20px 0 10px">Сповіщення Windows — емодзі за змістом події</div>
+  <div class="row" style="gap:12px">
+    <div class="toast"><div style="font-size:22px">🕯️</div><div><div class="app">Marstek Monitor · Дім</div><div class="t">Зникло світло</div><div class="b">14:05 · заряд 95% · вистачить ≈ на 10 год</div></div></div>
+    <div class="toast"><div style="font-size:22px">💡</div><div><div class="app">Marstek Monitor · Дім</div><div class="t">Світло з'явилось</div><div class="b">Без світла було 2 г 00 хв · заряд 63% · повна ≈ о 16:10</div></div></div>
+    <div class="toast"><div style="font-size:22px">🪫</div><div><div class="app">Marstek Monitor · Дім</div><div class="t">Низький заряд — 20%</div><div class="b">При 420 Вт вистачить ≈ на 1 г 50 хв</div></div></div>
+    <div class="toast"><div style="font-size:22px">🔋</div><div><div class="app">Marstek Monitor · Дім</div><div class="t">Станція заряджена</div><div class="b">100% · 5.12 кВт·г · вистачить ≈ на 11 год</div></div></div>
+    <div class="toast"><div style="font-size:22px">⚠️</div><div><div class="app">Marstek Monitor · Дім</div><div class="t">Помилка: перегрів інвертора (E07)</div><div class="b">Перевірте вентиляцію навколо станції</div></div></div>
+    <div class="toast"><div style="font-size:22px">📡</div><div><div class="app">Marstek Monitor · Дім</div><div class="t">Немає зв'язку зі станцією</div><div class="b">Ні локально, ні через хмару вже 10 хв</div></div></div>
+  </div>
+</div>
+</div></div>
+
+<!-- 8 -->
+<div class="blk option" data-choice="8-settings-v2" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>8. Налаштування — окремий екран з розділами</h3>
+<div class="mk" style="padding:0">
+  <div class="set">
+    <div class="nav">
+      <div>⚙️ Загальні</div>
+      <div class="on">🔔 Сповіщення</div>
+      <div>🔋 Станції</div>
+      <div>🔌 Підключення</div>
+      <div>🗂️ Дані та історія</div>
+      <div>ℹ️ Про програму</div>
+    </div>
+    <div class="pane">
+      <div style="font-size:17px;font-weight:600;margin-bottom:4px">Сповіщення</div>
+      <div class="xs" style="margin-bottom:14px">Спливають у кутку екрана Windows, навіть коли вікно додатка закрите.</div>
+      <div class="lbl" style="margin:0 0 6px 4px">Світло</div>
+      <div class="grp">
+        <div class="item"><div><div class="n">🕯️ Зникло світло</div><div class="d">З прогнозом, на скільки вистачить заряду</div></div><div class="sw"></div></div>
+        <div class="item"><div><div class="n">💡 Світло з'явилось</div><div class="d">Скільки тривало відключення і коли станція зарядиться</div></div><div class="sw"></div></div>
+      </div>
+      <div class="lbl" style="margin:0 0 6px 4px">Батарея</div>
+      <div class="grp">
+        <div class="item"><div><div class="n">🪫 Низький заряд</div><div class="d">Поріг спрацювання</div></div><div style="display:flex;gap:10px;align-items:center"><span class="seg"><span>10%</span><span class="on">20%</span><span>30%</span><span>…</span></span><div class="sw"></div></div></div>
+        <div class="item"><div><div class="n">🔋 Станція заряджена до 100%</div></div><div class="sw"></div></div>
+        <div class="item"><div><div class="n">⚠️ Нова помилка або попередження</div></div><div class="sw"></div></div>
+      </div>
+      <div class="lbl" style="margin:0 0 6px 4px">Зв'язок</div>
+      <div class="grp">
+        <div class="item"><div><div class="n">📡 Немає зв'язку зі станцією</div><div class="d">Якщо даних немає довше, ніж</div></div><div style="display:flex;gap:10px;align-items:center"><span class="dd">10 хв ▾</span><div class="sw off"></div></div></div>
+      </div>
+      <div class="grp">
+        <div class="item"><div><div class="n">🌙 Тиха година</div><div class="d">Не показувати сповіщення вночі (крім «Низький заряд»)</div></div><div style="display:flex;gap:10px;align-items:center"><span class="dd">23:00 – 07:00</span><div class="sw off"></div></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="xs" style="margin-top:8px">Інші розділи — в тому ж стилі: «Загальні» (мова, автозапуск, трей, тема), «Станції» (назви, порядок, видалення), «Підключення» (хмара: увійти/вийти, частота опитування), «Дані» (зберігання, експорт CSV), «Про програму» (версія, оновлення з GitHub).</div>
+</div></div>

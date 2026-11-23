@@ -1,0 +1,166 @@
+<!--@head title="Перший запуск"-->
+<style>
+  .win--bare { grid-template-rows: var(--titlebar-height) minmax(0, 1fr); }
+  .fr { max-width: 760px; margin: 0 auto; padding: var(--space-6) 0 var(--space-5); display: grid; gap: var(--space-4); align-content: start; }
+  .fr__top { display: flex; align-items: flex-start; gap: var(--space-4); }
+  .fr__top h1 { font-size: var(--text-heading); font-weight: 600; letter-spacing: var(--tracking-heading); margin: 0 0 4px; }
+  .fr__top p { margin: 0; color: var(--color-text-muted); font-size: var(--text-small); max-width: 60ch; }
+  .lang { margin-left: auto; flex: none; }
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+  .tile { position: relative; display: grid; gap: 4px; align-content: start; text-align: left; padding: var(--space-3) var(--space-4); border-radius: 10px; background: var(--color-surface-2); border: 1px solid var(--color-border-strong); min-height: 108px; }
+  .tile[aria-checked="true"] { border-color: var(--color-info); background: var(--color-info-soft); box-shadow: inset 0 0 0 1px var(--color-info); }
+  .tile__icon { width: 28px; height: 28px; border-radius: 7px; display: grid; place-items: center; background: var(--color-surface-3); margin-bottom: 4px; }
+  .tile[aria-checked="true"] .tile__icon { background: var(--color-info); color: var(--color-text-on-accent); }
+  .tile b { font-weight: 600; font-size: var(--text-small); }
+  .tile span { font-size: var(--text-caption); color: var(--color-text-muted); line-height: 1.4; }
+  .tile .pill { position: absolute; top: 10px; right: 10px; }
+  .result { padding: var(--space-5); display: grid; gap: var(--space-3); }
+  .result__h { display: flex; gap: var(--space-3); align-items: flex-start; }
+  .result__ic { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--color-surface-2); color: var(--color-text-muted); flex: none; }
+  .result__ic[data-tone="good"] { background: var(--color-good-soft); color: var(--color-good); }
+  .result__ic[data-tone="bad"] { background: var(--color-bad-soft); color: var(--color-bad); }
+  .result h2 { margin: 0; font-size: var(--text-title); font-weight: 600; }
+  .result p { margin: 2px 0 0; color: var(--color-text-muted); font-size: var(--text-small); line-height: 1.5; }
+  .actions { display: flex; gap: var(--space-2); flex-wrap: wrap; align-items: center; padding-left: 48px; }
+  .actions .link { font-size: var(--text-small); margin-left: var(--space-2); }
+  .dx { margin-left: 48px; display: grid; grid-template-columns: 16px 1fr; gap: 8px; font-size: var(--text-small); color: var(--color-text-muted); padding: var(--space-3); border-radius: 8px; background: var(--color-surface-2); }
+  .dx .icon { margin-top: 2px; color: var(--color-info); }
+  .dx b { color: var(--color-text-primary); font-weight: 500; }
+  .steps { margin: 0 0 0 48px; padding: 0; list-style: none; display: grid; gap: var(--space-2); counter-reset: s; }
+  .steps li { counter-increment: s; display: grid; grid-template-columns: 24px 1fr; gap: 10px; font-size: var(--text-small); color: var(--color-text-muted); }
+  .steps li::before { content: counter(s); width: 22px; height: 22px; border-radius: 50%; background: var(--color-surface-3); color: var(--color-text-primary); font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+  .field { display: grid; gap: 6px; }
+  .field label { font-size: var(--text-small); font-weight: 500; }
+  .field .input { width: 100%; text-align: left; height: 36px; font-size: var(--text-body); }
+  .field small { font-size: var(--text-caption); color: var(--color-text-subtle); }
+  .form { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); margin-left: 48px; }
+  .err { margin-left: 48px; display: grid; grid-template-columns: 18px 1fr; gap: 10px; padding: var(--space-3); border-radius: 8px; background: var(--color-bad-soft); border: 1px solid rgb(255 122 114 / .3); font-size: var(--text-small); }
+  .err .icon { color: var(--color-bad); width: 18px; height: 18px; }
+  .ref { font-family: var(--font-mono); font-size: 12px; color: var(--color-text-subtle); }
+  .offer { display: grid; grid-template-columns: 32px 1fr auto; gap: var(--space-3); align-items: center; padding: var(--space-3) var(--space-4); border-radius: 10px; border: 1px solid var(--color-border); background: var(--color-surface-1); }
+  .offer .result__ic { width: 32px; height: 32px; }
+  .offer b { font-weight: 500; display: block; }
+  .offer span { font-size: var(--text-small); color: var(--color-text-muted); }
+  .row2 { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); border-top: 1px solid var(--color-border); font-size: var(--text-small); }
+  .row2 .switch { margin-left: auto; }
+</style>
+</head>
+<body>
+<!--@sprite-->
+<main class="doc">
+  <!--@docnav page="10-first-run.html" title="Перший запуск"-->
+  <p class="doc-lede">Перший запуск — це вікно «Додати станцію», розгорнуте на все вікно, з одним рядком привітання (flows §1.3). Вкладок ще немає — нема чого показувати. Пошук стартує сам. Чотири стани, що найчастіше трапляються або найбільше лякають.</p>
+
+  <div style="display:grid;gap:48px">
+
+  <section>
+    <h2 class="doc-h2" style="margin-top:0">NONE_FOUND — нічого не знайдено (найчастіший)</h2>
+    <div class="win win--bare">
+      <!--@titlebar-->
+      <div class="content"><div class="fr">
+        <div class="fr__top"><div><h1>Marstek Monitor</h1><p>Показує, що зараз із зарядною станцією, на скільки її вистачить і як часто не було світла. Історія зберігається на цьому комп'ютері.</p></div>
+          <select class="select lang" aria-label="Мова"><option>Українська</option><option>English</option></select></div>
+        <div class="tiles" role="radiogroup" aria-label="Спосіб підключення">
+          <button class="tile" role="radio" aria-checked="true"><span class="tile__icon"><!--@icon n="wifi"--></span><b>Пошук у локальній мережі</b><span>Знайде станції у вашому Wi-Fi. Найшвидші дані, працює без інтернету.</span></button>
+          <button class="tile" role="radio" aria-checked="false"><span class="tile__icon"><!--@icon n="cloud"--></span><b>Акаунт Marstek</b><span>Увійдіть тим самим акаунтом, що й у телефоні. Працює звідусіль і дає історію.</span></button>
+          <button class="tile" role="radio" aria-checked="false"><span class="tile__icon"><!--@icon n="keyboard"--></span><b>IP вручну</b><span>Якщо пошук не знайшов станцію.</span></button>
+        </div>
+        <section class="panel result" aria-live="polite">
+          <div class="result__h"><span class="result__ic"><!--@icon n="search" cls="icon--lg"--></span><div><h2>Станцій у локальній мережі не знайдено</h2><p>Найчастіше на станції не ввімкнено локальний API, або станція й цей комп'ютер у різних мережах Wi-Fi.</p></div></div>
+          <div class="dx"><!--@icon n="info"--><span><b>Мережа Windows позначена як «Загальнодоступна»</b><br>У такій мережі Windows блокує відповіді станції. Змініть профіль мережі на «Приватна». <a class="link" href="#">Як це зробити</a></span></div>
+          <div class="actions">
+            <button class="btn btn--primary"><!--@icon n="cloud"-->Увійти в акаунт Marstek</button>
+            <a class="btn btn--secondary" href="#guide">Як увімкнути локальний API</a>
+            <button class="btn btn--ghost">Ввести IP</button>
+            <a class="link" href="#">Шукати знову</a>
+          </div>
+        </section>
+      </div></div>
+    </div>
+  </section>
+
+  <section id="guide">
+    <h2 class="doc-h2" style="margin-top:0">LAN_GUIDE — як увімкнути локальний API (у тому ж вікні)</h2>
+    <div class="win win--bare">
+      <!--@titlebar-->
+      <div class="content"><div class="fr">
+        <div class="fr__top"><div><h1>Marstek Monitor</h1><p>Показує, що зараз із зарядною станцією, на скільки її вистачить і як часто не було світла. Історія зберігається на цьому комп'ютері.</p></div></div>
+        <section class="panel result">
+          <div class="result__h"><button class="iconbtn" aria-label="Назад" style="transform:rotate(180deg);margin:2px 0 0 -6px"><!--@icon n="chevron-right"--></button><div><h2>Як увімкнути локальний API</h2><p>Локальний API вмикається на самій станції — через застосунок Marstek Venus Monitor (по Bluetooth) або через підтримку Marstek. Покрокова інструкція — у README проєкту.</p></div></div>
+          <ol class="steps">
+            <li><span>Станція і цей комп'ютер мають бути в одній мережі Wi-Fi.</span></li>
+            <li><span>Якщо Windows запитає дозвіл для Marstek Monitor, дозвольте доступ у приватних мережах.</span></li>
+            <li><span>Після ввімкнення натисніть «Шукати знову» — тут же, нікуди не переходячи.</span></li>
+          </ol>
+          <div class="actions">
+            <button class="btn btn--primary"><!--@icon n="search"-->Шукати знову</button>
+            <a class="link" href="#">Відкрити інструкцію<!--@icon n="external" cls="icon--sm"--></a>
+          </div>
+        </section>
+        <div class="offer"><span class="result__ic"><!--@icon n="cloud"--></span><div><b>Поки що — почати з хмари</b><span>Локальне підключення можна додати пізніше, до тієї самої станції.</span></div><button class="btn btn--secondary">Увійти в акаунт Marstek</button></div>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="doc-h2" style="margin-top:0">CLOUD_INCOMPATIBLE — хмара відповіла незрозуміло (2FA, капча, змінений протокол)</h2>
+    <div class="win win--bare">
+      <!--@titlebar-->
+      <div class="content"><div class="fr">
+        <div class="tiles" role="radiogroup" aria-label="Спосіб підключення">
+          <button class="tile" role="radio" aria-checked="false"><span class="tile__icon"><!--@icon n="wifi"--></span><b>Пошук у локальній мережі</b><span>Знайде станції у вашому Wi-Fi. Найшвидші дані, працює без інтернету.</span></button>
+          <button class="tile" role="radio" aria-checked="true"><span class="tile__icon"><!--@icon n="cloud"--></span><b>Акаунт Marstek</b><span>Увійдіть тим самим акаунтом, що й у телефоні. Працює звідусіль і дає історію.</span></button>
+          <button class="tile" role="radio" aria-checked="false"><span class="tile__icon"><!--@icon n="keyboard"--></span><b>IP вручну</b><span>Якщо пошук не знайшов станцію.</span></button>
+        </div>
+        <section class="panel result">
+          <div class="result__h"><span class="result__ic"><!--@icon n="cloud" cls="icon--lg"--></span><div><h2>Вхід в акаунт Marstek</h2><p>Пароль зберігається в диспетчері облікових даних Windows і передається лише на сервери Marstek.</p></div></div>
+          <div class="form">
+            <div class="field"><label for="em">Електронна пошта</label><input class="input" id="em" value="you@example.com" autocomplete="email"></div>
+            <div class="field"><label for="pw">Пароль</label><input class="input" id="pw" type="password" autocomplete="current-password"></div>
+          </div>
+          <div class="err" role="alert"><!--@icon n="alert"--><div>Не вдалося увійти: схоже, Marstek змінив спосіб входу. Перевірте, чи є оновлення додатка.<div class="t-muted" style="margin-top:4px">Хмара Marstek могла попросити додаткову перевірку (код, капчу) — додаток поки не вміє її проходити.</div><div class="ref" style="margin-top:6px">Код для звіту про помилку: MM-CLD-7F3A</div></div></div>
+          <div class="actions">
+            <button class="btn btn--secondary">Спробувати ще раз</button>
+            <button class="btn btn--secondary"><!--@icon n="wifi"-->Пошук у локальній мережі</button>
+            <a class="link" href="#" title="Відкриється сторінка на GitHub з версією додатка й кодом помилки. Пароль і пошта туди не потрапляють.">Повідомити розробника<!--@icon n="external" cls="icon--sm"--></a>
+          </div>
+          <p class="note" style="margin-left:48px"><!--@icon n="info"-->Marstek не має офіційного доступу для сторонніх програм, тож вхід може перестати працювати після оновлень Marstek.</p>
+        </section>
+      </div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="doc-h2" style="margin-top:0">DONE — станцію додано</h2>
+    <div class="win win--bare">
+      <!--@titlebar-->
+      <div class="content"><div class="fr">
+        <section class="panel result">
+          <div class="result__h"><span class="result__ic" data-tone="good"><!--@icon n="check" cls="icon--lg"--></span><div><h2>Станцію «Дім» додано</h2><p>Venus E 3.0 · 192.168.1.47 · LAN. Перші дані: 72%, без світла 3 год 27 хв.</p></div></div>
+          <div class="form" style="grid-template-columns:1fr">
+            <div class="field" style="max-width:320px"><label for="nm">Назва станції</label><input class="input" id="nm" value="Дім" maxlength="24"><small>Так станція підписана в треї та сповіщеннях.</small></div>
+          </div>
+        </section>
+        <div class="offer"><span class="result__ic"><!--@icon n="cloud"--></span><div><b>Підключити ще й хмару Marstek?</b><span>Коли локальний API замовкає, дані йтимуть через хмару. А відключення, поки комп'ютер вимкнений, теж потраплять в історію.</span></div><div style="display:flex;gap:8px;align-items:center"><button class="btn btn--ghost">Пізніше</button><button class="btn btn--secondary">Увійти в акаунт Marstek</button></div></div>
+        <div class="panel" style="padding:0">
+          <div class="row2" style="border-top:0">Запускати з Windows<button class="switch" role="switch" aria-checked="true" aria-label="Запускати з Windows"></button></div>
+          <div class="row2">Згортати в трей при закритті<button class="switch" role="switch" aria-checked="true" aria-label="Згортати в трей при закритті"></button></div>
+          <div class="row2"><!--@icon n="info"--><span class="t-muted">Windows 11 ховає нові іконки під «^». Перетягніть батарейку на панель задач, щоб бачити заряд завжди.</span><button class="iconbtn" aria-label="Закрити підказку" style="margin-left:auto"><!--@icon n="x"--></button></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><button class="btn btn--ghost"><!--@icon n="plus"-->Додати ще одну станцію</button><a class="btn btn--primary" href="01-overview.html">Перейти до огляду</a></div>
+      </div></div>
+    </div>
+  </section>
+  </div>
+
+  <ol class="doc-notes">
+    <li><b>Одна сторінка, не майстер.</b> Плитки способів завжди вгорі; під ними змінюється тільки область результату. Повернутись з будь-якого стану — клік по іншій плитці.</li>
+    <li><b>NONE_FOUND:</b> рівно три дії + текстове «Шукати знову». Головна — хмара (працює без налаштування станції). Якщо додаток сам визначив причину (профіль мережі, брандмауер, немає LAN) — блок діагнозу з синьою іконкою над діями, замість загальної поради.</li>
+    <li><b>CLOUD_INCOMPATIBLE</b> — помилка в червоній плашці під формою (не модальна), з кодом для звіту; пароль очищено, пошта лишається. Ніякої вини користувача в тексті.</li>
+    <li><b>DONE:</b> назва редагується на місці (≤ 24 символи — бюджет трею), пропозиція хмари — одна картка, закривається назавжди. Перемикачі автозапуску й трею видно тут, бо далі вікно «зникне» в трей.</li>
+    <li><b>Рядки</b> — з каталогу §13.1 (onboarding.none.*, onboarding.dx.*, onboarding.lanGuide.*, onboarding.cloud.*, onboarding.done.*).</li>
+  </ol>
+</main>
+<!--@script-->
+</body>
+</html>

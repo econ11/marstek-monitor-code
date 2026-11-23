@@ -1,0 +1,86 @@
+<!--@head title="Батарея"-->
+<style>
+  .bat-gauges { --cols: 3; padding: var(--space-4) var(--space-2) var(--space-3); margin-bottom: var(--space-4); }
+  .cap .dot { fill: var(--color-info); stroke: var(--color-surface-1); stroke-width: 2; }
+  .cap .dot.approx { fill: var(--color-surface-1); stroke: var(--color-info); stroke-width: 1.75; }
+  .cap .hitpt { fill: transparent; cursor: default; }
+  .cap .nominal { stroke: var(--color-text-subtle); stroke-dasharray: 4 4; }
+  .cap .nominal-label { fill: var(--color-text-subtle); font-size: 11px; }
+  .cap .val { fill: var(--color-text-muted); font-size: 11px; font-weight: 500; }
+  .legend .ln { width: 14px; height: 2px; background: var(--color-info); display: inline-block; margin-right: 6px; vertical-align: 3px; }
+  .legend .ln.d { background: none; border-top: 2px dashed var(--color-info); height: 0; }
+</style>
+</head>
+<body>
+<!--@sprite-->
+<main class="doc">
+  <!--@docnav page="04-battery.html" title="Батарея"-->
+  <p class="doc-lede">Три кільця того самого компонента. Температура в нормі — синя (нейтральне значення); поза 0…45 °C кільце і підпис стають червоними. Наведіть на точки графіка.</p>
+
+  <div class="win">
+    <!--@titlebar state="Без світла 3 год 27 хв"-->
+    <!--@appbar tab="battery" grid="off"-->
+    <div class="content">
+      <section class="panel bat-gauges" aria-label="Стан батареї">
+        <div class="gauges">
+          <!--@gauge title="Здоров'я" tone="good" pct="97" num="97" small="%" primary="4,97 з 5,12 кВт·год"-->
+          <!--@gauge title="Ресурс циклів" tone="info" pct="2.4" num="142" primary="з ~6000 циклів"-->
+          <!--@gauge title="Температура" tone="info" pct="40" num="18" small="°" primary="норма 0…45 °C"-->
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="cap-title">
+        <div class="panel__head">
+          <h2 class="panel__title" id="cap-title">Ємність по місяцях, кВт·год</h2>
+          <div class="legend"><span><span class="ln"></span>оцінка</span><span><span class="ln d"></span>приблизно — мало даних</span></div>
+        </div>
+        <div class="chart cap" id="cap"></div>
+        <p class="note" style="margin:var(--space-3) 0 0"><!--@icon n="info"-->Ємність рахується з довгих розрядів — коли заряд падає на половину і більше. Перші місяці значення приблизні.</p>
+      </section>
+    </div>
+  </div>
+
+  <ol class="doc-notes">
+    <li><b>Шкала графіка</b> не з нуля (4,6–5,2) — для лінійного графіка це чесно, і різниця 3% інакше невидима. Номінал 5,12 — пунктирна лінія з підписом.</li>
+    <li><b>Приблизні місяці</b> — порожні кружки і пунктирний відрізок лінії; у тултіпі — кількість розрядів, з яких рахували.</li>
+    <li><b>Кільце циклів</b> майже порожнє (2,4%) — це правда, а не помилка. Число в центрі несе сенс, кільце — масштаб.</li>
+  </ol>
+</main>
+<!--@script-->
+<script>
+(function () {
+  const M = [['черв', 'Червень', 5.10, true, 2], ['лип', 'Липень', 5.06, true, 3], ['серп', 'Серпень', 5.03, false, 7], ['вер', 'Вересень', 5.01, false, 6], ['жовт', 'Жовтень', 4.99, false, 9], ['лист', 'Листопад', 4.97, false, 8]];
+  const host = document.getElementById('cap');
+  const f = v => v.toFixed(2).replace('.', ',');
+  function render() {
+    const W = host.clientWidth, H = 250, P = { l: 44, r: 16, t: 24, b: 30 }, lo = 4.6, hi = 5.2;
+    const x = i => P.l + 24 + i * (W - P.l - P.r - 48) / (M.length - 1);
+    const y = v => P.t + (1 - (v - lo) / (hi - lo)) * (H - P.t - P.b);
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Ємність по місяцях: від 5,10 у червні до 4,97 у листопаді"><g class="grid">`;
+    for (let v = 4.6; v <= 5.201; v += 0.2) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" class="${v < 4.61 ? 'base' : ''}"/>`;
+    s += '</g><g class="axis">';
+    for (let v = 4.6; v <= 5.201; v += 0.2) s += `<text x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end">${v.toFixed(1).replace('.', ',')}</text>`;
+    M.forEach((m, i) => s += `<text x="${x(i)}" y="${H - 8}" text-anchor="middle" class="${i === M.length - 1 ? 'strong' : ''}">${m[0]}</text>`);
+    s += `</g><line class="nominal" x1="${P.l}" x2="${W - P.r}" y1="${y(5.12)}" y2="${y(5.12)}"/><text class="nominal-label" x="${W - P.r}" y="${y(5.12) - 6}" text-anchor="end">номінал 5,12</text>`;
+    const pt = i => `${x(i)},${y(M[i][2])}`;
+    s += `<path d="M${pt(0)}L${pt(1)}L${pt(2)}" fill="none" stroke="var(--color-info)" stroke-width="2" stroke-dasharray="5 4"/>`;
+    s += `<path d="M${pt(2)}${M.slice(3).map((_, k) => 'L' + pt(k + 3)).join('')}" fill="none" stroke="var(--color-info)" stroke-width="2" stroke-linejoin="round"/>`;
+    M.forEach((m, i) => {
+      s += `<circle class="dot${m[3] ? ' approx' : ''}" cx="${x(i)}" cy="${y(m[2])}" r="4.5"/><text class="val" x="${x(i)}" y="${y(m[2]) - 12}" text-anchor="middle">${f(m[2])}</text>`;
+      s += `<circle class="hitpt" data-i="${i}" cx="${x(i)}" cy="${y(m[2])}" r="18" tabindex="0" role="img" aria-label="${m[1]}: ${f(m[2])} кВт·год"/>`;
+    });
+    host.innerHTML = s + '</svg>';
+    host.querySelectorAll('.hitpt').forEach(c => {
+      const m = M[c.dataset.i];
+      const html = `<div class="tip__title">${m[1]} 2026${m[3] ? '<small>приблизно</small>' : ''}</div><dl><dt>Ємність</dt><dd>${f(m[2])} кВт·год</dd><dt>Від номіналу</dt><dd>${(m[2] / 5.12 * 100).toFixed(1).replace('.', ',')}%</dd><dt>Розрядів у розрахунку</dt><dd>${m[4]}</dd></dl>${m[3] ? '<div class="tip__foot">Менше 5 повних розрядів — оцінка неточна.</div>' : ''}`;
+      const on = () => { const r = c.getBoundingClientRect(); MM.tip.show(c, html, { rect: { left: r.left + 14, right: r.right - 14, width: r.width - 28, top: r.top + 12, bottom: r.bottom - 12, height: r.height - 24 } }); };
+      c.addEventListener('pointerenter', on); c.addEventListener('focus', on);
+      c.addEventListener('pointerleave', MM.tip.hide); c.addEventListener('blur', MM.tip.hide);
+    });
+  }
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(render);
+  window.addEventListener('resize', render);
+})();
+</script>
+</body>
+</html>

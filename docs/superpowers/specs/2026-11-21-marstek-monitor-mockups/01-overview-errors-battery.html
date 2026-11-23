@@ -1,0 +1,244 @@
+<h2>Весь інтерфейс — огляд</h2>
+<p class="subtitle"><b>Вирішили ви</b> — головний екран (блок 1). <b>Мої пропозиції</b> — блоки 2–8, позначені «пропозиція». Клікайте блоки, з якими згодні; в терміналі напишіть, що змінити.</p>
+
+<style>
+  .mk { font-family: system-ui, sans-serif; color:#e6e6e6; background:#16181d; border-radius:8px; padding:14px; }
+  .mk .row { display:flex; gap:12px; flex-wrap:wrap; }
+  .mk .card { background:#20232a; border-radius:8px; padding:10px 12px; flex:1; min-width:110px; }
+  .mk .lbl { font-size:11px; color:#9aa0a6; text-transform:uppercase; letter-spacing:.04em; }
+  .mk .sm { font-size:12px; color:#b5b9bf; }
+  .mk .ok { color:#5ad17a; } .mk .bad { color:#ef6b6b; } .mk .warn { color:#f2b84b; } .mk .info { color:#5aa9ff; }
+  .mk svg { width:100%; display:block; }
+  .mk .gauge { display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .mk .gauge svg { width:96px; }
+  .mk .tabs { display:flex; gap:14px; font-size:12px; color:#9aa0a6; border-bottom:1px solid #2c3038; padding-bottom:6px; margin-bottom:10px; align-items:center; }
+  .mk .tabs b { color:#e6e6e6; border-bottom:2px solid #5aa9ff; padding-bottom:5px; }
+  .mk .track { fill:none; stroke:#2c3038; stroke-width:11; }
+  .mk .fill { fill:none; stroke-width:11; stroke-linecap:round; }
+  .mk .v { fill:#e6e6e6; font-size:22px; font-weight:600; }
+  .mk .u { fill:#9aa0a6; font-size:9px; }
+  .mk table { width:100%; border-collapse:collapse; font-size:12px; }
+  .mk th { text-align:left; color:#9aa0a6; font-weight:500; font-size:11px; padding:4px 6px; border-bottom:1px solid #2c3038; }
+  .mk td { padding:5px 6px; border-bottom:1px solid #23262d; color:#d0d3d8; }
+  .mk .sel { background:#2a2e36; border:1px solid #3a3f48; border-radius:6px; padding:3px 8px; font-size:12px; color:#e6e6e6; }
+  .mk .tog { display:inline-block; width:28px; height:15px; border-radius:8px; background:#5ad17a; vertical-align:middle; position:relative; }
+  .mk .tog::after { content:""; position:absolute; right:2px; top:2px; width:11px; height:11px; border-radius:50%; background:#fff; }
+  .mk .tog.off { background:#3a3f48; } .mk .tog.off::after { right:auto; left:2px; }
+  .tag { display:inline-block; font-size:10px; padding:1px 6px; border-radius:4px; background:#5aa9ff22; color:#5aa9ff; margin-left:6px; vertical-align:middle; }
+  .tag.you { background:#5ad17a22; color:#5ad17a; }
+  .blk { margin-top:22px; }
+</style>
+
+<!-- 1 -->
+<div class="blk option" data-choice="1-main" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>1. Огляд — три стани верхнього ряду <span class="tag you">вирішено</span><span class="tag">пропозиція: стан «очікування»</span></h3>
+<div class="mk">
+  <div class="tabs">
+    <span class="sel">⌂ Venus E · дім ▾</span>
+    <b>Огляд</b><span>Відключення</span><span>Помилки</span><span>Батарея</span><span>Енергія</span><span style="margin-left:auto">⚙</span>
+  </div>
+  <div class="sm" style="margin-bottom:6px">Розряд:</div>
+  <div class="row">
+    <div class="card gauge"><div class="lbl">Заряд</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="217 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">72%</text></svg><div class="sm">3.7 з 5.12 кВт·г</div></div>
+    <div class="card gauge"><div class="lbl">Потужність</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#f2b84b" stroke-dasharray="158 302" transform="rotate(-90 60 60)"/><text x="60" y="62" text-anchor="middle" class="v" style="fill:#f2b84b">420</text><text x="60" y="78" text-anchor="middle" class="u">Вт · розряд</text></svg><div class="sm">з 2 500 Вт макс.</div></div>
+    <div class="card gauge"><div class="lbl">До розряду</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5aa9ff" stroke-dasharray="205 302" transform="rotate(-90 60 60)"/><text x="60" y="62" text-anchor="middle" class="v">7:30</text><text x="60" y="78" text-anchor="middle" class="u">год : хв</text></svg><div class="sm">до 10% · ≈ о 22:45</div></div>
+    <div class="card gauge"><div class="lbl">Світло сьогодні</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="262 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">87%</text></svg><div class="sm">2 відкл. · 3 г 10 хв</div></div>
+  </div>
+  <div class="sm" style="margin:12px 0 6px">Заряд:</div>
+  <div class="row">
+    <div class="card gauge"><div class="lbl">Заряд</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="190 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">63%</text></svg><div class="sm">3.2 з 5.12 кВт·г</div></div>
+    <div class="card gauge"><div class="lbl">Потужність</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="211 302" transform="rotate(-90 60 60)"/><text x="60" y="62" text-anchor="middle" class="v" style="fill:#5ad17a">1750</text><text x="60" y="78" text-anchor="middle" class="u">Вт · заряд</text></svg><div class="sm">з 2500 Вт макс.</div></div>
+    <div class="card gauge"><div class="lbl">До повного</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5aa9ff" stroke-dasharray="190 302" transform="rotate(-90 60 60)"/><text x="60" y="62" text-anchor="middle" class="v">0:52</text><text x="60" y="78" text-anchor="middle" class="u">год : хв</text></svg><div class="sm">до 100% · ≈ о 16:10</div></div>
+    <div class="card gauge"><div class="lbl">Світло сьогодні</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="262 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">87%</text></svg><div class="sm">2 відкл. · 3 г 10 хв</div></div>
+  </div>
+  <div class="sm" style="margin:12px 0 6px">Очікування (повна, світло є) — <span class="info">пропозиція</span>:</div>
+  <div class="row">
+    <div class="card gauge"><div class="lbl">Заряд</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="302 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">100%</text></svg><div class="sm">5.12 з 5.12 кВт·г</div></div>
+    <div class="card gauge"><div class="lbl">Потужність</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><text x="60" y="62" text-anchor="middle" class="v" style="fill:#9aa0a6">0</text><text x="60" y="78" text-anchor="middle" class="u">Вт · очікування</text></svg><div class="sm">станція в режимі очікування</div></div>
+    <div class="card gauge"><div class="lbl">Вистачить на</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5aa9ff" stroke-dasharray="302 302" transform="rotate(-90 60 60)"/><text x="60" y="62" text-anchor="middle" class="v">11:00</text><text x="60" y="78" text-anchor="middle" class="u">год : хв</text></svg><div class="sm">при сер. 420 Вт у відключення</div></div>
+    <div class="card gauge"><div class="lbl">Світло сьогодні</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="262 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">87%</text></svg><div class="sm">2 відкл. · 3 г 10 хв</div></div>
+  </div>
+  <div class="sm" style="margin-top:10px">Нижче — графік заряду і права колонка, як у v2/v3 (без змін).</div>
+</div>
+</div></div>
+
+<!-- 2 -->
+<div class="blk option" data-choice="2-outages" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>2. Вкладка «Відключення» <span class="tag">пропозиція</span></h3>
+<div class="mk">
+  <div class="tabs"><span>Огляд</span><b>Відключення</b><span>Помилки</span><span>Батарея</span><span>Енергія</span><span style="margin-left:auto" class="sm">Сьогодні · <b style="color:#e6e6e6;border:0;padding:0">7 днів</b> · 30 днів · свій період</span></div>
+  <div class="row">
+    <div class="card gauge"><div class="lbl">Світло за 7 днів</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="232 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">77%</text></svg><div class="sm">39 г без світла</div></div>
+    <div class="card gauge"><div class="lbl">Покриття відкл.</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="284 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">94%</text></svg><div class="sm">1 раз розрядилась раніше</div></div>
+    <div class="card" style="flex:2;display:flex;flex-direction:column;gap:6px;justify-content:center">
+      <div class="sm">Відключень: <b style="color:#e6e6e6">14</b></div>
+      <div class="sm">Середнє: <b style="color:#e6e6e6">2 г 47 хв</b></div>
+      <div class="sm">Найдовше: <b style="color:#e6e6e6">6 г 10 хв</b> (вт, 18.11)</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <div class="lbl" style="margin-bottom:6px">Без світла по днях (години)</div>
+    <svg viewBox="0 0 400 90">
+      <g fill="#ef6b6b" opacity=".75">
+        <rect x="10" y="40" width="40" height="40"/><rect x="65" y="20" width="40" height="60"/><rect x="120" y="50" width="40" height="30"/><rect x="175" y="10" width="40" height="70"/><rect x="230" y="35" width="40" height="45"/><rect x="285" y="55" width="40" height="25"/><rect x="340" y="45" width="40" height="35"/>
+      </g>
+      <g fill="#9aa0a6" font-size="9"><text x="22" y="89">пн</text><text x="77" y="89">вт</text><text x="132" y="89">ср</text><text x="187" y="89">чт</text><text x="242" y="89">пт</text><text x="297" y="89">сб</text><text x="352" y="89">нд</text></g>
+    </svg>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <table>
+      <tr><th>Початок</th><th>Кінець</th><th>Тривалість</th><th>Заряд на початку → в кінці</th><th></th></tr>
+      <tr><td>сьогодні 14:05</td><td class="bad">триває</td><td>1 г 12 хв</td><td>95% → 72%</td><td></td></tr>
+      <tr><td>сьогодні 06:10</td><td>08:10</td><td>2 г 00 хв</td><td>100% → 63%</td><td></td></tr>
+      <tr><td>20.11 19:30</td><td>21.11 01:40</td><td>6 г 10 хв</td><td>98% → <span class="bad">10%</span></td><td class="bad sm">станція розрядилась о 00:55</td></tr>
+      <tr><td>20.11 03:00</td><td>05:15</td><td>2 г 15 хв</td><td>100% → 71%</td><td class="sm">⋯ частково з хмари</td></tr>
+    </table>
+  </div>
+</div>
+</div></div>
+
+<!-- 3 -->
+<div class="blk option" data-choice="3-errors" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>3. Вкладка «Помилки» <span class="tag">пропозиція</span></h3>
+<div class="mk">
+  <div class="tabs"><span>Огляд</span><span>Відключення</span><b>Помилки</b><span>Батарея</span><span>Енергія</span></div>
+  <div class="card">
+    <table>
+      <tr><th>Коли</th><th>Рівень</th><th>Що сталося</th><th>Що робити</th></tr>
+      <tr><td>21.11 00:55</td><td class="warn">попередження</td><td>Низький заряд — станція вимкнула вихід (10%)</td><td class="sm">Нормально: спрацював захист від глибокого розряду</td></tr>
+      <tr><td>18.11 12:20</td><td class="bad">помилка</td><td>Перегрів інвертора (код E07)</td><td class="sm">Перевірити вентиляцію, не ставити впритул до стіни</td></tr>
+      <tr><td>15.11 09:03</td><td class="info">інфо</td><td>Втрачено зв'язок по локальній мережі на 14 хв</td><td class="sm">Додаток перемкнувся на хмару</td></tr>
+    </table>
+    <div class="sm" style="margin-top:8px">Фільтр: усі · помилки · попередження · зв'язок</div>
+  </div>
+</div>
+</div></div>
+
+<!-- 4 -->
+<div class="blk option" data-choice="4-battery" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>4. Вкладка «Батарея» <span class="tag">пропозиція</span></h3>
+<div class="mk">
+  <div class="tabs"><span>Огляд</span><span>Відключення</span><span>Помилки</span><b>Батарея</b><span>Енергія</span></div>
+  <div class="row">
+    <div class="card gauge"><div class="lbl">Здоров'я</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5ad17a" stroke-dasharray="293 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">97%</text></svg><div class="sm">4.97 з 5.12 кВт·г</div></div>
+    <div class="card gauge"><div class="lbl">Ресурс циклів</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5aa9ff" stroke-dasharray="7 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">142</text></svg><div class="sm">з ~6000 циклів</div></div>
+    <div class="card gauge"><div class="lbl">Температура</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5aa9ff" stroke-dasharray="120 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">18°</text></svg><div class="sm">норма 0…45 °C</div></div>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <div class="lbl">Ємність по місяцях, кВт·г</div>
+    <svg viewBox="0 0 400 80"><polyline fill="none" stroke="#5ad17a" stroke-width="2" points="0,15 80,16 160,18 240,20 320,22 400,24"/><g fill="#9aa0a6" font-size="9"><text x="0" y="76">черв</text><text x="160" y="76">верес</text><text x="370" y="76">лист</text></g></svg>
+    <div class="sm">Ємність рахується з повних циклів розряду (100% → 10%), тож перші місяці значення приблизні.</div>
+  </div>
+</div>
+</div></div>
+
+<!-- 5 -->
+<div class="blk option" data-choice="5-energy" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>5. Вкладка «Енергія» (другорядна) <span class="tag">пропозиція</span></h3>
+<div class="mk">
+  <div class="tabs"><span>Огляд</span><span>Відключення</span><span>Помилки</span><span>Батарея</span><b>Енергія</b></div>
+  <div class="row">
+    <div class="card gauge"><div class="lbl">Мережа / сонце</div><svg viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="48" style="stroke:#f2b84b"/><circle class="fill" cx="60" cy="60" r="48" stroke="#5aa9ff" stroke-dasharray="211 302" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" class="v">70%</text></svg><div class="sm">з мережі · 30% сонце</div></div>
+    <div class="card" style="flex:3"><div class="lbl">кВт·г по днях: <span class="ok">заряд</span> / <span class="warn">розряд</span></div>
+      <svg viewBox="0 0 300 80"><g><rect x="10" y="30" width="14" height="45" fill="#5ad17a"/><rect x="26" y="40" width="14" height="35" fill="#f2b84b"/><rect x="60" y="20" width="14" height="55" fill="#5ad17a"/><rect x="76" y="28" width="14" height="47" fill="#f2b84b"/><rect x="110" y="35" width="14" height="40" fill="#5ad17a"/><rect x="126" y="45" width="14" height="30" fill="#f2b84b"/><rect x="160" y="15" width="14" height="60" fill="#5ad17a"/><rect x="176" y="22" width="14" height="53" fill="#f2b84b"/><rect x="210" y="32" width="14" height="43" fill="#5ad17a"/><rect x="226" y="38" width="14" height="37" fill="#f2b84b"/></g></svg>
+    </div>
+  </div>
+  <div class="sm" style="margin-top:6px">Кільце «Мережа / сонце» з'являється тільки якщо підключені панелі.</div>
+</div>
+</div></div>
+
+<!-- 6 -->
+<div class="blk option" data-choice="6-stations" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>6. Кілька станцій <span class="tag">пропозиція</span></h3>
+<div class="mk">
+  <div class="row" style="align-items:flex-start">
+    <div class="card" style="flex:1">
+      <div class="lbl" style="margin-bottom:6px">Перемикач над вкладками</div>
+      <div class="sel" style="display:inline-block">⌂ Venus E · дім ▾</div>
+      <div style="margin-top:6px;background:#2a2e36;border-radius:6px;padding:6px 8px;font-size:12px;line-height:1.9">
+        <div>✓ ⌂ Venus E · дім — <span class="ok">72%</span> · <span class="bad">без світла</span></div>
+        <div>&nbsp;&nbsp;&nbsp;▣ Venus E · дача — <span class="ok">100%</span> · світло є</div>
+        <div style="border-top:1px solid #3a3f48;margin-top:4px;padding-top:4px;color:#9aa0a6">＋ Додати станцію…</div>
+      </div>
+    </div>
+    <div class="card" style="flex:1">
+      <div class="lbl" style="margin-bottom:6px">Додавання станції</div>
+      <div class="sm" style="line-height:1.8">
+        1. <b style="color:#e6e6e6">Знайти в локальній мережі</b> (автопошук)<br>
+        2. <b style="color:#e6e6e6">Увійти в хмару Marstek</b> — підтягнути всі станції акаунта<br>
+        3. Вказати IP вручну<br>
+        <span style="color:#9aa0a6">Одна станція може мати і локальне, і хмарне підключення — додаток сам обирає найкраще.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div></div>
+
+<!-- 7 -->
+<div class="blk option" data-choice="7-tray" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>7. Трей і сповіщення <span class="tag">пропозиція</span></h3>
+<div class="mk">
+  <div class="row" style="align-items:flex-start">
+    <div class="card">
+      <div class="lbl" style="margin-bottom:8px">Іконка в треї</div>
+      <div class="row" style="gap:18px;align-items:center">
+        <div style="text-align:center"><div style="width:28px;height:28px;border-radius:6px;background:#5ad17a22;border:2px solid #5ad17a;color:#5ad17a;font-size:11px;font-weight:700;line-height:24px">72</div><div class="sm">світло є</div></div>
+        <div style="text-align:center"><div style="width:28px;height:28px;border-radius:6px;background:#f2b84b22;border:2px solid #f2b84b;color:#f2b84b;font-size:11px;font-weight:700;line-height:24px">72</div><div class="sm">без світла</div></div>
+        <div style="text-align:center"><div style="width:28px;height:28px;border-radius:6px;background:#ef6b6b22;border:2px solid #ef6b6b;color:#ef6b6b;font-size:11px;font-weight:700;line-height:24px">15</div><div class="sm">низький заряд</div></div>
+        <div style="text-align:center"><div style="width:28px;height:28px;border-radius:6px;background:#3a3f4855;border:2px dashed #9aa0a6;color:#9aa0a6;font-size:11px;font-weight:700;line-height:24px">?</div><div class="sm">немає зв'язку</div></div>
+      </div>
+      <div class="sm" style="margin-top:8px">Наведення: «Venus E · 72% · розряд 420 Вт · без світла 1 г 12 хв · вистачить на 7:30»</div>
+    </div>
+    <div class="card">
+      <div class="lbl" style="margin-bottom:6px">Сповіщення Windows</div>
+      <div style="background:#2a2e36;border-radius:6px;padding:8px 10px;font-size:12px">
+        <b>⚡ Зникло світло</b><br><span class="sm">Venus E · 14:05 · заряд 95%, вистачить ≈ на 10 год</span>
+      </div>
+      <div style="background:#2a2e36;border-radius:6px;padding:8px 10px;font-size:12px;margin-top:6px">
+        <b>✓ Світло з'явилось</b><br><span class="sm">Venus E · без світла було 2 г 00 хв · заряд 63%, повний ≈ о 16:10</span>
+      </div>
+    </div>
+  </div>
+</div>
+</div></div>
+
+<!-- 8 -->
+<div class="blk option" data-choice="8-settings" onclick="toggleSelect(this)">
+<div class="content" style="width:100%">
+<h3>8. Налаштування <span class="tag">пропозиція</span></h3>
+<div class="mk">
+  <div class="row">
+    <div class="card" style="line-height:2">
+      <div class="lbl">Загальні</div>
+      <div class="sm">Мова <span class="sel">Українська ▾</span></div>
+      <div class="sm">Запускати з Windows <span class="tog"></span></div>
+      <div class="sm">Згортати в трей при закритті <span class="tog"></span></div>
+      <div class="sm">Тема <span class="sel">Темна ▾</span> <span style="color:#9aa0a6">(світла — пізніше)</span></div>
+    </div>
+    <div class="card" style="line-height:2">
+      <div class="lbl">Сповіщення</div>
+      <div class="sm"><span class="tog"></span> Зникло / з'явилось світло</div>
+      <div class="sm"><span class="tog"></span> Заряд нижче <span class="sel">20% ▾</span></div>
+      <div class="sm"><span class="tog"></span> Нова помилка</div>
+      <div class="sm"><span class="tog"></span> Станція заряджена до 100%</div>
+      <div class="sm"><span class="tog off"></span> Втрачено зв'язок зі станцією</div>
+    </div>
+    <div class="card" style="line-height:2">
+      <div class="lbl">Підключення</div>
+      <div class="sm">Хмара Marstek: <span class="ok">увійшли</span> · <span style="color:#5aa9ff">вийти</span></div>
+      <div class="sm">Опитування локально: <span class="sel">кожні 5 с ▾</span></div>
+      <div class="sm">Історія: <span class="sel">зберігати завжди ▾</span></div>
+      <div class="sm">Експорт даних у CSV</div>
+    </div>
+  </div>
+</div>
+</div></div>
+
+<p class="subtitle" style="margin-top:16px">Кольори скрізь: <span style="color:#5ad17a">зелений</span> — добре / заряд, <span style="color:#f2b84b">жовтий</span> — розряд / без світла, <span style="color:#5aa9ff">синій</span> — нейтральне, <span style="color:#ef6b6b">червоний</span> — погано (за порогами).</p>

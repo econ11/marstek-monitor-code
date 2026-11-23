@@ -1,0 +1,87 @@
+<!--@head title="Помилки"-->
+<style>
+  .toolbar { display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+  .seg__item .n { font-size: 11px; color: var(--color-text-subtle); font-weight: 500; }
+  .toolbar__hint { margin-left: auto; font-size: var(--text-small); color: var(--color-text-subtle); }
+  .lvl { min-width: 112px; }
+  .what { display: grid; gap: 2px; }
+  .what b { font-weight: 500; }
+  .code { font-family: var(--font-mono); font-size: 11.5px; color: var(--color-text-muted); background: var(--color-surface-2); border: 1px solid var(--color-border); border-radius: 4px; padding: 0 5px; margin-left: 6px; white-space: nowrap; }
+  .what small { color: var(--color-text-subtle); font-size: var(--text-caption); }
+  .advice { color: var(--color-text-muted); max-width: 38ch; }
+  #err td { padding-top: 10px; padding-bottom: 10px; vertical-align: top; }
+  #err td.lvl { padding-top: 9px; }
+  .pill--bad-outline { background: transparent; color: var(--color-bad); box-shadow: inset 0 0 0 1px rgb(255 122 114 / .45); }
+  .empty { padding: var(--space-7) var(--space-5); text-align: center; color: var(--color-text-muted); display: none; }
+  .empty .icon { width: 28px; height: 28px; color: var(--color-good); margin-bottom: var(--space-2); }
+</style>
+</head>
+<body>
+<!--@sprite-->
+<main class="doc">
+  <!--@docnav page="03-errors.html" title="Помилки"-->
+  <p class="doc-lede">Журнал станції і події зв'язку додатка. Фільтр працює. Рівні розрізняються формою + іконкою + текстом, не лише кольором; жовтий тут свідомо не використовується (він означає «без світла»).</p>
+
+  <div class="win">
+    <!--@titlebar state="Без світла 3 год 27 хв"-->
+    <!--@appbar tab="errors" grid="off"-->
+    <div class="content">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Фільтр подій" id="filter">
+          <button class="seg__item" aria-pressed="true" data-value="all">усі <span class="n">9</span></button>
+          <button class="seg__item" aria-pressed="false" data-value="error">помилки <span class="n">2</span></button>
+          <button class="seg__item" aria-pressed="false" data-value="warn">попередження <span class="n">4</span></button>
+          <button class="seg__item" aria-pressed="false" data-value="link">зв'язок <span class="n">6</span></button>
+        </div>
+        <span class="toolbar__hint">Нових немає · зберігається вся історія</span>
+      </div>
+
+      <section class="panel panel--flush" aria-label="Журнал">
+        <div class="table-wrap">
+          <table class="table" id="err">
+            <thead><tr><th scope="col">Коли</th><th scope="col">Рівень</th><th scope="col">Що сталося</th><th scope="col">Що робити</th></tr></thead>
+            <tbody>
+              <tr data-k="link"><td class="nowrap"><span class="when">04:20<small>сьогодні</small></span></td><td class="lvl"><span class="pill"><!--@icon n="cloud"-->інфо</span></td>
+                <td><span class="what"><b>Хмара віддала дані лише частково — за 1 год 10 хв даних немає</b><small>03:10–04:20, додаток не працював</small></span></td><td class="advice"><span class="t-subtle">—</span></td></tr>
+              <tr data-k="link"><td class="nowrap"><span class="when">02:40<small>пт 20.11</small></span></td><td class="lvl"><span class="pill"><!--@icon n="wifi"-->інфо</span></td>
+                <td><span class="what"><b>Зв'язок по локальній мережі відновлено (не було 1 год 20 хв)</b></span></td><td class="advice"><span class="t-subtle">—</span></td></tr>
+              <tr data-k="link"><td class="nowrap"><span class="when">01:21<small>пт 20.11</small></span></td><td class="lvl"><span class="pill pill--bad-outline"><!--@icon n="wifi-off"-->попередження</span></td>
+                <td><span class="what"><b>Немає зв'язку зі станцією — ні локально, ні через хмару</b></span></td><td class="advice">Перевірте, чи станція ввімкнена і чи працює роутер.</td></tr>
+              <tr data-k="warn"><td class="nowrap"><span class="when">01:20<small>пт 20.11</small></span></td><td class="lvl"><span class="pill pill--bad-outline"><!--@icon n="alert"-->попередження</span></td>
+                <td><span class="what"><b>Низький заряд — вихід вимкнено<span class="code">W10</span></b><small>Спрацював захист від глибокого розряду на 10%.</small></span></td><td class="advice">Нічого робити не треба: станція ввімкне вихід, коли з'явиться світло.</td></tr>
+              <tr data-k="link"><td class="nowrap"><span class="when">13:45<small>ср 18.11</small></span></td><td class="lvl"><span class="pill"><!--@icon n="wifi-off"-->інфо</span></td>
+                <td><span class="what"><b>Втрачено зв'язок по локальній мережі</b><small>13:45–13:59</small></span></td><td class="advice">Додаток перемкнувся на хмару. Нічого робити не треба.</td></tr>
+              <tr data-k="error"><td class="nowrap"><span class="when">12:20<small>ср 18.11</small></span></td><td class="lvl"><span class="pill" data-tone="bad"><!--@icon n="alert"-->помилка</span></td>
+                <td><span class="what"><b>Перегрів інвертора<span class="code">E07</span></b><small>Станція обмежила або вимкнула вихід, щоб охолонути.</small></span></td><td class="advice">Перевірте вентиляцію: не ставте впритул до стіни й не накривайте.</td></tr>
+              <tr data-k="link"><td class="nowrap"><span class="when">21:40<small>пн 16.11</small></span></td><td class="lvl"><span class="pill pill--bad-outline"><!--@icon n="wifi-off"-->попередження</span></td>
+                <td><span class="what"><b>Локальний API станції перестав відповідати</b></span></td><td class="advice">Це відома проблема деяких прошивок. Додаток спробує знову; допоможе перезапуск станції.</td></tr>
+              <tr data-k="error"><td class="nowrap"><span class="when">09:02<small>нд 15.11</small></span></td><td class="lvl"><span class="pill" data-tone="bad"><!--@icon n="alert"-->помилка</span></td>
+                <td><span class="what"><b>Невідома помилка<span class="code">0x2A13</span></b></span></td><td class="advice">Ми ще не знаємо цього коду. Якщо помилка повторюється, зверніться в підтримку Marstek і назвіть код.</td></tr>
+              <tr data-k="link"><td class="nowrap"><span class="when">08:55<small>нд 15.11</small></span></td><td class="lvl"><span class="pill pill--bad-outline"><!--@icon n="cloud"-->попередження</span></td>
+                <td><span class="what"><b>Сеанс у хмарі Marstek завершився</b></span></td><td class="advice">Увійдіть знову в <a class="link" href="07-settings.html">Налаштування → Підключення</a>.</td></tr>
+            </tbody>
+          </table>
+          <div class="empty" id="empty"><!--@icon n="check-circle"--><div>Немає подій цього типу.</div></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <ol class="doc-notes">
+    <li><b>Рівні</b> (інфо / попередження / помилка): помилка — червона заливка; попередження — червоний контур; інфо — нейтральна сіра пігулка. Іконка в пігулці — про предмет (wifi, хмара, ! для станції), фільтр «зв'язок» — за предметом, не за рівнем. Іконка + слово завжди поруч з кольором.</li>
+    <li><b>Нова подія</b> (ще не бачена): лічильник на вкладці «Помилки» (червона пігулка з числом) і 3-px червона смужка зліва в рядку, доки вкладку не відкрито.</li>
+    <li><b>Код</b> — моноширинний «жетон» після тексту: його копіюють у пошук і в issue. Невідомий код показується як «Невідома помилка» + код, ніколи не ховається.</li>
+    <li><b>Колонка «Що робити»</b> обмежена ~38 символами — порада читається одним поглядом, рядок росте вниз, а не вшир.</li>
+  </ol>
+</main>
+<!--@script-->
+<script>
+  document.getElementById('filter').addEventListener('seg-change', e => {
+    let n = 0;
+    document.querySelectorAll('#err tbody tr').forEach(tr => { const lvl = tr.querySelector('.pill--bad-outline') ? 'warn' : tr.querySelector('.pill[data-tone=bad]') ? 'error' : 'info';
+    const on = e.detail === 'all' || (e.detail === 'link' ? tr.dataset.k === 'link' : lvl === e.detail); tr.hidden = !on; n += on; });
+    document.getElementById('empty').style.display = n ? 'none' : 'block';
+  });
+</script>
+</body>
+</html>

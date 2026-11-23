@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Огляд — Marstek Monitor hi-fi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap&subset=cyrillic" rel="stylesheet">
+<style>
+/* ==========================================================================
+   Marstek Monitor — design tokens (dark theme, v1)
+   Two layers: primitives (--p-*) never used by components directly;
+   semantic tokens (--color-*, --space-*, --text-*, ...) are what components use.
+   A future light theme restates ONLY the semantic block under
+   :root[data-theme="light"]; primitives stay constant.
+   Contrast ratios below are WCAG 2.x, measured against --color-surface-1
+   (#151A20, the card surface) unless stated otherwise.
+   ========================================================================== */
+
+:root {
+  /* ---------- Primitives: neutrals (blue-graphite, hue ~215) ---------- */
+  --p-ink-950: #0B0E12;   /* window chrome / title bar */
+  --p-ink-900: #0E1115;   /* page */
+  --p-ink-850: #151A20;   /* surface 1 — cards, panels */
+  --p-ink-800: #1B2129;   /* surface 2 — popovers, hover rows, inputs */
+  --p-ink-750: #222932;   /* surface 3 — dialogs, tooltips */
+  --p-ink-700: #29303A;   /* gauge track, chart baseline */
+  --p-ink-650: #313944;   /* strong border, toggle off */
+  --p-ink-400: #8A94A1;   /* subtle text   5.5:1 on s1 */
+  --p-ink-300: #A6AEB9;   /* muted text    7.8:1 on s1 */
+  --p-ink-100: #E8EBEF;   /* primary text 14.6:1 on s1 */
+
+  /* ---------- Primitives: signal hues (one step each, tuned for dark) ---------- */
+  --p-green-400: #4FCB8D;  /* 8.6:1 on s1 */
+  --p-green-300: #7FDDAE;
+  --p-green-900: #12261D;  /* tint surface */
+  --p-amber-400: #F2B63D;  /* 9.6:1 on s1 */
+  --p-amber-300: #F7CD77;
+  --p-amber-900: #2A2418;
+  --p-blue-400:  #6DB3FF;  /* 8.0:1 on s1 */
+  --p-blue-300:  #9CCBFF;
+  --p-blue-900:  #13202F;
+  --p-red-400:   #FF7A72;  /* 6.9:1 on s1 */
+  --p-red-300:   #FFA39D;
+  --p-red-900:   #2C1617;
+
+  /* ======================= Semantic ======================= */
+  color-scheme: dark;
+
+  /* Surfaces — elevation is lightness, +~0.03 L per step */
+  --color-bg-chrome:   var(--p-ink-950);
+  --color-bg-page:     var(--p-ink-900);
+  --color-surface-1:   var(--p-ink-850);
+  --color-surface-2:   var(--p-ink-800);
+  --color-surface-3:   var(--p-ink-750);
+  --color-overlay-hover:  rgb(255 255 255 / 0.04);
+  --color-overlay-active: rgb(255 255 255 / 0.07);
+  --color-scrim:       rgb(5 7 10 / 0.62);
+
+  /* Text */
+  --color-text-primary: var(--p-ink-100);
+  --color-text-muted:   var(--p-ink-300);
+  --color-text-subtle:  var(--p-ink-400);  /* never on surface-3 for body text */
+  --color-text-on-accent: #0B1520;
+
+  /* Lines */
+  --color-border:        rgb(255 255 255 / 0.07);
+  --color-border-strong: rgb(255 255 255 / 0.13);
+  --color-gridline:      rgb(255 255 255 / 0.06);
+  --color-track:         var(--p-ink-700);
+
+  /* THE COLOUR RULE — one meaning per hue, nowhere else
+     good   = green : charge level OK, charging, grid present, no errors
+     power  = amber : discharging, no grid (outage)
+     info   = blue  : neutral magnitudes — time, counters, cycles, kWh capacity
+     bad    = red   : threshold crossed — SOC < alert threshold, temp out of range, error */
+  --color-good:      var(--p-green-400);
+  --color-good-soft: var(--p-green-900);
+  --color-warn:      var(--p-amber-400);   /* "no grid / discharging", not "warning" */
+  --color-warn-soft: var(--p-amber-900);
+  --color-info:      var(--p-blue-400);
+  --color-info-soft: var(--p-blue-900);
+  --color-bad:       var(--p-red-400);
+  --color-bad-soft:  var(--p-red-900);
+
+  /* Charts */
+  --color-chart-outage-band: rgb(166 174 185 / 0.10);  /* grey band = no grid */
+  --color-chart-outage-hatch: rgb(166 174 185 / 0.16);
+  --color-chart-gap-stroke:  var(--p-ink-400);           /* dashed frame = no data */
+  --color-chart-crosshair:   rgb(232 235 239 / 0.35);
+
+  /* Focus — 2px ring, measured ≥ 3:1 against every surface it can sit on */
+  --color-focus: #8CC4FF;   /* 9.5:1 on s1, 8.0:1 on s3 */
+  --ring-width: 2px;
+  --ring-offset: 2px;
+
+  /* ---------- Type ---------- */
+  --font-sans: "IBM Plex Sans", "Segoe UI Variable Text", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+
+  /* 6 sizes, ratio ≈ 1.2 for a dense instrument UI. Body is 14 (desktop, scanned at arm's length). */
+  --text-caption: 12px;  /* labels, axis ticks, meta, UPPERCASE section labels */
+  --text-small:   13px;  /* table cells, pills, secondary lines */
+  --text-body:    14px;  /* default */
+  --text-title:   16px;  /* card titles, dialog list items */
+  --text-heading: 20px;  /* settings section heading, dialog title */
+  --text-numeral: 28px;  /* gauge value (one size for every gauge) */
+
+  --leading-tight: 1.15;
+  --leading-snug:  1.35;
+  --leading-body:  1.5;
+
+  --weight-regular: 400;
+  --weight-medium:  500;   /* tabs, buttons, values in rows */
+  --weight-semibold: 600;  /* numerals, headings */
+
+  --tracking-caps:     0.07em;
+  --tracking-numeral: -0.02em;
+  --tracking-heading: -0.01em;
+
+  /* ---------- Space (8px grid, 4px half-step for tight UI) ---------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* ---------- Radii ---------- */
+  --radius-xs: 4px;       /* chart bars (top corners), checkbox */
+  --radius-control: 6px;  /* buttons, inputs, segmented items, tooltip */
+  --radius-card: 10px;    /* panels */
+  --radius-dialog: 12px;  /* dialogs, popovers */
+  --radius-pill: 999px;
+
+  /* ---------- Elevation: only floating layers get shadows ---------- */
+  --shadow-popover:
+    0 1px 0 0 rgb(255 255 255 / 0.05) inset,
+    0 8px 24px -6px rgb(0 0 0 / 0.55),
+    0 2px 6px -2px rgb(0 0 0 / 0.4);
+  --shadow-dialog:
+    0 1px 0 0 rgb(255 255 255 / 0.06) inset,
+    0 24px 48px -12px rgb(0 0 0 / 0.65),
+    0 4px 12px -4px rgb(0 0 0 / 0.5);
+
+  /* ---------- Motion ---------- */
+  --duration-instant: 100ms;  /* hover colour, press */
+  --duration-fast:    150ms;  /* tooltip in, toggle thumb */
+  --duration-normal:  200ms;  /* popover, segmented indicator */
+  --duration-slow:    280ms;  /* dialog enter */
+  --duration-data:    600ms;  /* gauge fill / chart transitions on new data — slow on purpose, data is not UI */
+  --ease-standard:   cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+
+  /* ---------- Z (in-window layers; tooltips portalled to <body>) ---------- */
+  --z-sticky: 100;
+  --z-popover: 1000;
+  --z-scrim: 1100;
+  --z-dialog: 1200;
+  --z-tooltip: 1500;
+
+  /* ---------- Component tokens (only where a value is unique) ---------- */
+  --gauge-size: 120px;          /* rendered dial box */
+  --gauge-stroke: 10;           /* in viewBox units (viewBox 0 0 120 120, r = 50) */
+  --titlebar-height: 32px;
+  --header-height: 52px;
+  --control-height: 32px;
+  --row-height: 40px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-normal: 1ms;
+    --duration-slow: 1ms;
+    --duration-data: 1ms;
+  }
+}
+
+/* ==========================================================================
+   Marstek Monitor — components (uses tokens.css only; no raw colours below
+   except inside the documentation shell .doc-*)
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--color-text-primary);
+  background: #07090C;
+  font-feature-settings: "tnum" 1;          /* tabular figures everywhere: values update live */
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: var(--ring-width) solid var(--color-focus); outline-offset: var(--ring-offset); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.icon { width: 16px; height: 16px; flex: none; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+.icon--sm { width: 14px; height: 14px; }
+.icon--lg { width: 20px; height: 20px; }
+.mono { font-family: var(--font-mono); font-size: 0.93em; }
+.t-good { color: var(--color-good); } .t-warn { color: var(--color-warn); }
+.t-info { color: var(--color-info); } .t-bad  { color: var(--color-bad); }
+.t-muted { color: var(--color-text-muted); } .t-subtle { color: var(--color-text-subtle); }
+
+/* ---------- Documentation shell (outside the app window) ---------- */
+.doc { max-width: 1180px; margin: 0 auto; padding: 40px 40px 80px; }
+.doc-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 8px; }
+.doc-head h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+.doc-head a { color: var(--color-text-muted); font-size: 13px; text-decoration: none; }
+.doc-head a:hover { color: var(--color-text-primary); }
+.doc-lede { color: var(--color-text-muted); max-width: 72ch; margin: 0 0 24px; font-size: 14px; }
+.doc-h2 { font-size: 13px; text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-text-muted); font-weight: 500; margin: 48px 0 12px; }
+.doc-notes { margin: 16px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 32px; color: var(--color-text-muted); font-size: 13px; max-width: 1100px; counter-reset: n; }
+.doc-notes li { counter-increment: n; padding-left: 28px; position: relative; }
+.doc-notes li::before { content: counter(n); position: absolute; left: 0; top: 1px; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--color-border-strong); font-size: 11px; display: grid; place-items: center; color: var(--color-text-primary); }
+.doc-notes b { color: var(--color-text-primary); font-weight: 500; }
+
+/* ---------- Window frame (Windows 11) ---------- */
+.win {
+  width: 1100px; height: 720px;
+  display: grid; grid-template-rows: var(--titlebar-height) var(--header-height) minmax(0, 1fr);
+  background: var(--color-bg-page);
+  border: 1px solid rgb(255 255 255 / 0.10);
+  border-radius: 8px; overflow: hidden; position: relative;
+  box-shadow: 0 30px 80px -20px rgb(0 0 0 / 0.8), 0 0 0 1px rgb(0 0 0 / 0.6);
+  isolation: isolate;
+}
+.win--short { height: auto; grid-template-rows: var(--titlebar-height) var(--header-height) auto; }
+.titlebar { display: flex; align-items: center; background: var(--color-bg-chrome); font-size: var(--text-caption); color: var(--color-text-muted); padding-left: 12px; gap: 8px; user-select: none; }
+.titlebar__logo { width: 16px; height: 16px; }
+.titlebar__state { color: var(--color-warn); }
+.titlebar__ctrls { margin-left: auto; display: flex; height: 100%; }
+.titlebar__ctrls span { width: 46px; display: grid; place-items: center; }
+.titlebar__ctrls span:last-child:hover { background: #C42B1C; color: #fff; }
+
+/* ---------- App bar: station switcher · tabs · settings ---------- */
+.appbar {
+  display: flex; align-items: center; gap: var(--space-5);
+  padding: 0 var(--space-4) 0 var(--space-3);
+  background: var(--color-bg-chrome);
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+/* Signature: the "outage rail" — a 2px amber line under the app bar for as long as the grid is gone.
+   Visible from across the room, carries no text, never animates. */
+.appbar[data-grid="off"]::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: var(--color-warn); opacity: 0.85;
+}
+.station-btn {
+  display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px 0 6px;
+  background: transparent; border: 1px solid transparent; border-radius: var(--radius-control);
+  transition: background-color var(--duration-instant) var(--ease-standard);
+  min-width: 0; max-width: 260px;
+}
+.station-btn:hover, .station-btn[aria-expanded="true"] { background: var(--color-overlay-hover); border-color: var(--color-border); }
+.station-btn__text { display: grid; text-align: left; line-height: 1.2; min-width: 0; }
+.station-btn__name { font-weight: var(--weight-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.station-btn__model { font-size: var(--text-caption); color: var(--color-text-subtle); white-space: nowrap; }
+.station-btn .icon { color: var(--color-text-subtle); }
+
+.minidial { width: 28px; height: 28px; position: relative; flex: none; }
+.minidial svg { width: 100%; height: 100%; display: block; }
+.minidial circle { fill: none; stroke-width: 12; }
+.minidial .track { stroke: var(--color-track); }
+.minidial .fill { stroke-linecap: round; }
+.minidial b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 9.5px; font-weight: 600; letter-spacing: -0.02em; }
+.minidial--lg { width: 40px; height: 40px; }
+.minidial--lg b { font-size: 12px; }
+
+.tabs { display: flex; height: 100%; gap: var(--space-1); }
+.tab {
+  position: relative; display: flex; align-items: center; padding: 0 var(--space-3);
+  color: var(--color-text-muted); text-decoration: none; font-weight: var(--weight-medium); white-space: nowrap;
+  transition: color var(--duration-instant) var(--ease-standard);
+}
+.tab:hover { color: var(--color-text-primary); }
+.tab[aria-current="page"] { color: var(--color-text-primary); }
+.tab[aria-current="page"]::after { content: ""; position: absolute; left: var(--space-3); right: var(--space-3); bottom: 0; height: 2px; border-radius: 2px 2px 0 0; background: var(--color-text-primary); }
+.tab__count { margin-left: 6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--radius-pill); background: var(--color-bad-soft); color: var(--color-bad); font-size: 11px; font-weight: 600; display: inline-grid; place-items: center; }
+.appbar__end { margin-left: auto; display: flex; align-items: center; gap: var(--space-2); }
+
+.iconbtn {
+  width: 32px; height: 32px; display: grid; place-items: center; border-radius: var(--radius-control);
+  background: transparent; border: 0; color: var(--color-text-muted);
+  transition: background-color var(--duration-instant) var(--ease-standard), color var(--duration-instant);
+}
+.iconbtn:hover { background: var(--color-overlay-hover); color: var(--color-text-primary); }
+.iconbtn[aria-current="page"] { background: var(--color-overlay-active); color: var(--color-text-primary); }
+
+/* ---------- Content area ---------- */
+.content { padding: var(--space-5); overflow: auto; min-height: 0; scrollbar-gutter: stable; }
+.content::-webkit-scrollbar { width: 10px; }
+.content::-webkit-scrollbar-thumb { background: var(--p-ink-650); border-radius: 10px; border: 3px solid var(--color-bg-page); }
+.stack { display: grid; gap: var(--space-4); align-content: start; }
+.row { display: flex; gap: var(--space-4); align-items: center; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) 296px; gap: var(--space-4); align-items: start; }
+
+/* ---------- Panel (the one container) ---------- */
+.panel { background: var(--color-surface-1); border: 1px solid var(--color-border); border-radius: var(--radius-card); padding: var(--space-4) var(--space-5); min-width: 0; }
+.panel--flush { padding: 0; overflow: hidden; }
+.panel__head { display: flex; align-items: center; gap: var(--space-3); min-height: var(--control-height); margin-bottom: var(--space-3); flex-wrap: wrap; }
+.panel--flush .panel__head { padding: var(--space-3) var(--space-5) 0; }
+.panel__title { font-size: var(--text-title); font-weight: var(--weight-medium); margin: 0; letter-spacing: var(--tracking-heading); }
+.panel__sub { font-size: var(--text-small); color: var(--color-text-subtle); }
+.panel__head > .seg, .panel__head > .legend { margin-left: auto; }
+.label { font-size: var(--text-caption); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-text-muted); font-weight: var(--weight-medium); }
+.note { font-size: var(--text-small); color: var(--color-text-subtle); display: flex; gap: var(--space-2); align-items: flex-start; }
+.note .icon { margin-top: 2px; }
+
+/* ---------- Ring gauge — ONE style for every gauge in the app ---------- */
+.gauges { display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); }
+.gauges > .gauge + .gauge { border-left: 1px solid var(--color-border); }
+.gauge { margin: 0; display: grid; justify-items: center; gap: var(--space-2); padding: var(--space-1) var(--space-3) var(--space-2); text-align: center; min-width: 0; }
+.gauge__title { font-size: var(--text-caption); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-text-muted); font-weight: var(--weight-medium); }
+.gauge__dial { position: relative; width: var(--gauge-size); height: var(--gauge-size); }
+.gauge__dial svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.gauge__track, .gauge__fill { fill: none; stroke-width: var(--gauge-stroke); }
+.gauge__track { stroke: var(--color-track); }
+.gauge__fill { stroke: var(--tone, var(--color-info)); stroke-linecap: round; transition: stroke-dasharray var(--duration-data) var(--ease-standard), stroke var(--duration-data); }
+.gauge--empty .gauge__fill { display: none; }  /* 0 → no cap-dot, just the track */
+.gauge__value { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; line-height: 1; }
+.gauge__num { font-size: var(--text-numeral); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-numeral); color: var(--color-text-primary); }
+.gauge__num small { font-size: 15px; font-weight: var(--weight-medium); color: var(--color-text-muted); margin-left: 1px; letter-spacing: 0; }
+.gauge__unit { margin-top: 5px; font-size: 11px; color: var(--color-text-subtle); letter-spacing: 0.02em; }
+.gauge__meta { display: grid; gap: 2px; line-height: var(--leading-snug); max-width: 100%; }
+.gauge__primary { font-size: var(--text-small); color: var(--tone-text, var(--color-text-primary)); font-weight: var(--weight-medium); }
+.gauge__secondary { font-size: var(--text-caption); color: var(--color-text-subtle); }
+.gauge[data-tone="good"] { --tone: var(--color-good); }
+.gauge[data-tone="warn"] { --tone: var(--color-warn); }
+.gauge[data-tone="info"] { --tone: var(--color-info); }
+.gauge[data-tone="bad"]  { --tone: var(--color-bad); --tone-text: var(--color-bad); }
+/* stale data: value stays, but nothing about it may look live */
+.gauge--stale .gauge__fill { stroke: var(--color-text-subtle); }
+.gauge--stale .gauge__num { color: var(--color-text-muted); }
+
+/* ---------- Status list (Overview right column) ---------- */
+.status { display: grid; }
+.status__row { display: grid; grid-template-columns: 32px minmax(0, 1fr); gap: var(--space-3); padding: var(--space-3) var(--space-4); align-items: start; }
+.status__row + .status__row { border-top: 1px solid var(--color-border); }
+.status__icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--color-surface-2); color: var(--color-text-muted); }
+.status__icon[data-tone="good"] { background: var(--color-good-soft); color: var(--color-good); }
+.status__icon[data-tone="warn"] { background: var(--color-warn-soft); color: var(--color-warn); }
+.status__icon[data-tone="info"] { background: var(--color-info-soft); color: var(--color-info); }
+.status__icon[data-tone="bad"]  { background: var(--color-bad-soft); color: var(--color-bad); }
+.status__body { display: grid; gap: 1px; min-width: 0; }
+.status__value { font-weight: var(--weight-medium); line-height: var(--leading-snug); }
+.status__meta { font-size: var(--text-small); color: var(--color-text-subtle); line-height: var(--leading-snug); }
+.status__row--hero { background: linear-gradient(90deg, var(--color-warn-soft), transparent 85%); }
+.status__row--hero .status__value { font-size: var(--text-title); color: var(--color-warn); }
+a.status__row { color: inherit; text-decoration: none; transition: background-color var(--duration-instant); }
+a.status__row:hover { background: var(--color-overlay-hover); }
+
+.live { display: inline-flex; align-items: center; gap: 6px; }
+.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--color-good); box-shadow: 0 0 0 0 rgb(79 203 141 / 0.5); animation: live 2.4s var(--ease-standard) infinite; }
+@keyframes live { 0% { box-shadow: 0 0 0 0 rgb(79 203 141 / 0.45); } 70%, 100% { box-shadow: 0 0 0 6px rgb(79 203 141 / 0); } }
+@media (prefers-reduced-motion: reduce) { .live::before { animation: none; } }
+
+/* ---------- Pills ---------- */
+.pill { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: var(--radius-pill); font-size: var(--text-caption); font-weight: var(--weight-medium); white-space: nowrap; background: var(--color-surface-2); color: var(--color-text-muted); }
+.pill .icon { width: 12px; height: 12px; stroke-width: 2; }
+.pill[data-tone="good"] { background: var(--color-good-soft); color: var(--color-good); }
+.pill[data-tone="warn"] { background: var(--color-warn-soft); color: var(--color-warn); }
+.pill[data-tone="info"] { background: var(--color-info-soft); color: var(--color-info); }
+.pill[data-tone="bad"]  { background: var(--color-bad-soft);  color: var(--color-bad); }
+.pill--outline { background: transparent; box-shadow: inset 0 0 0 1px var(--color-border-strong); }
+
+/* ---------- Segmented control ---------- */
+.seg { display: inline-flex; position: relative; padding: 3px; gap: 2px; background: var(--color-bg-page); border: 1px solid var(--color-border); border-radius: 8px; }
+.seg__item {
+  position: relative; z-index: 1; height: 26px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px;
+  border: 0; border-radius: 5px; background: transparent; color: var(--color-text-muted);
+  font-size: var(--text-small); font-weight: var(--weight-medium); white-space: nowrap;
+  transition: color var(--duration-instant) var(--ease-standard);
+}
+.seg__item:hover { color: var(--color-text-primary); }
+.seg__item[aria-pressed="true"], .seg__item[aria-checked="true"] { color: var(--color-text-primary); }
+.seg__thumb { position: absolute; z-index: 0; top: 3px; bottom: 3px; left: 0; width: 0; border-radius: 5px; background: var(--p-ink-650); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06); transition: transform var(--duration-normal) var(--ease-standard), width var(--duration-normal) var(--ease-standard); }
+.seg--sm .seg__item { height: 24px; padding: 0 10px; }
+
+/* ---------- Buttons ---------- */
+.btn { height: var(--control-height); padding: 0 14px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--radius-control); border: 1px solid transparent; font-weight: var(--weight-medium); font-size: var(--text-small); white-space: nowrap; min-width: 5rem; text-decoration: none;
+  transition: background-color var(--duration-instant) var(--ease-standard), border-color var(--duration-instant); }
+.btn:active { transform: translateY(1px); }
+.btn--primary { background: var(--color-info); color: var(--color-text-on-accent); }
+.btn--primary:hover { background: var(--p-blue-300); }
+.btn--secondary { background: var(--color-surface-2); border-color: var(--color-border-strong); color: var(--color-text-primary); }
+.btn--secondary:hover { background: var(--color-surface-3); }
+.btn--ghost { background: transparent; color: var(--color-text-muted); min-width: 0; padding: 0 10px; }
+.btn--ghost:hover { background: var(--color-overlay-hover); color: var(--color-text-primary); }
+.link { color: var(--color-info); text-decoration: none; display: inline-flex; gap: 4px; align-items: center; }
+.link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- Table ---------- */
+.table-wrap { overflow: auto; }
+.table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--text-small); }
+.table th { position: sticky; top: 0; z-index: 1; background: var(--color-surface-1); text-align: left; font-size: var(--text-caption); font-weight: var(--weight-medium); text-transform: uppercase; letter-spacing: var(--tracking-caps); color: var(--color-text-subtle); height: 36px; padding: 0 var(--space-3); box-shadow: inset 0 -1px 0 var(--color-border); white-space: nowrap; }
+.table td { height: var(--row-height); padding: 8px var(--space-3); border-bottom: 1px solid var(--color-border); vertical-align: middle; line-height: var(--leading-snug); }
+.table th:first-child, .table td:first-child { padding-left: var(--space-5); }
+.table th:last-child,  .table td:last-child  { padding-right: var(--space-5); }
+.table tbody tr { transition: background-color var(--duration-instant); }
+.table tbody tr:hover { background: var(--color-overlay-hover); }
+.table tbody tr:last-child td { border-bottom: 0; }
+.table .num { text-align: right; }
+.table .nowrap { white-space: nowrap; }
+.table tr.is-dim { opacity: 0.35; }
+.table tr.is-hit { background: var(--color-overlay-active); }
+.when { display: grid; line-height: 1.25; }
+.when small { color: var(--color-text-subtle); font-size: var(--text-caption); }
+.arrow-soc { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.arrow-soc i { font-style: normal; color: var(--color-text-subtle); }
+
+/* ---------- Charts ---------- */
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart .grid line { stroke: var(--color-gridline); stroke-width: 1; shape-rendering: crispEdges; }
+.chart .grid line.base { stroke: var(--color-border-strong); }
+.chart .axis text { fill: var(--color-text-subtle); font-size: 11px; font-family: var(--font-sans); }
+.chart .axis text.strong { fill: var(--color-text-muted); font-weight: 500; }
+.chart .band { fill: var(--color-chart-outage-band); }
+.chart .band-label { fill: var(--color-text-muted); font-size: 11px; }
+.chart .gap { fill: url(#gap-hatch); stroke: var(--color-chart-gap-stroke); stroke-dasharray: 3 3; stroke-width: 1; }
+.chart .gap-label { fill: var(--color-text-subtle); font-size: 11px; }
+.chart .threshold { stroke: var(--color-bad); stroke-dasharray: 2 4; stroke-width: 1; opacity: 0.6; }
+.chart .threshold-label { fill: var(--color-bad); font-size: 10.5px; opacity: 0.85; }
+.chart .bar { transition: opacity var(--duration-instant), fill var(--duration-instant); cursor: pointer; }
+.chart .bar-hit { fill: transparent; cursor: pointer; }
+.chart .bar-hit:hover + .bar, .chart .is-hover .bar { filter: brightness(1.15); }
+.chart.has-selection .bar-g:not(.is-selected) .bar { opacity: 0.35; }
+.chart .crosshair { stroke: var(--color-chart-crosshair); stroke-width: 1; }
+.legend { display: flex; gap: var(--space-4); font-size: var(--text-caption); color: var(--color-text-muted); align-items: center; flex-wrap: wrap; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+.legend i.dash { background: transparent; border: 1px dashed var(--color-chart-gap-stroke); }
+
+/* ---------- Tooltip (one component; portalled to <body>, edge-aware) ---------- */
+.tip {
+  position: fixed; z-index: var(--z-tooltip); left: 0; top: 0;
+  max-width: 280px; min-width: 160px; padding: 10px 12px;
+  background: var(--color-surface-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-control);
+  box-shadow: var(--shadow-popover); font-size: var(--text-small); line-height: var(--leading-snug);
+  pointer-events: none; opacity: 0; transform: translateY(2px);
+  transition: opacity var(--duration-fast) var(--ease-decelerate), transform var(--duration-fast) var(--ease-decelerate);
+}
+.tip.is-open { opacity: 1; transform: none; }
+.tip__arrow { position: absolute; width: 10px; height: 10px; background: var(--color-surface-3); border: 1px solid var(--color-border-strong); transform: rotate(45deg); }
+.tip[data-side="top"]    .tip__arrow { bottom: -6px; border-top: 0; border-left: 0; }
+.tip[data-side="bottom"] .tip__arrow { top: -6px; border-bottom: 0; border-right: 0; }
+.tip__title { font-weight: var(--weight-semibold); margin-bottom: 6px; display: flex; justify-content: space-between; gap: 12px; }
+.tip__title small { font-weight: 400; color: var(--color-text-subtle); font-size: var(--text-caption); }
+.tip dl { margin: 0; display: grid; grid-template-columns: auto auto; gap: 3px 16px; }
+.tip dt { color: var(--color-text-muted); }
+.tip dd { margin: 0; text-align: right; font-weight: var(--weight-medium); }
+.tip dd.sub, .tip dt.sub { font-weight: 400; color: var(--color-text-subtle); font-size: var(--text-caption); }
+.tip dt.sub { padding-left: 10px; }
+.tip__foot { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); color: var(--color-text-subtle); font-size: var(--text-caption); }
+.tip [hidden] { display: none; }
+@media (prefers-reduced-motion: reduce) { .tip { transition: opacity var(--duration-fast); transform: none; } }
+
+/* ---------- Form controls ---------- */
+.switch { position: relative; width: 36px; height: 20px; flex: none; border-radius: var(--radius-pill); background: var(--p-ink-650); border: 0; padding: 0; transition: background-color var(--duration-fast) var(--ease-standard); }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--color-text-muted); transition: transform var(--duration-fast) var(--ease-standard), background-color var(--duration-fast); }
+.switch[aria-checked="true"] { background: var(--color-info); }
+.switch[aria-checked="true"]::after { transform: translateX(16px); background: var(--color-text-on-accent); }
+.switch:focus-visible { outline-offset: 2px; }
+.select { height: var(--control-height); padding: 0 32px 0 12px; border-radius: var(--radius-control); background: var(--color-surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%23A6AEB9' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E") no-repeat right 10px center; border: 1px solid var(--color-border-strong); appearance: none; font-size: var(--text-small); }
+.select:hover { border-color: rgb(255 255 255 / 0.2); }
+.select[aria-disabled="true"], .is-off .select { opacity: 0.45; }
+.input { height: var(--control-height); padding: 0 10px; border-radius: var(--radius-control); background: var(--color-surface-2); border: 1px solid var(--color-border-strong); font-size: var(--text-small); width: 72px; text-align: center; }
+.input:focus-visible { outline-offset: 0; border-color: var(--color-focus); }
+
+/* ---------- Popover & dialog ---------- */
+.scrim { position: absolute; inset: var(--titlebar-height) 0 0 0; background: var(--color-scrim); z-index: var(--z-scrim); }
+.scrim--light { background: rgb(5 7 10 / 0.35); inset: calc(var(--titlebar-height) + var(--header-height)) 0 0 0; }
+.popover { position: absolute; z-index: var(--z-popover); background: var(--color-surface-2); border: 1px solid var(--color-border-strong); border-radius: var(--radius-dialog); box-shadow: var(--shadow-popover); }
+.dialog { position: absolute; z-index: var(--z-dialog); left: 50%; top: calc(50% + 16px); transform: translate(-50%, -50%); width: 640px; max-height: calc(100% - 96px); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--color-surface-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-dialog); box-shadow: var(--shadow-dialog); }
+.dialog__head { display: flex; align-items: flex-start; gap: var(--space-3); padding: var(--space-5) var(--space-5) var(--space-3); }
+.dialog__title { font-size: var(--text-heading); font-weight: var(--weight-semibold); letter-spacing: var(--tracking-heading); margin: 0; line-height: 1.25; }
+.dialog__desc { margin: 4px 0 0; color: var(--color-text-muted); font-size: var(--text-small); }
+.dialog__head .iconbtn { margin-left: auto; margin-top: -4px; margin-right: -8px; }
+.dialog__body { padding: var(--space-2) var(--space-5) var(--space-5); overflow: auto; display: grid; gap: var(--space-4); align-content: start; }
+.dialog__foot { display: flex; gap: var(--space-2); justify-content: flex-end; padding: var(--space-3) var(--space-5); border-top: 1px solid var(--color-border); }
+/* 4-digit values with a unit ("1750 Вт") step down one size so they stay inside the 100px inner circle */
+.gauge__num--long { font-size: 23px; }
+.gauge__num--long small { font-size: 13px; }
+
+/* ---------- Connection states: skeleton, stale, no link ---------- */
+.chart .gap--open { stroke-dasharray: 4 3; }
+.chart .skel-fill, .skel { fill: var(--color-surface-2); background: var(--color-surface-2); }
+.skel { display: block; border-radius: 6px; position: relative; overflow: hidden; }
+.skel::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.04), transparent); animation: shimmer 1.6s var(--ease-standard) infinite; }
+@keyframes shimmer { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) { .skel::after { animation: none; } }
+.skel-ring { width: var(--gauge-size); height: var(--gauge-size); border-radius: 50%; border: 10px solid var(--color-surface-2); }
+.banner { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: var(--space-3); align-items: start; padding: var(--space-3) var(--space-4); border-radius: var(--radius-card); border: 1px solid var(--color-border-strong); background: var(--color-surface-1); }
+.banner > .icon { margin-top: 2px; width: 18px; height: 18px; color: var(--color-text-muted); }
+.banner__t { font-weight: 500; }
+.banner__d { font-size: var(--text-small); color: var(--color-text-muted); }
+.banner--quiet { background: transparent; border-style: dashed; }
+.banner--info > .icon { color: var(--color-info); }
+.banner .btn { align-self: center; }
+
+</style>
+<style>
+  .ov-main { display: grid; gap: var(--space-4); min-width: 0; }
+  .ov-gauges { padding: var(--space-4) var(--space-2) var(--space-3); }
+  .soc-legend { margin-top: var(--space-2); }
+  .legend .ln { width: 14px; height: 2px; border-radius: 2px; background: var(--color-good); display: inline-block; margin-right: 6px; vertical-align: 3px; }
+  .legend .th { width: 14px; border-top: 1px dashed var(--color-bad); display: inline-block; margin-right: 6px; vertical-align: 3px; opacity: .8; }
+  .variants { display: grid; gap: var(--space-5); width: 1100px; }
+  .variant { background: var(--color-bg-page); border: 1px solid rgb(255 255 255 / .08); border-radius: 8px; padding: var(--space-5); display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: var(--space-5); align-items: center; }
+  .variant__name { font-weight: 500; }
+  .variant__name p { margin: 4px 0 0; font-size: 13px; color: var(--color-text-muted); font-weight: 400; }
+  .stale-bar { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-small); color: var(--color-warn); padding: 0 var(--space-3) var(--space-3); margin: 0 var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-border); }
+  .stale-bar span { color: var(--color-text-muted); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="i-plug" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/></symbol><symbol id="i-plug-off" viewBox="0 0 24 24"><path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/><path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/><path d="m3 3 18 18"/></symbol><symbol id="i-zap" viewBox="0 0 24 24"><path d="M13 2 4 14h8l-1 8 9-12h-8l1-8Z"/></symbol><symbol id="i-battery" viewBox="0 0 24 24"><rect x="2" y="7" width="17" height="10" rx="2"/><path d="M22 11v2"/><path d="M6 11v2M10 11v2"/></symbol><symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol><symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol><symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol><symbol id="i-wifi" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M2 8.8a15 15 0 0 1 20 0"/><path d="M5 12.9a10 10 0 0 1 14 0"/><path d="M8.5 16.4a5 5 0 0 1 7 0"/></symbol><symbol id="i-wifi-off" viewBox="0 0 24 24"><path d="M12 20h.01"/><path d="M8.5 16.4a5 5 0 0 1 7 0"/><path d="M5 12.9a10 10 0 0 1 5.2-2.7"/><path d="M19 12.9a10 10 0 0 0-2.1-1.6"/><path d="M2 8.8a15 15 0 0 1 4.2-2.6"/><path d="M22 8.8a15 15 0 0 0-11.3-3.7"/><path d="m2 2 20 20"/></symbol><symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z"/></symbol><symbol id="i-bluetooth" viewBox="0 0 24 24"><path d="m7 7 10 10-5 5V2l5 5L7 17"/></symbol><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3 2"/></symbol><symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol><symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol><symbol id="i-settings" viewBox="0 0 24 24"><path d="M12.2 2h-.4a2 2 0 0 0-2 2v.2a2 2 0 0 1-1 1.7l-.4.3a2 2 0 0 1-2 0l-.2-.1a2 2 0 0 0-2.7.7l-.2.4a2 2 0 0 0 .7 2.7l.2.1a2 2 0 0 1 1 1.7v.5a2 2 0 0 1-1 1.7l-.2.1a2 2 0 0 0-.7 2.7l.2.4a2 2 0 0 0 2.7.7l.2-.1a2 2 0 0 1 2 0l.4.3a2 2 0 0 1 1 1.7v.2a2 2 0 0 0 2 2h.4a2 2 0 0 0 2-2v-.2a2 2 0 0 1 1-1.7l.4-.3a2 2 0 0 1 2 0l.2.1a2 2 0 0 0 2.7-.7l.2-.4a2 2 0 0 0-.7-2.7l-.2-.1a2 2 0 0 1-1-1.7v-.5a2 2 0 0 1 1-1.7l.2-.1a2 2 0 0 0 .7-2.7l-.2-.4a2 2 0 0 0-2.7-.7l-.2.1a2 2 0 0 1-2 0l-.4-.3a2 2 0 0 1-1-1.7V4a2 2 0 0 0-2-2Z"/><circle cx="12" cy="12" r="3"/></symbol><symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M2 14h4M10 8h4M18 16h4"/></symbol><symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></symbol><symbol id="i-database" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14a8 3 0 0 0 16 0V5"/><path d="M4 12a8 3 0 0 0 16 0"/></symbol><symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol><symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol><symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol><symbol id="i-keyboard" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M6 9h.01M10 9h.01M14 9h.01M18 9h.01M6 13h.01M18 13h.01M10 13h4M8 16h8"/></symbol><symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol><symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="17" rx="2"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></symbol><symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.7-6.4L3 8.3"/><path d="M3 3.5v4.8h4.8"/><path d="M12 7.5V12l3 2"/></symbol><symbol id="i-thermo" viewBox="0 0 24 24"><path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></symbol><symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol><symbol id="i-external" viewBox="0 0 24 24"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></symbol><symbol id="i-network" viewBox="0 0 24 24"><rect x="15" y="15" width="6" height="6" rx="1"/><rect x="3" y="15" width="6" height="6" rx="1"/><rect x="9" y="3" width="6" height="6" rx="1"/><path d="M6 15v-2a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2"/><path d="M12 12V9"/></symbol><symbol id="i-home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h14V9"/><path d="M10 20v-5h4v5"/></symbol><symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4"/></symbol><symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m18 13-6 6-6-6"/></symbol><symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/></symbol><symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol><symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.2-8.6"/></symbol><symbol id="i-pause" viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></symbol><symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol><symbol id="i-grip" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/></symbol><pattern id="gap-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="6" stroke="rgb(138 148 161 / 0.22)" stroke-width="1.5"/></pattern><pattern id="cloud-hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="5" height="5" fill="var(--color-warn)"/><line x1="0" y1="0" x2="0" y2="5" stroke="rgb(14 17 21 / 0.45)" stroke-width="2"/></pattern></defs></svg>
+<main class="doc">
+  <div class="doc-head"><h1>Огляд</h1><a href="index.html">← усі екрани</a><a href="02-outages.html">Відключення ›</a></div>
+  <p class="doc-lede">Стан «розряд, без світла» о 15:17 суботи 21.11. Наведіть мишу на графік — перехрестя з тултіпом; на кільця — короткі пояснення. Нижче вікна — варіанти верхнього ряду: заряд, очікування, низький заряд. Стани зв'язку (скелетони, застарілі дані, немає зв'язку, «ймовірно, розрядилась») — на сторінці <a class="link" href="09-states.html">09 · Стани</a>.</p>
+
+  <div class="win">
+    <div class="titlebar"><svg class="titlebar__logo" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="4.5" width="11" height="7" rx="1.5" fill="none" stroke="currentColor"/><rect x="13.5" y="6.5" width="1.5" height="3" rx=".5" fill="currentColor"/><rect x="3" y="6" width="6" height="4" rx=".5" fill="var(--color-good)"/></svg><span>Marstek Monitor</span><span aria-hidden="true">·</span><span class="titlebar__state">Без світла 3 год 27 хв</span><div class="titlebar__ctrls" aria-hidden="true"><span><svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor"/></svg></span><span><svg width="10" height="10" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" rx="1.5" fill="none" stroke="currentColor"/></svg></span><span><svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0l10 10M10 0 0 10" stroke="currentColor"/></svg></span></div></div>
+    <header class="appbar" data-grid="off">
+  <button class="station-btn" aria-haspopup="dialog" aria-expanded="false" onclick="location.href='06-stations.html'">
+    <span class="minidial" aria-hidden="true"><svg viewBox="0 0 48 48"><circle class="track" cx="24" cy="24" r="18"/><circle class="fill" cx="24" cy="24" r="18" pathLength="100" stroke-dasharray="72 100" transform="rotate(-90 24 24)" style="stroke:var(--color-good)"/></svg><b>72</b></span>
+    <span class="station-btn__text"><span class="station-btn__name">Дім</span><span class="station-btn__model">Venus E 3.0</span></span>
+    <svg class="icon " aria-hidden="true"><use href="#i-chevron-down"/></svg>
+  </button>
+  <nav class="tabs" aria-label="Розділи"><a class="tab" href="01-overview.html" aria-current="page">Огляд</a><a class="tab" href="02-outages.html">Відключення</a><a class="tab" href="03-errors.html">Помилки</a><a class="tab" href="04-battery.html">Батарея</a><a class="tab" href="05-energy.html">Енергія</a></nav>
+  <div class="appbar__end"><a class="iconbtn" href="07-settings.html" aria-label="Налаштування"><svg class="icon icon--lg" aria-hidden="true"><use href="#i-settings"/></svg></a></div>
+</header>
+    <div class="content">
+      <div class="split">
+        <div class="ov-main">
+          <section class="panel ov-gauges" aria-label="Поточний стан">
+            <div class="gauges">
+              <figure class="gauge" data-tone="good" data-tip="#tip-soc" tabindex="0">
+  <figcaption class="gauge__title">Заряд</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Заряд: 72%. 3,7 з 5,12 кВт·год">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="72 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">72<small>%</small></span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">3,7 з 5,12 кВт·год</span></div>
+</figure>
+              <figure class="gauge" data-tone="warn" data-tip="#tip-power" tabindex="0">
+  <figcaption class="gauge__title">Потужність</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Потужність: 420. з 2 500 Вт макс.">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="16.8 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">420</span><span class="gauge__unit t-warn">Вт · розряд</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">з 2 500 Вт макс.</span></div>
+</figure>
+              <figure class="gauge" data-tone="info" data-tip="#tip-eta" tabindex="0">
+  <figcaption class="gauge__title">До розряду</figcaption>
+  <div class="gauge__dial" role="img" aria-label="До розряду: 7:30. до 10% · ≈ о 22:47">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="68.9 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">7:30</span><span class="gauge__unit">год : хв</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">до 10% · ≈ о 22:47</span></div>
+</figure>
+              <figure class="gauge" data-tone="warn" data-tip="#tip-light" tabindex="0">
+  <figcaption class="gauge__title">Без світла сьогодні</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Без світла сьогодні: 5:27. 2 відключення">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="35.7 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">5:27</span><span class="gauge__unit">год : хв</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">2 відключення</span></div>
+</figure>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="soc-title">
+            <div class="panel__head">
+              <h2 class="panel__title" id="soc-title">Заряд станції, %</h2>
+              <div class="seg seg--sm" role="group" aria-label="Період графіка" id="soc-range">
+                <button class="seg__item" aria-pressed="true" data-value="24">24 год</button>
+                <button class="seg__item" aria-pressed="false" data-value="168">7 днів</button>
+                <button class="seg__item" aria-pressed="false" data-value="720">30 днів</button>
+              </div>
+            </div>
+            <div class="chart" id="soc"></div>
+            <div class="legend soc-legend">
+              <span><span class="ln"></span>заряд</span>
+              <span><i style="background:var(--color-chart-outage-band);box-shadow:inset 0 0 0 1px rgb(166 174 185 / .18)"></i>без світла</span>
+              <span><i class="dash"></i>немає даних</span>
+              <span><span class="th"></span>поріг сповіщення</span>
+            </div>
+          </section>
+        </div>
+
+        <aside class="panel panel--flush" aria-label="Зведення">
+          <div class="status">
+            <a class="status__row status__row--hero" href="02-outages.html">
+              <span class="status__icon" data-tone="warn"><svg class="icon " aria-hidden="true"><use href="#i-plug-off"/></svg></span>
+              <span class="status__body"><span class="label">Світло</span><span class="status__value">немає з 11:50 · 3 год 27 хв</span></span>
+            </a>
+            <a class="status__row" href="02-outages.html">
+              <span class="status__icon"><svg class="icon " aria-hidden="true"><use href="#i-history"/></svg></span>
+              <span class="status__body"><span class="label">Попереднє відключення</span><span class="status__value">сьогодні 06:10–08:10 · 2 год 00 хв</span><span class="status__meta">100% → 84%</span></span>
+            </a>
+            <a class="status__row" href="03-errors.html">
+              <span class="status__icon" data-tone="good"><svg class="icon " aria-hidden="true"><use href="#i-check-circle"/></svg></span>
+              <span class="status__body"><span class="label">Помилки</span><span class="status__value">нових немає</span></span>
+            </a>
+            <a class="status__row" href="04-battery.html">
+              <span class="status__icon" data-tone="info"><svg class="icon " aria-hidden="true"><use href="#i-battery"/></svg></span>
+              <span class="status__body"><span class="label">Батарея</span><span class="status__value">142 цикли · 97% ємності</span></span>
+            </a>
+            <div class="status__row" data-tip="#tip-source" tabindex="0">
+              <span class="status__icon" data-tone="good"><svg class="icon " aria-hidden="true"><use href="#i-wifi"/></svg></span>
+              <span class="status__body"><span class="label">Джерело даних</span><span class="status__value"><span class="live">LAN · 3 с тому</span></span></span>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <ol class="doc-notes">
+    <li><b>Рейка відключення.</b> Поки світла немає, під панеллю вкладок горить 2-px жовта лінія, а в заголовку вікна — «Без світла 3 год 27 хв». Видно з іншого кінця кімнати; не анімується.</li>
+    <li><b>Одне кільце на все.</b> 120 px, штрих 10, сірий трек, заокруглені кінці, старт о 12-й, за годинниковою. Заголовок над, значення в центрі, два рядки під.</li>
+    <li><b>Кільця часу:</b> повне коло = станція повна. «До розряду» і «Вистачить на» — частка енергії, що лишилась понад нижню межу 10% (72% → 69% кола); «До повного» — поточний заряд (63% → 63% кола).</li><li><b>«Без світла сьогодні»</b> — у центрі години без світла, а не відсоток. Жовте заповнення = частка дня, що вже минула, без світла. Відсотки — лише в статистиці на вкладці «Відключення».</li>
+    <li><b>Перший рядок справа — головний.</b> «Світло» — єдиний рядок із тонованим тлом, бо це перше питання під час блекауту.</li>
+    <li><b>Графік:</b> сіра смуга = мережі не було (підпис над смугою, якщо вміщається); штрихована рамка = даних немає (ПК вимкнений / станція вимкнулась). Лінія ніколи не з'єднує точки через пропуск.</li>
+    <li><b>Тултіпи</b> — один компонент на весь додаток: переноситься в &lt;body&gt;, зсувається і перевертається, щоб не вийти за межі вікна (спробуйте навести на правий край графіка).</li>
+  </ol>
+
+  <h2 class="doc-h2">Варіанти верхнього ряду</h2>
+  <div class="variants">
+    <div class="variant">
+      <div class="variant__name">Заряд<p>Мережа є, станція заряджається. Рейки немає.</p></div>
+      <div class="panel ov-gauges"><div class="gauges">
+        <figure class="gauge" data-tone="good">
+  <figcaption class="gauge__title">Заряд</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Заряд: 63%. 3,2 з 5,12 кВт·год">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="63 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">63<small>%</small></span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">3,2 з 5,12 кВт·год</span></div>
+</figure>
+        <figure class="gauge" data-tone="good">
+  <figcaption class="gauge__title">Потужність</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Потужність: 1750. з 2500 Вт макс.">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="70 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">1750</span><span class="gauge__unit t-good">Вт · заряд</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">з 2500 Вт макс.</span></div>
+</figure>
+        <figure class="gauge" data-tone="info">
+  <figcaption class="gauge__title">До повного</figcaption>
+  <div class="gauge__dial" role="img" aria-label="До повного: 1:38. до 100% · ≈ о 16:55">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="63 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">1:38</span><span class="gauge__unit">год : хв</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">до 100% · ≈ о 16:55</span></div>
+</figure>
+        <figure class="gauge" data-tone="warn">
+  <figcaption class="gauge__title">Без світла сьогодні</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Без світла сьогодні: 5:27. 2 відключення">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="35.7 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">5:27</span><span class="gauge__unit">год : хв</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">2 відключення</span></div>
+</figure>
+      </div></div>
+    </div>
+    <div class="variant">
+      <div class="variant__name">Очікування<p>Повна, мережа є, P ≈ 0. Порожнє кільце потужності — без крапки.</p></div>
+      <div class="panel ov-gauges"><div class="gauges">
+        <figure class="gauge" data-tone="good">
+  <figcaption class="gauge__title">Заряд</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Заряд: 100%. 5,12 з 5,12 кВт·год">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="100 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">100<small>%</small></span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">5,12 з 5,12 кВт·год</span></div>
+</figure>
+        <figure class="gauge gauge--empty" data-tone="info">
+  <figcaption class="gauge__title">Потужність</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Потужність: 0. ні заряду, ні розряду">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">0</span><span class="gauge__unit">Вт · очікування</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">ні заряду, ні розряду</span></div>
+</figure>
+        <figure class="gauge" data-tone="info">
+  <figcaption class="gauge__title">Вистачить на</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Вистачить на: 10:14. при сер. 450 Вт у відкл.">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="100 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">10:14</span><span class="gauge__unit">год : хв</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">при сер. 450 Вт у відкл.</span></div>
+</figure>
+        <figure class="gauge gauge--empty" data-tone="warn">
+  <figcaption class="gauge__title">Без світла сьогодні</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Без світла сьогодні: 0:00. без відключень">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="0 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">0:00</span><span class="gauge__unit">год : хв</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">без відключень</span></div>
+</figure>
+      </div></div>
+    </div>
+    <div class="variant">
+      <div class="variant__name">Низький заряд<p>SOC нижче порогу сповіщення — кільце і підпис червоні.</p></div>
+      <div class="panel ov-gauges"><div class="gauges">
+        <figure class="gauge" data-tone="bad">
+  <figcaption class="gauge__title">Заряд</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Заряд: 17%. 0,9 з 5,12 кВт·год">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="17 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">17<small>%</small></span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">0,9 з 5,12 кВт·год</span></div>
+</figure>
+        <figure class="gauge" data-tone="warn">
+  <figcaption class="gauge__title">Потужність</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Потужність: 440. з 2 500 Вт макс.">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="17.6 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">440</span><span class="gauge__unit t-warn">Вт · розряд</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">з 2 500 Вт макс.</span></div>
+</figure>
+        <figure class="gauge" data-tone="info">
+  <figcaption class="gauge__title">До розряду</figcaption>
+  <div class="gauge__dial" role="img" aria-label="До розряду: 0:35. до 10% · ≈ о 15:52">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="7.8 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">0:35</span><span class="gauge__unit">год : хв</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">до 10% · ≈ о 15:52</span></div>
+</figure>
+        <figure class="gauge" data-tone="warn">
+  <figcaption class="gauge__title">Без світла сьогодні</figcaption>
+  <div class="gauge__dial" role="img" aria-label="Без світла сьогодні: 9:02. 1 відключення">
+    <svg viewBox="0 0 120 120" aria-hidden="true"><circle class="gauge__track" cx="60" cy="60" r="50"/><circle class="gauge__fill" cx="60" cy="60" r="50" pathLength="100" stroke-dasharray="59 100" transform="rotate(-90 60 60)"/></svg>
+    <div class="gauge__value"><span class="gauge__num">9:02</span><span class="gauge__unit">год : хв</span></div>
+  </div>
+  <div class="gauge__meta"><span class="gauge__primary">1 відключення</span></div>
+</figure>
+      </div></div>
+    </div>
+  </div>
+</main>
+
+<template id="tip-soc"><div class="tip__title">Заряд 72%</div><dl><dt>Енергія</dt><dd>3,69 кВт·год</dd><dt>Понад 10%</dt><dd>3,17 кВт·год</dd><dt>Номінал</dt><dd>5,12 кВт·год</dd></dl><div class="tip__foot">Червоніє нижче порогу сповіщення (20%).</div></template>
+<template id="tip-power"><div class="tip__title">Розряд 420 Вт</div><dl><dt>Зараз</dt><dd>420 Вт</dd><dt>Сер. за 5 хв</dt><dd>415 Вт</dd><dt>Макс. розряду</dt><dd>2 500 Вт</dd></dl><div class="tip__foot">Заповнення кільця = потужність / максимум у поточному напрямку.</div></template>
+<template id="tip-eta"><div class="tip__title">До розряду ≈ 7 год 30 хв</div><dl><dt>Вимкнеться</dt><dd>≈ о 22:47</dd><dt>Нижній поріг</dt><dd>10%</dd><dt>Розрахунок</dt><dd>3,17 кВт·год / 415 Вт</dd></dl><div class="tip__foot">Кільце — скільки енергії лишилось понад 10%: повне коло = станція повна.</div></template>
+<template id="tip-light"><div class="tip__title">Без світла сьогодні<small>00:00 – 15:17</small></div><dl><dt>06:10–08:10</dt><dd>2 год 00 хв</dd><dt>з 11:50</dt><dd class="t-warn">3 год 27 хв, триває</dd><dt>Разом</dt><dd>5 год 27 хв</dd></dl><div class="tip__foot">Кільце — частка дня, що минула, без світла.</div></template>
+<template id="tip-source"><div class="tip__title">Джерела даних</div><dl><dt>Локальна мережа</dt><dd class="t-good">3 с тому</dd><dt>Хмара Marstek</dt><dd>1 хв тому</dd><dt>Bluetooth</dt><dd class="sub">немає адаптера</dd></dl><div class="tip__foot">Показуємо найсвіжіше; при рівній свіжості LAN &gt; BLE &gt; хмара.</div></template>
+
+<script>
+/* Marstek Monitor mockups — shared behaviour.
+   1. Tooltip engine: one portalled .tip, edge-aware (shift + flip), never leaves the
+      visible area of the app window (or the viewport, whichever is smaller).
+   2. Segmented controls with a sliding thumb.
+   3. Switches.
+   This is reference behaviour for the frontend; any chart library used in the app
+   must reproduce section 1 exactly (see README → Tooltip). */
+(function () {
+  'use strict';
+  const EDGE = 8;        // px kept free between tooltip and the edge of the bounds
+  const GAP = 10;        // px between anchor and tooltip
+  const OPEN_DELAY = 120, WARM_MS = 300;
+
+  const tip = document.createElement('div');
+  tip.className = 'tip';
+  tip.setAttribute('role', 'tooltip');
+  tip.id = 'mm-tip';
+  tip.innerHTML = '<div class="tip__body"></div><span class="tip__arrow"></span>';
+  document.addEventListener('DOMContentLoaded', () => document.body.appendChild(tip));
+  const body = () => tip.firstElementChild, arrow = () => tip.lastElementChild;
+
+  let openTimer = 0, lastClose = 0, current = null;
+
+  function boundsFor(el) {
+    const vw = document.documentElement.clientWidth, vh = document.documentElement.clientHeight;
+    let b = { left: 0, top: 0, right: vw, bottom: vh };
+    const win = el && el.closest && el.closest('.win');
+    if (win) {
+      const r = win.getBoundingClientRect();
+      b = { left: Math.max(b.left, r.left), top: Math.max(b.top, r.top + 32), right: Math.min(b.right, r.right), bottom: Math.min(b.bottom, r.bottom) };
+    }
+    return { left: b.left + EDGE, top: b.top + EDGE, right: b.right - EDGE, bottom: b.bottom - EDGE };
+  }
+
+  /* rect: anchor rect in viewport coords. Point anchors (crosshair) pass a 0-size rect. */
+  function place(rect, ctx, prefer) {
+    const b = boundsFor(ctx);
+    tip.style.maxWidth = Math.min(280, b.right - b.left) + 'px';
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    const cx = rect.left + rect.width / 2;
+    let side = prefer || 'top';
+    let y = side === 'top' ? rect.top - GAP - h : rect.bottom + GAP;
+    if (side === 'top' && y < b.top) { side = 'bottom'; y = rect.bottom + GAP; }
+    if (side === 'bottom' && y + h > b.bottom) {
+      if (rect.top - GAP - h >= b.top) { side = 'top'; y = rect.top - GAP - h; }
+      else y = Math.max(b.top, b.bottom - h);   // no room either way: pin inside, cover the anchor
+    }
+    let x = Math.round(cx - w / 2);
+    x = Math.min(Math.max(x, b.left), b.right - w);
+    tip.dataset.side = side;
+    tip.style.transform = '';
+    tip.style.left = x + 'px';
+    tip.style.top = Math.round(y) + 'px';
+    const ax = Math.min(Math.max(cx - x - 5, 10), w - 20);
+    arrow().style.left = ax + 'px';
+  }
+
+  function show(anchor, html, opts = {}) {
+    body().innerHTML = html;
+    current = anchor;
+    const rect = opts.rect || anchor.getBoundingClientRect();
+    place(rect, anchor, opts.side);
+    tip.classList.add('is-open');
+    if (anchor.setAttribute) anchor.setAttribute('aria-describedby', 'mm-tip');
+  }
+  function hide() {
+    clearTimeout(openTimer);
+    if (!tip.classList.contains('is-open')) return;
+    tip.classList.remove('is-open');
+    if (current && current.removeAttribute) current.removeAttribute('aria-describedby');
+    current = null; lastClose = Date.now();
+  }
+  function contentFor(el) {
+    const ref = el.getAttribute('data-tip');
+    if (ref && ref.startsWith('#')) { const t = document.querySelector(ref); return t ? t.innerHTML : ''; }
+    return ref || '';
+  }
+  function scheduleShow(el) {
+    clearTimeout(openTimer);
+    const warm = Date.now() - lastClose < WARM_MS || tip.classList.contains('is-open');
+    openTimer = setTimeout(() => show(el, contentFor(el), { side: el.dataset.tipSide }), warm ? 0 : OPEN_DELAY);
+  }
+
+  document.addEventListener('pointerover', e => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (el && el !== current) scheduleShow(el);
+  });
+  document.addEventListener('pointerout', e => {
+    const el = e.target.closest && e.target.closest('[data-tip]');
+    if (el && !el.contains(e.relatedTarget)) hide();
+  });
+  document.addEventListener('focusin', e => { const el = e.target.closest('[data-tip]'); if (el) scheduleShow(el); });
+  document.addEventListener('focusout', e => { if (e.target.closest('[data-tip]')) hide(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hide(); });
+  document.addEventListener('scroll', hide, true);
+  window.addEventListener('resize', hide);
+
+  /* ---------- Segmented controls ---------- */
+  function syncSeg(seg) {
+    const on = seg.querySelector('[aria-pressed="true"]');
+    let thumb = seg.querySelector('.seg__thumb');
+    if (!thumb) { thumb = document.createElement('span'); thumb.className = 'seg__thumb'; seg.prepend(thumb); }
+    if (!on) { thumb.style.width = '0'; return; }
+    thumb.style.width = on.offsetWidth + 'px';
+    thumb.style.transform = `translateX(${on.offsetLeft}px)`;
+  }
+  document.addEventListener('click', e => {
+    const item = e.target.closest('.seg__item');
+    if (item) {
+      const seg = item.closest('.seg');
+      seg.querySelectorAll('.seg__item').forEach(b => b.setAttribute('aria-pressed', String(b === item)));
+      syncSeg(seg);
+      seg.dispatchEvent(new CustomEvent('seg-change', { bubbles: true, detail: item.dataset.value }));
+    }
+    const sw = e.target.closest('.switch');
+    if (sw) {
+      const on = sw.getAttribute('aria-checked') !== 'true';
+      sw.setAttribute('aria-checked', String(on));
+      const row = sw.closest('[data-dependent]');
+      if (row) row.classList.toggle('is-off', !on);
+    }
+  });
+  const syncAll = () => document.querySelectorAll('.seg').forEach(syncSeg);
+  document.addEventListener('DOMContentLoaded', syncAll);
+  if (document.fonts) document.fonts.ready.then(syncAll);
+
+  /* ---------- Formatting helpers (uk) ---------- */
+  const pad = n => String(n).padStart(2, '0');
+  const dur = h => { const m = Math.round(h * 60); return `${Math.floor(m / 60)} год ${pad(m % 60)} хв`; };
+
+  window.MM = { tip: { show, hide, place }, pad, dur };
+})();
+
+</script>
+<script>
+/* Sample data for the mockups — ONE consistent story, simulated, so every number on
+   every screen agrees (Overview, Outages, Energy, tray, toasts).
+   Station: Venus E 3.0, 5.12 kWh, max charge 2500 W (we charge at 1750 → 600 W above 90%),
+   max discharge 2500 W (off-grid), output stops at 10%.
+   Time axis: hours since Sun 15.11.2026 00:00 (local). "Now" = Sat 21.11 15:17. */
+(function () {
+  const CAP = 5.12, MIN = 10, STEP = 5 / 60;          // kWh, %, h
+  const DAY0 = new Date(2026, 10, 15);                  // 15 Nov 2026 (month is 0-based)
+  const NOW = 6 * 24 + 15 + 17 / 60;
+  const h = (day, hh, mm = 0) => day * 24 + hh + mm / 60;
+
+  // [start, end|null(ongoing), avg discharge W, flags]
+  const fixed = [
+    [h(0, 9), h(0, 11), 420], [h(0, 19), h(0, 21), 400],
+    [h(1, 5, 30), h(1, 7, 30), 380], [h(1, 13), h(1, 15), 450], [h(1, 20), h(1, 22), 430],
+    [h(2, 16), h(2, 19), 410],
+    [h(3, 13, 45), h(3, 16), 432, { cloud: true }],
+    [h(4, 7), h(4, 9), 435], [h(4, 19, 30), h(5, 2, 40), 790],
+    [h(5, 18), h(5, 20, 30), 430],
+    [h(6, 6, 10), h(6, 8, 10), 410], [h(6, 11, 50), null, 415],
+  ];
+  // 23 earlier days (for the 30-day view) — seeded, so the page is stable
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const early = [];
+  for (let d = -23; d < 0; d++) {
+    const n = rnd() < 0.15 ? 0 : 1 + Math.floor(rnd() * 3);
+    const slots = [6, 11, 16, 20].sort(() => rnd() - 0.5).slice(0, n).sort((a, b) => a - b);
+    for (const s of slots) {
+      const st = h(d, s, Math.floor(rnd() * 4) * 15), len = [2, 2, 2.5, 3, 4][Math.floor(rnd() * 5)];
+      early.push([st, st + len, 360 + Math.floor(rnd() * 100)]);
+    }
+  }
+  const outages = early.concat(fixed).map(([s, e, p, f]) => ({ start: s, end: e, p, ongoing: e == null, cloud: !!(f && f.cloud) }));
+  const gaps = [{ start: h(6, 3, 10), end: h(6, 4, 20), kind: 'nodata' }];   // PC off, cloud had nothing
+
+  // ---- simulate 5-min samples ----
+  const samples = [];
+  let soc = 100, dead = null;
+  for (let t = h(-23, 0); t <= NOW + 1e-9; t += STEP) {
+    const o = outages.find(o => t >= o.start && t < (o.end ?? Infinity));
+    const g = gaps.find(g => t >= g.start && t < g.end);
+    let p = 0;
+    if (o) {
+      if (dead == null) {
+        const jitter = Math.sin(t * 7.3) * 40 + Math.sin(t * 2.1) * 25;
+        p = -(o.p + jitter);
+        soc += (p / 1000) * STEP / CAP * 100;
+        if (soc <= MIN) { soc = MIN; dead = t; o.diedAt = t; }
+      }
+    } else {
+      dead = null;
+      if (soc < 100) { p = soc < 90 ? 1750 : 600; soc = Math.min(100, soc + (p / 1000) * STEP / CAP * 100); }
+    }
+    const grid = !o;
+    if (g || (o && dead != null && t > dead)) samples.push({ t, soc: null, p: null, grid, gap: g ? 'nodata' : 'dead' });
+    else samples.push({ t, soc: Math.round(soc * 10) / 10, p: Math.round(p), grid });
+  }
+  // soc at start/end of each outage, min soc
+  for (const o of outages) {
+    const inside = samples.filter(s => s.t >= o.start && s.t <= (o.end ?? NOW) && s.soc != null);
+    o.socStart = Math.round(inside[0]?.soc ?? 100);
+    o.socEnd = Math.round(inside[inside.length - 1]?.soc ?? MIN);
+    o.minSoc = Math.round(Math.min(...inside.map(s => s.soc)));
+    if (o.diedAt) o.socEnd = MIN;
+  }
+
+  const DOW = ['нд', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'];
+  const DOW_LONG = ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', "П'ятниця", 'Субота'];
+  const MON_GEN = ['січня', 'лютого', 'березня', 'квітня', 'травня', 'червня', 'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'];
+  const pad = n => String(n).padStart(2, '0');
+  const dateOf = t => { const d = new Date(DAY0); d.setMinutes(d.getMinutes() + Math.round(t * 60)); return d; };
+  const fmt = {
+    time: t => { const d = dateOf(t); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; },
+    dayShort: t => { const d = dateOf(t); return `${DOW[d.getDay()]} ${pad(d.getDate())}.${pad(d.getMonth() + 1)}`; },
+    dm: t => { const d = dateOf(t); return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}`; },
+    dow: t => DOW[dateOf(t).getDay()],
+    dayTip: t => { const d = dateOf(t); const w = DOW[d.getDay()]; return `${w[0].toUpperCase() + w.slice(1)}, ${d.getDate()} ${MON_GEN[d.getMonth()]}`; },
+    dayLong: t => { const d = dateOf(t); return `${DOW_LONG[d.getDay()]}, ${d.getDate()} ${MON_GEN[d.getMonth()]}`; },
+    dur: hrs => { const m = Math.round(hrs * 60); return `${Math.floor(m / 60)} год ${pad(m % 60)} хв`; },
+    durShort: hrs => { const m = Math.round(hrs * 60); return `${Math.floor(m / 60)}:${pad(m % 60)}`; },
+    kwh: v => v.toFixed(1).replace('.', ','),
+    dayIndex: t => Math.floor(t / 24),
+  };
+  // NB: Ukrainian decimal separator is a comma (3,7 кВт·год). kwh() follows that; see README.
+
+  // ---- per-day aggregates ----
+  function day(d) {
+    const s0 = d * 24, s1 = Math.min(s0 + 24, NOW);
+    const day = { d, t: s0, count: 0, off: 0, longest: null, minSoc: 100, died: false, cloud: false, ongoing: false, chg: 0, dis: 0, peak: null, disOutage: 0 };
+    for (const o of outages) {
+      const e = o.end ?? NOW, a = Math.max(o.start, s0), b = Math.min(e, s1);
+      if (b > a) {
+        day.off += b - a;
+        if (o.minSoc < day.minSoc) day.minSoc = o.minSoc;
+        if (o.diedAt && o.diedAt >= s0 && o.diedAt < s1 + 24) day.died = day.died || (o.start >= s0 && o.start < s1);
+        if (o.cloud) day.cloud = true;
+      }
+      if (o.start >= s0 && o.start < s0 + 24) {
+        day.count++; if (o.ongoing) day.ongoing = true;
+        const len = e - o.start;
+        if (!day.longest || len > day.longest.len) day.longest = { len, o };
+        if (o.diedAt) day.died = true;
+      }
+    }
+    for (const s of samples) if (s.t >= s0 && s.t < s1 && s.p != null) {
+      if (s.p > 0) day.chg += s.p / 1000 * STEP;
+      if (s.p < 0) { day.dis += -s.p / 1000 * STEP; if (!s.grid) day.disOutage += -s.p / 1000 * STEP; if (!day.peak || -s.p > day.peak.w) day.peak = { w: -s.p, t: s.t }; }
+    }
+    day.span = s1 - s0;
+    return day;
+  }
+  const days = []; for (let d = -23; d <= 6; d++) days.push(day(d));
+
+  window.MMData = { CAP, MIN, NOW, h, outages, gaps, samples, days, fmt, dateOf };
+})();
+
+</script>
+<script>
+/* SOC chart (Overview). One renderer for every connection state.
+   opts: { range: 24|168|720, now: t, lastData: t (last fresh measurement; default = now),
+           tail: null | 'stale' | 'nolink' | 'dead'  — what is drawn between lastData and now,
+           skeleton: bool, observedSince: t (axis left of it is empty, no frame) } */
+(function () {
+  const D = MMData, F = D.fmt;
+  function render(host, opts = {}) {
+    const range = opts.range || 24, now = opts.now ?? D.NOW, last = opts.lastData ?? now, tail = opts.tail || null;
+    const W = host.clientWidth, H = opts.height || 236;
+    const P = { l: 40, r: 8, t: 26, b: 26 };
+    const t1 = now, t0 = t1 - range;
+    const x = t => P.l + (t - t0) / (t1 - t0) * (W - P.l - P.r);
+    const y = v => P.t + (1 - v / 100) * (H - P.t - P.b);
+    const step = range <= 24 ? 1 : range <= 168 ? 3 : 6;
+    const since = opts.observedSince ?? -Infinity;
+    const pts = D.samples.filter((s, i) => s.t >= Math.max(t0, since) - 0.01 && s.t <= last + 1e-6 && i % step === 0);
+    let s = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Заряд станції, % — ${range === 24 ? '24 год' : range === 168 ? '7 днів' : '30 днів'}">`;
+    s += `<defs><linearGradient id="socfill-${host.id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="var(--color-good)" stop-opacity=".13"/><stop offset="1" stop-color="var(--color-good)" stop-opacity="0"/></linearGradient><clipPath id="plot-${host.id}"><rect x="${P.l}" y="0" width="${W - P.l - P.r}" height="${H}"/></clipPath></defs>`;
+    s += '<g class="grid">';
+    for (const v of [0, 25, 50, 75, 100]) s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(v)}" y2="${y(v)}" class="${v === 0 ? 'base' : ''}"/>`;
+    s += '</g><g class="axis">';
+    for (const v of [0, 25, 50, 75, 100]) s += `<text x="${P.l - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+    const ticks = [];
+    const every = range === 24 ? 3 : range === 168 ? 24 : 96;
+    for (let t = Math.ceil(t0 / every) * every; t <= t1; t += every) ticks.push(t);
+    for (const t of ticks) {
+      const midnight = Math.abs(t % 24) < 1e-6;
+      const label = range === 24 ? (midnight ? F.dayShort(t) : F.time(t)) : F.dayShort(t);
+      s += `<text x="${x(t)}" y="${H - 6}" text-anchor="middle" class="${midnight && range === 24 ? 'strong' : ''}">${label}</text>`;
+    }
+    s += `</g>`;
+    if (opts.skeleton) {
+      s += `<rect x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}" rx="6" class="skel-fill"/></svg>`;
+      host.innerHTML = s; return;
+    }
+    if (since > t0) s += `<text class="gap-label" x="${x(since) + 8}" y="${y(50) + 4}">спостереження з ${F.time(since)}</text><line x1="${x(since)}" x2="${x(since)}" y1="${P.t}" y2="${H - P.b}" stroke="var(--color-border-strong)"/>`;
+    s += `<g clip-path="url(#plot-${host.id})">`;
+    // outage bands (no-grid), labels never collide
+    let lastRight = -Infinity;
+    for (const o of D.outages) {
+      if (o.start >= last) continue;
+      const end = Math.min(o.end ?? Infinity, last);
+      const a = Math.max(o.start, t0, since), b = Math.min(end, t1);
+      if (b <= a) continue;
+      const bx = x(a), bw = x(b) - bx;
+      s += `<rect class="band" x="${bx}" y="${P.t}" width="${bw}" height="${H - P.t - P.b}"/>`;
+      const known = Math.min(o.end ?? last, last) - o.start;
+      const ongoing = o.end == null || o.end > last;
+      const opts2 = ongoing && tail
+        ? [`без світла ≥ ${F.dur(known)}`, `≥ ${F.dur(known)}`]
+        : [`без світла ${F.dur(known)}${ongoing ? ', триває' : ''}`, F.dur(known)];
+      for (const txt of opts2) {
+        const tw = txt.length * 6.1;
+        if (bw < 30 && range !== 24) break;
+        const left = Math.min(Math.max(bx + bw / 2 - tw / 2, P.l), W - P.r - tw);
+        if (left < lastRight + 10) continue;
+        s += `<text class="band-label" x="${left}" y="${P.t - 9}">${txt}</text>`;
+        lastRight = left + tw; break;
+      }
+    }
+    // gaps inside history
+    const gapRuns = []; let run = null;
+    const dt = (D.samples[1].t - D.samples[0].t) * step;
+    for (const p of pts) {
+      if (p.soc == null) { if (!run) run = { a: p.t, kind: p.gap }; run.b = p.t + dt; }
+      else if (run) { gapRuns.push(run); run = null; }
+    }
+    if (run) gapRuns.push(run);
+    if (tail === 'nolink' || tail === 'dead') gapRuns.push({ a: last, b: now, kind: tail, open: true });
+    for (const g of gapRuns) {
+      const gx = x(g.a), gw = Math.max(2, x(g.b) - gx);
+      s += `<rect class="gap${g.open ? ' gap--open' : ''}" x="${gx}" y="${P.t + 1}" width="${gw}" height="${H - P.t - P.b - 2}" rx="3"/>`;
+      const label = { dead: 'ймовірно, розрядилась', nolink: 'немає даних', nodata: 'немає даних' }[g.kind] || 'немає даних';
+      if (gw > label.length * 6 + 8) s += `<text class="gap-label" x="${gx + gw / 2}" y="${y(50) + 4}" text-anchor="middle">${label}</text>`;
+    }
+    let line = '', area = '', seg = [];
+    const flush = () => {
+      if (seg.length > 1) {
+        const d = seg.map((p, i) => `${i ? 'L' : 'M'}${x(p.t).toFixed(1)},${y(p.soc).toFixed(1)}`).join('');
+        line += d; area += d + `L${x(seg[seg.length - 1].t).toFixed(1)},${y(0)}L${x(seg[0].t).toFixed(1)},${y(0)}Z`;
+      }
+      seg = [];
+    };
+    for (const p of pts) { if (p.soc == null) flush(); else seg.push(p); }
+    flush();
+    const muted = !!tail;
+    const lc = muted ? 'var(--color-text-subtle)' : 'var(--color-good)';
+    if (!muted) s += `<path d="${area}" fill="url(#socfill-${host.id})"/>`;
+    s += `<line class="threshold" x1="${P.l}" x2="${W - P.r}" y1="${y(20)}" y2="${y(20)}"/>`;
+    s += `<path d="${line}" fill="none" stroke="${lc}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    const lp = [...pts].reverse().find(p => p.soc != null);
+    if (lp) s += `<circle cx="${x(lp.t)}" cy="${y(lp.soc)}" r="3.5" fill="${muted ? 'var(--color-surface-1)' : lc}" stroke="${muted ? lc : 'var(--color-surface-1)'}" stroke-width="2"/>`;
+    if (muted && lp) s += `<text class="gap-label" x="${x(lp.t) - 6}" y="${y(lp.soc) - 10}" text-anchor="end">${lp.soc.toFixed(0)}% о ${F.time(lp.t)}</text>`;
+    s += '</g>';
+    s += `<text class="threshold-label" x="${W - P.r}" y="${y(20) - 5}" text-anchor="end">20%</text>`;
+    s += `<g class="hover" style="display:none"><line class="crosshair" y1="${P.t}" y2="${H - P.b}"/><circle r="4" fill="${lc}" stroke="var(--color-surface-1)" stroke-width="2"/></g>`;
+    s += `<rect class="hit" x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}" fill="transparent"/></svg>`;
+    host.innerHTML = s;
+
+    const svg = host.firstChild, hover = svg.querySelector('.hover'), hit = svg.querySelector('.hit');
+    hit.addEventListener('pointermove', e => {
+      const r = svg.getBoundingClientRect();
+      const t = t0 + (e.clientX - r.left - P.l) / (W - P.l - P.r) * (t1 - t0);
+      const when = tt => `${F.dayShort(tt)} · ${F.time(tt)}`;
+      let html, px, ay, dotOn = false;
+      if (t > last && tail) {
+        px = x(Math.min(t, now)); ay = y(50);
+        html = tail === 'stale'
+          ? `<div class="tip__title">Чекаємо даних<small>${when(t)}</small></div><dl><dt>Останні дані</dt><dd>о ${F.time(last)}</dd></dl>`
+          : tail === 'dead'
+            ? `<div class="tip__title">Немає даних<small>з ${F.time(last)}</small></div><dl><dt>Причина</dt><dd>станція, ймовірно, розрядилась</dd><dt>Заряд перед цим</dt><dd>${lp ? lp.soc.toFixed(0) : '—'}%</dd></dl>`
+            : `<div class="tip__title">Немає даних<small>з ${F.time(last)}</small></div><dl><dt>Що зі світлом</dt><dd>невідомо</dd></dl>`;
+      } else {
+        let best = pts[0];
+        for (const p of pts) if (Math.abs(p.t - t) < Math.abs(best.t - t)) best = p;
+        px = x(best.t);
+        if (best.soc == null) {
+          ay = y(50);
+          const o = D.outages.find(o => o.diedAt && best.t >= o.diedAt && best.t < o.end);
+          html = `<div class="tip__title">Немає даних<small>${when(best.t)}</small></div>` + (best.gap === 'dead' && o
+            ? `<dl><dt>Станція розрядилась</dt><dd>о ${F.time(o.diedAt)}</dd><dt>Знову на зв'язку</dt><dd>о ${F.time(o.end)}</dd></dl>`
+            : `<dl><dt>Причина</dt><dd>додаток не працював</dd></dl><div class="tip__foot">Що було зі світлом, невідомо.</div>`);
+        } else {
+          dotOn = true; ay = y(best.soc);
+          hover.lastChild.setAttribute('cx', px); hover.lastChild.setAttribute('cy', ay);
+          const pw = best.p > 0 ? `<dd class="t-good">заряд ${best.p} Вт</dd>` : best.p < 0 ? `<dd class="t-warn">розряд ${-best.p} Вт</dd>` : '<dd>очікування</dd>';
+          html = `<div class="tip__title">${Math.round(best.soc)}%<small>${when(best.t)}</small></div><dl><dt>Потужність</dt>${pw}<dt>Світло</dt>${best.grid ? '<dd class="t-good">є</dd>' : '<dd class="t-warn">немає</dd>'}</dl>`;
+        }
+      }
+      hover.style.display = '';
+      hover.lastChild.style.display = dotOn ? '' : 'none';
+      hover.firstChild.setAttribute('x1', px); hover.firstChild.setAttribute('x2', px);
+      MM.tip.show(svg, html, { rect: { left: r.left + px, right: r.left + px, width: 0, top: r.top + ay - 6, bottom: r.top + ay + 6, height: 12 } });
+    });
+    hit.addEventListener('pointerleave', () => { hover.style.display = 'none'; MM.tip.hide(); });
+  }
+  window.MMSoc = { render };
+})();
+
+</script>
+<script>
+(function () {
+  const host = document.getElementById('soc');
+  let range = 24;
+  const go = () => MMSoc.render(host, { range });
+  document.getElementById('soc-range').addEventListener('seg-change', e => { range = Number(e.detail); go(); });
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(go);
+  window.addEventListener('resize', go);
+})();
+</script>
+</body>
+</html>

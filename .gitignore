@@ -1,0 +1,9 @@
+.superpowers/
+.task
+.wails
+bin
+frontend/dist
+frontend/node_modules
+frontend/bindings
+*.syso
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe

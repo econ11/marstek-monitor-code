@@ -1,0 +1,158 @@
+<!--@head title="Станції"-->
+<style>
+  .behind { display: grid; gap: var(--space-4); }
+  .behind .gauges { padding: var(--space-2) 0; }
+  .sw { left: 12px; top: calc(var(--titlebar-height) + var(--header-height) - 4px); width: 464px; padding: var(--space-2); }
+  .sw__label { padding: var(--space-2) var(--space-3) var(--space-1); }
+  .st { display: grid; grid-template-columns: 40px minmax(0, 1fr) 20px; gap: var(--space-3); align-items: center; padding: var(--space-3); border-radius: 8px; width: 100%; text-align: left; background: transparent; border: 0; transition: background-color var(--duration-instant); }
+  .st:hover { background: var(--color-overlay-hover); }
+  .st[aria-checked="true"] { background: var(--color-overlay-active); }
+  .st__name { font-weight: 500; display: flex; gap: 8px; align-items: baseline; }
+  .st__name small { font-weight: 400; color: var(--color-text-subtle); font-size: var(--text-caption); }
+  .st__pills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+  .st__check { color: var(--color-text-primary); }
+  .st--offline .minidial b { color: var(--color-text-subtle); }
+  .sw__foot { display: flex; justify-content: space-between; gap: var(--space-2); border-top: 1px solid var(--color-border); margin-top: var(--space-2); padding: var(--space-2) var(--space-1) 0; }
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
+  .tile { position: relative; display: grid; gap: 6px; align-content: start; text-align: left; padding: var(--space-4); border-radius: 10px; background: var(--color-surface-2); border: 1px solid var(--color-border-strong); min-height: 132px; transition: border-color var(--duration-instant), background-color var(--duration-instant); }
+  .tile:hover { border-color: rgb(255 255 255 / .22); }
+  .tile[aria-checked="true"] { border-color: var(--color-info); background: var(--color-info-soft); box-shadow: inset 0 0 0 1px var(--color-info); }
+  .tile__icon { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; background: var(--color-surface-3); color: var(--color-text-primary); margin-bottom: 4px; }
+  .tile[aria-checked="true"] .tile__icon { background: var(--color-info); color: var(--color-text-on-accent); }
+  .tile b { font-weight: 600; }
+  .tile span { font-size: var(--text-small); color: var(--color-text-muted); line-height: var(--leading-snug); }
+  .tile .pill { position: absolute; top: 12px; right: 12px; }
+  .found { border: 1px solid var(--color-border); border-radius: 10px; overflow: hidden; }
+  .found__head { display: flex; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-4); background: var(--color-surface-2); font-size: var(--text-small); color: var(--color-text-muted); }
+  .found__head .spin { margin-left: auto; display: inline-flex; gap: 6px; align-items: center; color: var(--color-text-subtle); }
+  .spin .icon { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .spin .icon { animation: none; } }
+  .dev { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: var(--space-3); align-items: center; padding: var(--space-3) var(--space-4); border-top: 1px solid var(--color-border); }
+  .dev__icon { width: 36px; height: 36px; border-radius: 8px; background: var(--color-surface-2); display: grid; place-items: center; color: var(--color-good); }
+  .dev__meta { font-size: var(--text-caption); color: var(--color-text-subtle); display: flex; gap: 6px; flex-wrap: wrap; }
+  .dev--added .dev__icon { color: var(--color-text-subtle); }
+  .two { display: grid; gap: var(--space-7); }
+</style>
+</head>
+<body>
+<!--@sprite-->
+<main class="doc">
+  <!--@docnav page="06-stations.html" title="Станції"-->
+  <p class="doc-lede">Ліворуч над вкладками — перемикач станції. Він відкриває панель зі станціями (стан кожної видно без перемикання), звідти — «Додати станцію».</p>
+
+  <div class="two">
+  <div>
+  <h2 class="doc-h2" style="margin-top:0">Перемикач відкрито</h2>
+  <div class="win">
+    <!--@titlebar state="Без світла 3 год 27 хв"-->
+    <!--@appbar tab="overview" grid="off" open="1"-->
+    <div class="content">
+      <div class="split">
+        <div class="behind">
+          <section class="panel"><div class="gauges">
+            <!--@gauge title="Заряд" tone="good" pct="72" num="72" small="%" primary="3,7 з 5,12 кВт·год"-->
+            <!--@gauge title="Потужність" tone="warn" pct="16.8" num="420" unit="Вт · розряд" utone="warn" primary="з 2 500 Вт макс."-->
+            <!--@gauge title="До розряду" tone="info" pct="68.9" num="7:30" unit="год : хв" primary="до 10% · ≈ о 22:47"-->
+            <!--@gauge title="Без світла сьогодні" tone="warn" pct="35.7" num="5:27" unit="год : хв" primary="2 відключення"-->
+          </div></section>
+          <section class="panel" style="height:300px"></section>
+        </div>
+        <aside class="panel" style="height:420px"></aside>
+      </div>
+    </div>
+    <div class="scrim scrim--light" aria-hidden="true"></div>
+    <div class="popover sw" role="dialog" aria-label="Станції">
+      <div class="sw__label label">Станції</div>
+      <div role="radiogroup" aria-label="Вибрана станція">
+        <button class="st" role="radio" aria-checked="true">
+          <!--@minidial pct="72" tone="good" num="72" lg="1"-->
+          <span><span class="st__name">Дім <small>Venus E 3.0</small></span>
+            <span class="st__pills"><span class="pill" data-tone="warn"><!--@icon n="plug-off"-->без світла 3:27</span><span class="pill" data-tone="warn">↓ 420 Вт</span><span class="pill">LAN · 3 с тому</span></span></span>
+          <span class="st__check"><!--@icon n="check"--></span>
+        </button>
+        <button class="st" role="radio" aria-checked="false">
+          <!--@minidial pct="100" tone="good" num="100" lg="1"-->
+          <span><span class="st__name">Дача <small>Venus E 3.0</small></span>
+            <span class="st__pills"><span class="pill" data-tone="good"><!--@icon n="plug"-->світло є</span><span class="pill">очікування</span><span class="pill">хмара · 2 хв тому</span></span></span>
+          <span></span>
+        </button>
+        <button class="st st--offline" role="radio" aria-checked="false">
+          <!--@minidial pct="64" tone="mute" num="64" lg="1"-->
+          <span><span class="st__name">Батьки <small>Venus E 2.0</small></span>
+            <span class="st__pills"><span class="pill pill--outline"><!--@icon n="wifi-off"-->немає зв'язку · дані о 14:52</span></span></span>
+          <span></span>
+        </button>
+      </div>
+      <div class="sw__foot">
+        <a class="btn btn--secondary" href="#add">＋ Додати станцію</a>
+        <button class="btn btn--ghost">Керувати станціями…</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div id="add">
+  <h2 class="doc-h2" style="margin-top:0">Вікно «Додати станцію» — пошук у мережі</h2>
+  <div class="win">
+    <!--@titlebar state="Без світла 3 год 27 хв"-->
+    <!--@appbar tab="overview" grid="off"-->
+    <div class="content">
+      <div class="split">
+        <div class="behind">
+          <section class="panel"><div class="gauges">
+            <!--@gauge title="Заряд" tone="good" pct="72" num="72" small="%" primary="3,7 з 5,12 кВт·год"-->
+            <!--@gauge title="Потужність" tone="warn" pct="16.8" num="420" unit="Вт · розряд" utone="warn" primary="з 2 500 Вт макс."-->
+            <!--@gauge title="До розряду" tone="info" pct="68.9" num="7:30" unit="год : хв" primary="до 10% · ≈ о 22:47"-->
+            <!--@gauge title="Без світла сьогодні" tone="warn" pct="35.7" num="5:27" unit="год : хв" primary="2 відключення"-->
+          </div></section>
+          <section class="panel" style="height:300px"></section>
+        </div>
+        <aside class="panel" style="height:420px"></aside>
+      </div>
+    </div>
+    <div class="scrim" aria-hidden="true"></div>
+    <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="add-title" aria-describedby="add-desc">
+      <div class="dialog__head">
+        <div><h2 class="dialog__title" id="add-title">Додати станцію</h2>
+        <p class="dialog__desc" id="add-desc">Одна станція може мати і локальне, і хмарне підключення — додаток сам бере найсвіжіші дані.</p></div>
+        <button class="iconbtn" aria-label="Закрити"><!--@icon n="x"--></button>
+      </div>
+      <div class="dialog__body">
+        <div class="tiles" role="radiogroup" aria-label="Спосіб підключення">
+          <button class="tile" role="radio" aria-checked="true"><span class="tile__icon"><!--@icon n="wifi"--></span><b>Пошук у локальній мережі</b><span>Знайде станції у вашому Wi-Fi. Найшвидші дані, працює без інтернету.</span><em class="pill" data-tone="info" style="font-style:normal">рекомендовано</em></button>
+          <button class="tile" role="radio" aria-checked="false"><span class="tile__icon"><!--@icon n="cloud"--></span><b>Акаунт Marstek</b><span>Увійдіть тим самим акаунтом, що й у телефоні. Працює звідусіль і дає історію.</span></button>
+          <button class="tile" role="radio" aria-checked="false"><span class="tile__icon"><!--@icon n="keyboard"--></span><b>IP вручну</b><span>Якщо пошук не знайшов станцію.</span></button>
+        </div>
+        <div class="found" aria-live="polite">
+          <div class="found__head">Знайдено в мережі:<span class="spin"><!--@icon n="loader" cls="icon--sm"-->Шукаємо станції у вашому Wi-Fi…</span></div>
+          <div class="dev">
+            <span class="dev__icon"><!--@icon n="battery" cls="icon--lg"--></span>
+            <span><b style="font-weight:500">Venus E 3.0</b><span class="dev__meta"><span class="mono">192.168.1.47</span>·<span>VNSE3-0</span>·<span>прошивка v151</span></span></span>
+            <button class="btn btn--primary"><!--@icon n="plus"-->Додати</button>
+          </div>
+          <div class="dev dev--added">
+            <span class="dev__icon"><!--@icon n="battery" cls="icon--lg"--></span>
+            <span><b style="font-weight:500">Venus E 3.0</b><span class="dev__meta"><span class="mono">192.168.1.52</span>·<span>VNSE3-0</span>·<span>прошивка v151</span></span></span>
+            <span class="pill" data-tone="good"><!--@icon n="check"-->вже додано</span>
+          </div>
+        </div>
+        <p class="note"><!--@icon n="info"--><span>Не бачите своєї? Локальний API треба ввімкнути на станції. <a class="link" href="10-first-run.html#guide">Як це зробити<!--@icon n="external" cls="icon--sm"--></a></span></p>
+      </div>
+      <div class="dialog__foot"><button class="btn btn--secondary">Скасувати</button></div>
+    </div>
+  </div>
+  </div>
+  </div>
+
+  <ol class="doc-notes">
+    <li><b>Панель станцій</b> — поповер 464 px під кнопкою, легкий скрим лише над контентом (вкладки лишаються видимими). Стан кожної станції — пігулки за правилом кольору; стрілка ↓ = розряд, ↑ = заряд.</li>
+    <li><b>Офлайн-станція</b> — сіре міні-кільце з останнім відсотком і контурна пігулка «немає зв'язку · дані о 14:52» замість пігулки світла (стан світла невідомий). Сірий колір = «не поточне».</li>
+    <li><b>Клавіатура:</b> стрілки ↑/↓ ходять по станціях (radiogroup), Enter вибирає і закриває, Esc закриває і повертає фокус на кнопку станції.</li>
+    <li><b>Плитки способів</b> — radiogroup; вибрана — синя рамка + заливка іконки (не лише колір: іконка інвертується). Під плитками змінюється тіло вікна: список знайдених / форма входу / поле IP.</li>
+    <li><b>Пошук</b> триває ~10 с, список доповнюється наживо (aria-live). Уже додана станція не зникає, а показує «вже додано» — інакше користувач думає, що пошук її не бачить.</li>
+  </ol>
+</main>
+<!--@script-->
+</body>
+</html>
