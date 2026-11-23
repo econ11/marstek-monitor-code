@@ -54,6 +54,25 @@ jobs:
           echo "version=$v" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0   # full history, so the tagged commit can be checked against origin/main
+
+      # A draft is only ever made from main: a tag must point at a commit on main, and a real
+      # (non-dry) dispatch must run on main. A dry run may run from any branch.
+      - name: Released from main
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "$EVENT" = "push" ]; then
+            if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+              echo "::error::the tagged commit is not on main; tag a commit of main"; exit 1
+            fi
+          elif [ "$DRY_RUN" != "true" ] && [ "$REF" != "refs/heads/main" ]; then
+            echo "::error::a non-dry release runs only on main (got $REF)"; exit 1
+          fi
 
       - name: CHANGELOG has the version
         shell: pwsh
@@ -71,6 +90,8 @@ jobs:
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-go@v5
         with:
@@ -177,6 +198,8 @@ jobs:
           fi
 
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-go@v5
         with:
@@ -214,11 +237,12 @@ jobs:
         run: |
           keychain="$RUNNER_TEMP/signing.keychain-db"
           kc_pass="$(openssl rand -base64 32)"
+          echo "::add-mask::$kc_pass"
           printf '%s' "$MACOS_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
           security create-keychain -p "$kc_pass" "$keychain"
           security set-keychain-settings -lut 21600 "$keychain"
           security unlock-keychain -p "$kc_pass" "$keychain"
-          security import "$RUNNER_TEMP/cert.p12" -P "$MACOS_CERT_PASSWORD" -A -t cert -f pkcs12 -k "$keychain" > /dev/null
+          security import "$RUNNER_TEMP/cert.p12" -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign -t cert -f pkcs12 -k "$keychain" > /dev/null
           security set-key-partition-list -S apple-tool:,apple: -s -k "$kc_pass" "$keychain" > /dev/null
           # shellcheck disable=SC2046
           security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
@@ -250,7 +274,8 @@ jobs:
           trap 'hdiutil detach "$mnt" > /dev/null || true' EXIT
           app="$(find "$mnt" -maxdepth 1 -name '*.app' -print -quit)"
           if [ -z "$app" ]; then echo "::error::no .app in $dmg"; exit 1; fi
-          spctl --assess --type execute -vv "$app"
+          spctl --assess --type execute "$app"
+          echo "Gatekeeper: accepted"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -297,7 +322,8 @@ jobs:
           case " $archs " in *" arm64 "*) ;; *) echo "::error::no arm64 slice"; exit 1 ;; esac
           case " $archs " in *" x86_64 "*) ;; *) echo "::error::no x86_64 slice"; exit 1 ;; esac
           codesign --verify --deep --strict "$app"
-          spctl --assess --type execute -vv "$app"
+          spctl --assess --type execute "$app"
+          echo "Gatekeeper: accepted"
 
   publish:
     needs: [prepare, windows, macos, intel-check]
@@ -308,6 +334,8 @@ jobs:
       VERSION: ${{ needs.prepare.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/download-artifact@v4
         with:

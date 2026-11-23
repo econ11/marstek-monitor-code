@@ -48,7 +48,8 @@ or un-notarized dmg is never built for a release. The publish job fails without 
    with `-pre`, `-rc` or `+build` is rejected.
 2. Optional rehearsal: Actions → **release** → *Run workflow* with `version=<version>` and
    `dry_run` checked (the default). Everything is built, signed and checked; nothing is published.
-3. Tag and push (owner):
+3. Tag a commit of `main` and push the tag (owner; a tag on any other commit fails the run, and a
+   non-dry manual run works only on `main`):
 
    ```powershell
    git tag -a v<version> -m "Marstek Monitor <version>"
@@ -56,7 +57,8 @@ or un-notarized dmg is never built for a release. The publish job fails without 
    ```
 
 4. The workflow runs:
-   - **prepare**: checks the version (`x.y.z`) and the CHANGELOG section;
+   - **prepare**: checks the version (`x.y.z`), that the release comes from `main`, and the
+     CHANGELOG section;
    - **windows**: the checks, plus `go test -tags release ./core/update/`;
      `wails3 task package VERSION=<version>` with NSIS 3.13 (the Taskfile adds the `release`
      build tag); `go version -m` must show the `release` tag on `bin/marstek-monitor.exe`;

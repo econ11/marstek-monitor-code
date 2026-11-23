@@ -22,6 +22,22 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # The release scripts' tests are Pester 3 syntax (as on the owner's PC): pin 3.4.0 in
+      # Windows PowerShell, whatever newer Pester the image has.
+      - name: Pester (scripts)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Get-Module -ListAvailable Pester | Where-Object { $_.Version -eq [version]'3.4.0' })) {
+            Install-Module Pester -RequiredVersion 3.4.0 -Force -SkipPublisherCheck -Scope CurrentUser
+          }
+          Import-Module Pester -RequiredVersion 3.4.0
+          $r = Invoke-Pester scripts -PassThru
+          if ($r.TotalCount -eq 0 -or $r.FailedCount -gt 0) { Write-Error "Pester: $($r.FailedCount) failed of $($r.TotalCount)"; exit 1 }
 
       - uses: actions/setup-go@v5
         with:
