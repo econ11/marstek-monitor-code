@@ -178,3 +178,32 @@ func TestCanInstallHereOutsideBundle(t *testing.T) {
 		t.Fatal("a test binary is inside a bundle?")
 	}
 }
+
+// After the swap the new app gets this run's -simulate* flags back (the
+// local update test must not restart on the real data folder); nothing else.
+func TestRelaunchArgs(t *testing.T) {
+	got := relaunchArgs([]string{"--background", "-simulate-quiet", "-simulate-dir", "/tmp/x y", "-psn_0_1"})
+	want := []string{"-simulate-quiet", "-simulate-dir", "/tmp/x y"}
+	if strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Fatalf("%q, want %q", got, want)
+	}
+	if got := relaunchArgs([]string{"--background"}); len(got) != 0 {
+		t.Fatalf("a normal run: %q", got)
+	}
+}
+
+// The relaunch script passes the flags through as separate arguments and
+// waits for the pid; checked with a stand-in for open.
+func TestRelaunchScript(t *testing.T) {
+	dir := t.TempDir()
+	out := filepath.Join(dir, "out")
+	script := strings.ReplaceAll(relaunchScript, "/usr/bin/open", "printf '%s\\n' >"+out)
+	cmd := exec.Command("/bin/sh", "-c", script, "x", "999999", "/A b.app", "-simulate-quiet", "-simulate-dir", "/t m")
+	if b, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("%v %s", err, b)
+	}
+	b, _ := os.ReadFile(out)
+	if want := "/A b.app\n--args\n-simulate-quiet\n-simulate-dir\n/t m\n"; string(b) != want {
+		t.Fatalf("open got %q, want %q", b, want)
+	}
+}

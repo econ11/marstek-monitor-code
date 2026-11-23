@@ -15,6 +15,9 @@
 # App Store Connect API key, .p8) are all set: the app and then the dmg are
 # submitted with notarytool and stapled. It needs an identity.
 #
+# UPDATE_TEST=1 in the environment builds the version WITHOUT the release tag
+# (the local update test, docs/macos-signing.md); never for a release.
+#
 # Checks (any failure stops the script): the binary holds arm64 and x86_64;
 # CFBundleShortVersionString is <version>; codesign --verify --deep --strict
 # passes; with an identity, the hardened runtime flag is set.
@@ -57,7 +60,7 @@ notarize() { # <file to submit> <file to staple>
 }
 
 # 1. The universal, version-stamped, ad-hoc signed app.
-wails3 task darwin:package VERSION="$VERSION"
+wails3 task darwin:package VERSION="$VERSION" UPDATE_TEST="${UPDATE_TEST:-}"
 
 # 2. Developer ID signature (hardened runtime, timestamp, entitlements).
 if [ -n "$IDENTITY" ]; then

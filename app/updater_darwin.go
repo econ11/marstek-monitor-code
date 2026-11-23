@@ -269,16 +269,43 @@ func startInstaller(dmg string) error {
 		return err
 	}
 	swapped.Store(true)
-	// "$1" / "$2": the pid and the path are arguments, never shell text.
-	cmd := exec.Command("/bin/sh", "-c",
-		`while kill -0 "$1" 2>/dev/null; do sleep 0.2; done; exec /usr/bin/open "$2"`,
-		"marstek-relaunch", strconv.Itoa(os.Getpid()), newApp)
+	// The pid, the path and the flags are arguments, never shell text. The
+	// new app gets this run's -simulate* flags back (the local update test
+	// must not restart on the real data folder); a normal run has none, and
+	// the app opens as by a double click.
+	args := append([]string{"marstek-relaunch", strconv.Itoa(os.Getpid()), newApp}, relaunchArgs(os.Args[1:])...)
+	cmd := exec.Command("/bin/sh", append([]string{"-c", relaunchScript}, args...)...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 	if err := cmd.Start(); err != nil {
 		// The new app is in place; it opens at the next start by hand.
 		return fmt.Errorf("update: installed, but the relaunch did not start: %w", err)
 	}
 	return cmd.Process.Release()
+}
+
+// relaunchScript waits for the old process ($1) to exit, then opens the new
+// app ($2), with the remaining arguments as its flags when there are any.
+const relaunchScript = `pid=$1; app=$2; shift 2
+while kill -0 "$pid" 2>/dev/null; do sleep 0.2; done
+if [ $# -gt 0 ]; then exec /usr/bin/open "$app" --args "$@"; fi
+exec /usr/bin/open "$app"`
+
+// relaunchArgs keeps the -simulate* flags of args (and the folder after
+// -simulate-dir); everything else is dropped.
+func relaunchArgs(args []string) []string {
+	var out []string
+	for i := 0; i < len(args); i++ {
+		switch strings.TrimLeft(args[i], "-") {
+		case "simulate", "simulate-quiet", "simulate-firstrun", "simulate-e2e":
+			out = append(out, args[i])
+		case "simulate-dir":
+			if i+1 < len(args) {
+				out = append(out, args[i], args[i+1])
+				i++
+			}
+		}
+	}
+	return out
 }
 
 // cleanAfterUpdate removes what an update left beside the running app (the

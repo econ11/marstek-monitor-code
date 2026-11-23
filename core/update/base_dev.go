@@ -48,3 +48,13 @@ func overrideURL(s string) bool {
 	}
 	return false
 }
+
+// LocalTestBase reports whether MARSTEK_UPDATE_BASE points this dev build at
+// a local test server: a loopback http base (http://127.0.0.1:<port>/…/,
+// overrideURL), not an https one. Only then may a -simulate* run check for
+// and install an update (docs/macos-signing.md, «Тест оновлення перед
+// релізом»). Always false in a release build (base_release.go).
+func LocalTestBase() bool {
+	s := os.Getenv("MARSTEK_UPDATE_BASE")
+	return strings.HasSuffix(s, "/") && strings.HasPrefix(s, devLoopback) && overrideURL(s)
+}

@@ -11,3 +11,7 @@ func releasesBase() string { return ReleasesBase }
 
 // latestAPI is LatestURL, always, in a release build.
 func latestAPI() string { return LatestURL }
+
+// LocalTestBase is false in a release build: no environment variable lets a
+// -simulate* run reach an update.
+func LocalTestBase() bool { return false }

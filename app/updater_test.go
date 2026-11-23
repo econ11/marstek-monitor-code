@@ -450,3 +450,56 @@ func TestUpdateRefusedWhenCannotInstall(t *testing.T) {
 		t.Fatalf("download folder made: %v", err)
 	}
 }
+
+// The local update test (docs/macos-signing.md): under -simulate*, Check and
+// Install run only in a build without the release tag pointed at a loopback
+// MARSTEK_UPDATE_BASE. A release build, or no override, stays simulated.
+func TestUpdateLocalTestUnderSimulate(t *testing.T) {
+	for name, tc := range map[string]struct {
+		base    string
+		allowed bool // in a build without the release tag
+	}{
+		"loopback override": {"http://127.0.0.1:8000/", true},
+		"no override":       {"", false},
+		"https override":    {"https://example.com/releases/", false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Setenv("MARSTEK_UPDATE_BASE", tc.base)
+			want := tc.allowed && !releaseTagTest
+			h := newInstall(t)
+			h.u.Simulate = true
+			if got := !h.u.simulated(); got != want {
+				t.Fatalf("release=%v: update allowed %v, want %v", releaseTagTest, got, want)
+			}
+			v, err := h.u.Check()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if gotSim := v.Err == UpdateErrSimulated; gotSim == want {
+				t.Fatalf("Check Err %q (allowed=%v)", v.Err, want)
+			}
+			err = h.u.Install()
+			if want {
+				// The whole install runs (download, checksum, backup, start).
+				if err != nil || len(h.starter.paths) != 1 || h.quits != 1 {
+					t.Fatalf("Install = %v, started %v, quits %d; want one start and a quit", err, h.starter.paths, h.quits)
+				}
+			} else {
+				if err == nil || h.u.State().Err != UpdateErrSimulated || len(h.starter.paths) != 0 {
+					t.Fatalf("Install = %v, Err %q, started %v; want refused as simulated", err, h.u.State().Err, h.starter.paths)
+				}
+			}
+		})
+	}
+	// A release build ignores the environment even when the function would
+	// say yes (the var stands for update.LocalTestBase).
+	old := localUpdateTest
+	localUpdateTest = func() bool { return false }
+	t.Cleanup(func() { localUpdateTest = old })
+	t.Setenv("MARSTEK_UPDATE_BASE", "http://127.0.0.1:8000/")
+	h := newInstall(t)
+	h.u.Simulate = true
+	if err := h.u.Install(); err == nil || len(h.starter.paths) != 0 {
+		t.Fatalf("release build: Install = %v, started %v", err, h.starter.paths)
+	}
+}

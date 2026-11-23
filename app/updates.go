@@ -196,6 +196,24 @@ func (u *UpdatesService) CleanTemp() {
 	}
 }
 
+// localUpdateTest is update.LocalTestBase (a var so tests can play a
+// release build).
+var localUpdateTest = update.LocalTestBase
+
+// simulated: a -simulate* run, where nothing reaches an update, unless this
+// dev build is pointed at a local test server (update.LocalTestBase: never
+// in a release build), for the pre-release update test
+// (docs/macos-signing.md).
+func (u *UpdatesService) simulated() bool { return u.Simulate && !localUpdateTest() }
+
+// CleanAfterUpdate removes what a Mac update left beside the app (the
+// swapped-out .app.old and temp folders); nothing on Windows. CleanTemp
+// does it too; main calls this one in the local update test, where
+// CleanTemp is not run.
+//
+//wails:ignore
+func (u *UpdatesService) CleanAfterUpdate() { cleanAfterUpdate() }
+
 // SetAuto applies the UpdateCheck setting.
 //
 //wails:ignore
@@ -226,7 +244,7 @@ func (u *UpdatesService) LatestRelease() update.Release {
 // an error of the call: it comes back as Err = UpdateErrCheck in the view.
 // While a check is running, it returns the view as it is.
 func (u *UpdatesService) Check() (UpdateView, error) {
-	if u.Simulate {
+	if u.simulated() {
 		// -simulate*: never GitHub, the button says so.
 		u.mu.Lock()
 		defer u.mu.Unlock()

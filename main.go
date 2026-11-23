@@ -207,6 +207,14 @@ func run() error {
 	// even from the button (agents never reach GitHub).
 	updates := app.NewUpdatesService(st, app.Version, update.NewClient(), user.UpdateCheck)
 	updates.Simulate = simulate
+	// The local update test (docs/macos-signing.md; dev builds only, a
+	// loopback MARSTEK_UPDATE_BASE): -simulate* may check and install, with
+	// the download in the simulated data folder, not the real copy's.
+	localUpdateTest := simulate && update.LocalTestBase()
+	if localUpdateTest {
+		updates.TempDir = filepath.Join(dir, filepath.Base(updates.TempDir))
+		slog.Info("update: local update test", "base", os.Getenv("MARSTEK_UPDATE_BASE"))
+	}
 	updates.Deliver = func(t notify.Toast) error { return notifier.Deliver(t, monitor.Snapshot{}, st) }
 	// The one-click update (Task 5; never in -simulate*): the installer from
 	// the release, its DB backup next to the database, then the app quits.
@@ -318,6 +326,11 @@ func run() error {
 			r.run(ctx)
 		}()
 		if simulate {
+			if localUpdateTest {
+				// The update swapped the bundle before this start: its
+				// .app.old goes. Checks stay manual («Перевірити зараз»).
+				updates.CleanAfterUpdate()
+			}
 			slog.Info("update check: off in a simulated run")
 			return
 		}

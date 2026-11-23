@@ -81,7 +81,7 @@ func failed(code string, err error) error { return &updateFailure{code, err} }
 // kept. Progress comes as updates:changed. In -simulate* nothing runs.
 func (u *UpdatesService) Install() error {
 	u.mu.Lock()
-	if u.Simulate {
+	if u.simulated() {
 		u.view.Err = UpdateErrSimulated
 		u.emitLocked()
 		u.mu.Unlock()

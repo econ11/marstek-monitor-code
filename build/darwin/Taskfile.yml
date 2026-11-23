@@ -12,6 +12,10 @@ version: '3'
 # stays "dev" (never checks for updates; "0.0.0-dev" would parse as a
 # version) and the bundle says 0.0.0. The dmg, signing and notarization are
 # scripts/macos-package.sh.
+#
+# UPDATE_TEST=1 (dev only, docs/macos-signing.md «Тест оновлення перед
+# релізом»): a VERSION'd build WITHOUT the release tag, so a -simulate* run
+# may update from a loopback MARSTEK_UPDATE_BASE. Never set it for a release.
 
 includes:
   common: ../Taskfile.yml
@@ -20,6 +24,7 @@ vars:
   MODULE:
     sh: go list -m
   VERSION: '{{.VERSION | default "dev"}}'
+  UPDATE_TEST: '{{.UPDATE_TEST | default ""}}'
   # The bundle version: VERSION, or 0.0.0 for a developer build.
   PLIST_VERSION: '{{if eq .VERSION "dev"}}0.0.0{{else}}{{.VERSION}}{{end}}'
 
@@ -67,7 +72,7 @@ tasks:
       - rm -f "{{.OUTPUT}}"
       - go build {{.BUILD_FLAGS}} -o "{{.OUTPUT}}"
     vars:
-      BUILD_FLAGS: '{{if eq .DEV "true"}}-buildvcs=false -gcflags=all="-l"{{else}}-tags production{{if ne .VERSION "dev"}},release{{end}} -trimpath -buildvcs=false -ldflags="-w -s -X ''{{.MODULE}}/app.Version={{.VERSION}}''"{{end}}'
+      BUILD_FLAGS: '{{if eq .DEV "true"}}-buildvcs=false -gcflags=all="-l"{{else}}-tags production{{if and (ne .VERSION "dev") (ne .UPDATE_TEST "1")}},release{{end}} -trimpath -buildvcs=false -ldflags="-w -s -X ''{{.MODULE}}/app.Version={{.VERSION}}''"{{end}}'
     env:
       GOOS: darwin
       CGO_ENABLED: 1

@@ -131,3 +131,25 @@ func TestDevBaseOverride(t *testing.T) {
 		t.Fatal("restored an asset outside the base")
 	}
 }
+
+// LocalTestBase: only a dev build pointed at a loopback http base may let a
+// -simulate* run check and install (the local update test); never a
+// release build, never an https base, never without the override.
+func TestLocalTestBase(t *testing.T) {
+	for base, devWant := range map[string]bool{
+		"":                                false,
+		"http://127.0.0.1:8000/":          true,
+		"http://127.0.0.1:8000/download/": true,
+		"http://127.0.0.1:8000":           false, // no trailing slash: not a base
+		"https://example.com/releases/":   false, // an override, but not local
+		"http://localhost:8000/":          false,
+		"http://127.0.0.1:8000/?x=1/":     false,
+		"http://user@127.0.0.1:8000/":     false,
+	} {
+		t.Setenv("MARSTEK_UPDATE_BASE", base)
+		want := devWant && !releaseBuild
+		if got := LocalTestBase(); got != want {
+			t.Errorf("release=%v base %q: LocalTestBase %v, want %v", releaseBuild, base, got, want)
+		}
+	}
+}
