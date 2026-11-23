@@ -25,10 +25,11 @@ func dockFor(windowVisible bool) dockPolicy {
 
 // dock tracks the window's visibility and the grid icon and hands each
 // change that shows on screen to apply, in order. Before start (the app not
-// running yet) it only records.
+// running yet) it only records. apply reports whether it could show the
+// state; if not, the same state is tried again at the next change.
 type dock struct {
 	mu      sync.Mutex
-	apply   func(dockPolicy, appIcon)
+	apply   func(dockPolicy, appIcon) bool
 	open    bool
 	icon    appIcon
 	started bool
@@ -37,7 +38,7 @@ type dock struct {
 	shownIcon appIcon
 }
 
-func newDock(apply func(dockPolicy, appIcon)) *dock {
+func newDock(apply func(dockPolicy, appIcon) bool) *dock {
 	return &dock{apply: apply, icon: iconOn}
 }
 
@@ -76,6 +77,8 @@ func (d *dock) push(force bool) {
 	if !force && p == d.shown && (p == dockHidden || d.icon == d.shownIcon) {
 		return
 	}
-	d.apply(p, d.icon)
+	if !d.apply(p, d.icon) {
+		return // not shown (no image): not remembered, so it is retried
+	}
 	d.shown, d.shownIcon = p, d.icon
 }

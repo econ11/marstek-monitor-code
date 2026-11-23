@@ -15,10 +15,11 @@ type dockRecorder struct {
 	calls []dockCall
 }
 
-func (r *dockRecorder) apply(p dockPolicy, i appIcon) {
+func (r *dockRecorder) apply(p dockPolicy, i appIcon) bool {
 	r.mu.Lock()
 	r.calls = append(r.calls, dockCall{p, i})
 	r.mu.Unlock()
+	return true
 }
 
 func (r *dockRecorder) take() []dockCall {
@@ -74,5 +75,28 @@ func TestDockPolicy(t *testing.T) {
 	d.setOpen(true) // opened from the menu bar: the Dock shows the latest icon
 	if c := r.take(); len(c) != 1 || c[0] != (dockCall{dockShown, iconOff}) {
 		t.Fatalf("open after hidden change: %v, want shown/off", c)
+	}
+}
+
+// A state the Dock could not show (no image) is not remembered: the next
+// change tries it again instead of leaving the old icon up.
+func TestDockRetriesUnshownState(t *testing.T) {
+	var calls []dockCall
+	ok := false
+	d := newDock(func(p dockPolicy, i appIcon) bool {
+		calls = append(calls, dockCall{p, i})
+		return ok || p == dockHidden
+	})
+	d.setOpen(true)
+	d.start() // shown/on fails
+	d.setIcon(iconOn)
+	if len(calls) != 2 {
+		t.Fatalf("calls %v: an unshown state was taken as shown", calls)
+	}
+	ok = true
+	d.setIcon(iconOn)
+	d.setIcon(iconOn) // now shown: no more calls
+	if len(calls) != 3 || calls[2] != (dockCall{dockShown, iconOn}) {
+		t.Fatalf("calls %v, want 3 ending in shown/on", calls)
 	}
 }

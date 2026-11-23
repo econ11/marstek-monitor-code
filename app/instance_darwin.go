@@ -13,6 +13,8 @@ static size_t userTempDir(char *buf, size_t n) {
 import "C"
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"log/slog"
 	"net"
@@ -44,12 +46,17 @@ const bundleID = "com.econ11.marstekmonitor"
 // throw-away folder).
 var instanceDir = userInstanceDir
 
+// userTempDir is confstr(_CS_DARWIN_USER_TEMP_DIR) (a var so tests can take
+// the fallback).
+var userTempDir = darwinUserTempDir
+
 // userInstanceDir is the per-user temporary folder from
-// confstr(_CS_DARWIN_USER_TEMP_DIR), else ~/Library/Caches/<bundle id>/.
+// confstr(_CS_DARWIN_USER_TEMP_DIR), else ~/Library/Caches/<bundle id>/,
+// owner-only (0700, also when it already existed with wider rights).
 // Never $TMPDIR or /tmp: a copy started by launchd at login may have no
 // $TMPDIR, and two copies looking at different lock files would both run.
 func userInstanceDir() (string, error) {
-	if d := darwinUserTempDir(); d != "" {
+	if d := userTempDir(); d != "" {
 		return d, nil
 	}
 	home, err := os.UserHomeDir()
@@ -57,7 +64,34 @@ func userInstanceDir() (string, error) {
 		return "", err
 	}
 	dir := filepath.Join(home, "Library", "Caches", bundleID)
-	return dir, os.MkdirAll(dir, 0o700)
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return "", err
+	}
+	if fi, err := os.Stat(dir); err == nil && fi.Mode().Perm()&0o077 != 0 {
+		if err := os.Chmod(dir, 0o700); err != nil {
+			return "", err
+		}
+	}
+	return dir, nil
+}
+
+// maxSockPath is the longest Unix socket path: sun_path is 104 bytes with
+// the terminating NUL.
+const maxSockPath = 103
+
+// sockPath is <dir>/<name>.sock, or, when that is longer than a socket path
+// may be (a long home folder in the fallback), <dir>/mm-<8 hex of
+// sha256(name)>.sock, which every copy derives the same way. "" when even
+// that does not fit.
+func sockPath(dir, name string) string {
+	if p := filepath.Join(dir, name+".sock"); len(p) <= maxSockPath {
+		return p
+	}
+	sum := sha256.Sum256([]byte(name))
+	if p := filepath.Join(dir, "mm-"+hex.EncodeToString(sum[:4])+".sock"); len(p) <= maxSockPath {
+		return p
+	}
+	return ""
 }
 
 // darwinUserTempDir is confstr(_CS_DARWIN_USER_TEMP_DIR), "" if unavailable.
@@ -78,7 +112,10 @@ func FirstInstance(name string) (inst *Instance, ok bool, err error) {
 	if err != nil {
 		return nil, false, err
 	}
-	sock := filepath.Join(dir, name+".sock")
+	sock := sockPath(dir, name)
+	if sock != "" && sock != filepath.Join(dir, name+".sock") {
+		slog.Info("single instance: socket path shortened", "socket", sock)
+	}
 	f, err := os.OpenFile(filepath.Join(dir, name+".lock"), os.O_CREATE|os.O_RDWR, 0o600)
 	if err != nil {
 		return nil, false, err
@@ -88,18 +125,24 @@ func FirstInstance(name string) (inst *Instance, ok bool, err error) {
 		if !errors.Is(err, syscall.EWOULDBLOCK) {
 			return nil, false, err
 		}
-		if c, err := net.Dial("unix", sock); err == nil {
-			_ = c.Close() // connecting is the whole message
+		if sock != "" {
+			if c, err := net.Dial("unix", sock); err == nil {
+				_ = c.Close() // connecting is the whole message
+			}
 		}
 		return nil, false, nil
 	}
 	// We hold the lock: a socket file left over is from a copy that died.
-	_ = os.Remove(sock)
-	ln, err := net.Listen("unix", sock)
-	if err != nil {
-		// Still the only copy; a second one just cannot reach us.
-		slog.Warn("single instance: no socket, a second copy cannot show this window", "err", err)
-		ln = nil
+	var ln net.Listener
+	if sock == "" {
+		slog.Warn("single instance: no socket path fits, a second copy cannot show this window", "dir", dir)
+	} else {
+		_ = os.Remove(sock)
+		if ln, err = net.Listen("unix", sock); err != nil {
+			// Still the only copy; a second one just cannot reach us.
+			slog.Warn("single instance: no socket, a second copy cannot show this window", "socket", sock, "err", err)
+			ln = nil
+		}
 	}
 	held = &Instance{ln: ln, lock: f}
 	return held, true, nil

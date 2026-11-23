@@ -1,12 +1,12 @@
 #import <AppKit/AppKit.h>
 
-// The app icon art is a full-bleed tile (240 of 256 px, the Windows grid).
+// The app icon art is a full-bleed tile (960 of 1024 px, the Windows grid).
 // A Dock image set at run time is shown as is, while macOS fits bundle icons
 // to its own grid (the tile about 80% of the canvas, 824 of 1024). The tile
-// is drawn at that size, so the on and off images match each other and the
-// icons around them.
-static const CGFloat kDockCanvas = 256.0;
-static const CGFloat kArtTile = 240.0 / 256.0;  // tile share of the source art
+// is drawn at that size on a 1024 px bitmap, so the on and off images match
+// each other and the icons around them.
+static const NSInteger kDockPx = 1024;
+static const CGFloat kArtTile = 960.0 / 1024.0;   // tile share of the source art
 static const CGFloat kAppleTile = 824.0 / 1024.0; // tile share on the macOS grid
 
 static NSImage *dockImage(const void *png, int n) {
@@ -14,17 +14,25 @@ static NSImage *dockImage(const void *png, int n) {
 	if (src == nil) {
 		return nil;
 	}
-	CGFloat side = kDockCanvas * kAppleTile / kArtTile;
-	CGFloat inset = (kDockCanvas - side) / 2.0;
-	NSImage *dst = [[NSImage alloc] initWithSize:NSMakeSize(kDockCanvas, kDockCanvas)];
-	[dst lockFocus];
-	[[NSGraphicsContext currentContext] setImageInterpolation:NSImageInterpolationHigh];
+	NSBitmapImageRep *rep = [[NSBitmapImageRep alloc]
+		initWithBitmapDataPlanes:NULL pixelsWide:kDockPx pixelsHigh:kDockPx
+		bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO
+		colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:0 bitsPerPixel:0];
+	CGFloat side = kDockPx * kAppleTile / kArtTile;
+	CGFloat inset = (kDockPx - side) / 2.0;
+	[NSGraphicsContext saveGraphicsState];
+	NSGraphicsContext *ctx = [NSGraphicsContext graphicsContextWithBitmapImageRep:rep];
+	[NSGraphicsContext setCurrentContext:ctx];
+	[ctx setImageInterpolation:NSImageInterpolationHigh];
 	[src drawInRect:NSMakeRect(inset, inset, side, side)
 	       fromRect:NSZeroRect
-	      operation:NSCompositingOperationSourceOver
+	      operation:NSCompositingOperationCopy
 	       fraction:1.0];
-	[dst unlockFocus];
+	[NSGraphicsContext restoreGraphicsState];
 	[src release];
+	NSImage *dst = [[NSImage alloc] initWithSize:NSMakeSize(kDockPx, kDockPx)];
+	[dst addRepresentation:rep];
+	[rep release];
 	return [dst autorelease];
 }
 

@@ -3,4 +3,4 @@
 package app
 
 // setDock: only macOS has a Dock (dock.go).
-func setDock(dockPolicy, appIcon) {}
+func setDock(dockPolicy, appIcon) bool { return true }

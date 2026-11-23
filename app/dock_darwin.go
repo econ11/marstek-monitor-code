@@ -9,30 +9,40 @@ void marstekSetDock(int shown, const void *png, int n);
 import "C"
 
 import (
+	"embed"
 	"log/slog"
 	"unsafe"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-// dockPNG is the 256 px PNG frame of the app icon .ico of the state (the
-// same artwork as the Windows taskbar button; the bundle's icons.icns is
-// the "on" one).
+// The Dock images are 1024 px renders of the app icon: "on" is
+// build/appicon.png (the bundle's icons.icns comes from it), "off" is
+// appicon-off.svg rendered the same way (docs/design/logo/README.md). A
+// 256 px source looked soft in a Retina Dock.
+//
+//go:embed assets/dock-on-1024.png assets/dock-off-1024.png
+var dockFS embed.FS
+
+// dockPNG is the Dock image of the state, nil if missing.
 func dockPNG(i appIcon) []byte {
-	ico := windowICO(i)
-	e, ok := pickICOImage(ico, 256)
-	if !ok {
+	b, err := dockFS.ReadFile("assets/dock-" + string(i) + "-1024.png")
+	if err != nil {
 		return nil
 	}
-	return ico[e.offset : e.offset+e.length]
+	return b
 }
 
 // setDock applies the Dock policy and, when shown, the icon, on the main
-// thread. Any goroutine.
-func setDock(p dockPolicy, i appIcon) {
-	png := dockPNG(i)
-	if png == nil {
-		slog.Warn("dock icon: no PNG frame", "icon", i)
+// thread. It reports false when the icon cannot be shown (no image), so
+// dock keeps trying. Any goroutine.
+func setDock(p dockPolicy, i appIcon) bool {
+	var png []byte
+	if p == dockShown {
+		if png = dockPNG(i); png == nil {
+			slog.Warn("dock icon: no image", "icon", i)
+			return false
+		}
 	}
 	application.InvokeAsync(func() {
 		var ptr unsafe.Pointer
@@ -42,4 +52,5 @@ func setDock(p dockPolicy, i appIcon) {
 		}
 		C.marstekSetDock(C.int(p), ptr, C.int(len(png)))
 	})
+	return true
 }
