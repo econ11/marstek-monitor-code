@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Hardened runtime entitlements for the Developer ID build
+     (scripts/macos-package.sh). Not sandboxed; only what the app needs:
+     the LAN client (UDP to the station, HTTPS to GitHub for updates). -->
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.network.client</key>
+	<true/>
+</dict>
+</plist>

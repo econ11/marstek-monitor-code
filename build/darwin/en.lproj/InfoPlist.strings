@@ -1,0 +1,2 @@
+/* Marstek Monitor: the macOS Local Network permission prompt. */
+"NSLocalNetworkUsageDescription" = "Marstek Monitor polls your Marstek battery on the local network (UDP 30000).";

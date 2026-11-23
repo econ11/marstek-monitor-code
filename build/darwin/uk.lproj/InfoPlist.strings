@@ -1,0 +1,2 @@
+/* Marstek Monitor: текст запиту macOS про доступ до локальної мережі. */
+"NSLocalNetworkUsageDescription" = "Marstek Monitor опитує вашу батарею Marstek у локальній мережі (UDP 30000).";
