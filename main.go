@@ -309,6 +309,9 @@ func run() error {
 
 	r.a, r.tray, r.win = a, tray, win
 	a.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
+		// macOS asks for notification permission once, at start (it waits
+		// for the user, so off the UI thread); Windows does nothing.
+		go app.AskNotificationPermission()
 		wg.Add(1)
 		go func() {
 			defer wg.Done()

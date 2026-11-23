@@ -49,3 +49,7 @@ func saveToastIcon() {
 		_ = w32.SaveHIconAsPNG(icon, path)
 	}
 }
+
+// AskNotificationPermission: Windows has no permission prompt for toasts
+// (macOS asks at start, toast_darwin.go).
+func AskNotificationPermission() {}
